@@ -1,0 +1,30 @@
+{
+  "name": "La tribune des fans - Communautés sportives",
+  "short_name": "La tribune des fans",
+  "description": "Chat en direct, articles et podcasts avec votre communauté sportive",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#0B4870",
+  "orientation": "portrait-primary",
+  "categories": ["sports", "social"],
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png"
+    },
+    {
+      "src": "/images/fanstribune.webp",
+      "sizes": "192x192",
+      "type": "image/webp",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/fanstribune.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

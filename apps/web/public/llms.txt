@@ -1,0 +1,33 @@
+# La tribune des fans
+
+> Plateforme communautaire sportive bilingue (FR/EN) pour les fans de hockey, baseball, football et plus. Chat en direct, articles, podcasts et jauges de confiance.
+
+La tribune des fans (Fans Tribune) est une communauté en ligne dédiée aux passionnés de sport au Québec et au Canada. Les utilisateurs rejoignent des tribunes thématiques pour discuter en temps réel, lire des articles d'analyse, écouter des podcasts et voter sur des jauges de confiance comme le Nordiquomètre et l'Exposmètre.
+
+## Pages principales
+
+- [Accueil](https://fanstribune.com/fr): Page d'accueil avec les messages tendances
+- [Galerie de presse](https://fanstribune.com/fr/galerie-de-presse): Tous les articles et podcasts sportifs
+- [À propos](https://fanstribune.com/fr/a-propos): Mission et fonctionnalités de la plateforme
+- [Contact](https://fanstribune.com/fr/contact): Coordonnées et réseaux sociaux
+
+## Types de contenu
+
+- **Tribunes**: Salons de chat en direct par équipe/sport
+- **Articles**: Chroniques, analyses et opinions de fans et journalistes
+- **Podcasts**: Émissions audio et vidéo en direct (YouTube Live)
+- **Nordiquomètre**: Jauge de confiance pour le retour des Nordiques à Québec
+- **Exposmètre**: Jauge de confiance pour le retour des Expos à Montréal
+
+## Communautés actives
+
+- Zone Nordiques (hockey)
+- Expos de Montréal (baseball)
+- Blue Jays de Toronto (baseball)
+- La Taverne (discussions générales)
+
+## Informations techniques
+
+- Site bilingue: français et anglais
+- Plateforme: Next.js, Supabase, Vercel
+- Contact: info@fanstribune.com
