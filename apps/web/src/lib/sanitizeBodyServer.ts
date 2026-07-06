@@ -26,6 +26,10 @@ const OPTIONS: sanitizeHtml.IOptions = {
     img: ['src', 'alt', 'width', 'height'],
   },
   allowedSchemes: ['http', 'https', 'mailto'],
+  // Legacy imported bodies embed inline base64 images (data: URIs). Allow the
+  // data scheme for <img> only (never for <a>) so those images render instead
+  // of being stripped; links stay restricted to http/https/mailto.
+  allowedSchemesByTag: { img: ['http', 'https', 'data'] },
   allowProtocolRelative: false,
   // Disallowed tags are dropped but their text content is kept (default),
   // except true non-text tags like <script>/<style> which are removed whole.
