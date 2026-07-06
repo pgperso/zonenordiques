@@ -8,7 +8,7 @@ import { useSupabase } from '@/hooks/useSupabase';
 
 /**
  * Two stacked sidebar cards: the live Nordiquomètre confidence index (the
- * average of every vote, all horizons pooled) and a "Lazoom" shortcut badge
+ * average of every vote, all horizons pooled) and a "La Zone" shortcut badge
  * straight into the Zone Nordiques chat. Rendered in the gallery sidebar
  * between the poll and "Top of the week".
  */
@@ -74,7 +74,7 @@ export function MetreCards() {
         />
       </Link>
 
-      {/* Lazoom — shortcut into the live chat */}
+      {/* La Zone — shortcut into the live chat */}
       <Link
         href="/tribunes/zone-nordiques"
         className="group flex items-center gap-3 rounded-xl px-4 py-3 text-white shadow-sm transition hover:shadow-md"
@@ -84,7 +84,7 @@ export function MetreCards() {
           <MessageCircle size={22} aria-hidden="true" />
         </span>
         <span className="min-w-0">
-          <span className="block text-base font-bold leading-tight">Lazoom</span>
+          <span className="block text-base font-bold leading-tight">La Zone</span>
           <span className="block text-xs text-white/70">
             {isFr ? 'Rejoins la discussion en direct' : 'Join the live discussion'}
           </span>

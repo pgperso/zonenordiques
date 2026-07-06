@@ -117,12 +117,21 @@ export function Header({ categories }: HeaderProps) {
         {/* Language + Desktop auth */}
         <div className="hidden items-center gap-3 md:flex">
           <SportsMenu categories={categories} />
-          <Link
-            href="/tribunes/zone-nordiques"
-            className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
-          >
-            {t('home.theZone')}
-          </Link>
+          {tribune ? (
+            <Link
+              href="/"
+              className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
+            >
+              {t('pressGallery.title')}
+            </Link>
+          ) : (
+            <Link
+              href="/tribunes/zone-nordiques"
+              className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
+            >
+              {t('home.theZone')}
+            </Link>
+          )}
           <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
           <button
             onClick={cycleTheme}
@@ -239,10 +248,10 @@ export function Header({ categories }: HeaderProps) {
             </button>
           ) : (
             <Link
-              href="/tribunes/zone-nordiques"
+              href={tribune ? '/' : '/tribunes/zone-nordiques'}
               className="rounded-lg bg-brand-red px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-red-dark"
             >
-              {t('home.theZone')}
+              {tribune ? t('pressGallery.title') : t('home.theZone')}
             </Link>
           )}
         <button
