@@ -27,12 +27,9 @@ interface Props {
   /** Stable seed for the gradient/letter variant (defaults to the title).
    *  Accepts a number (e.g. article id) — coerced to string. */
   seed?: string | number;
-  /** Show the small brand wordmark bottom-left (cards yes, heroes no — they
-   *  carry their own title overlay). */
-  showWordmark?: boolean;
 }
 
-export function ArticleCoverPlaceholder({ title, seed, showWordmark = false }: Props) {
+export function ArticleCoverPlaceholder({ title, seed }: Props) {
   const { colors, angle } = variantFor(String(seed ?? title ?? BRAND.name));
   const initial = (title.trim()[0] || BRAND.shortName[0] || 'Z').toUpperCase();
   return (
@@ -44,11 +41,6 @@ export function ArticleCoverPlaceholder({ title, seed, showWordmark = false }: P
       <span className="select-none text-6xl font-black leading-none text-white/10 sm:text-7xl">
         {initial}
       </span>
-      {showWordmark && (
-        <span className="absolute bottom-2 left-3 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/70">
-          {BRAND.name}
-        </span>
-      )}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
     </div>
   );

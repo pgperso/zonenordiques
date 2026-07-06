@@ -36,7 +36,7 @@ export function PressArticleCard({ item }: PressArticleCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <ArticleCoverPlaceholder title={item.title} seed={item.id} showWordmark />
+          <ArticleCoverPlaceholder title={item.title} seed={item.id} />
         )}
       </div>
 
