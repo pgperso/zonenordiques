@@ -116,7 +116,7 @@ export function Header({ categories }: HeaderProps) {
 
         {/* Language + Desktop auth */}
         <div className="hidden items-center gap-3 md:flex">
-          <SportsMenu categories={categories} />
+          {!tribune && <SportsMenu categories={categories} />}
           {tribune ? (
             <Link
               href="/"

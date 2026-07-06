@@ -65,7 +65,13 @@ export const FeedMessage = memo(function FeedMessage({
   presenceStatus,
 }: FeedMessageProps) {
   const t = useTranslations('tribune');
-  const username = message.member?.username ?? t('deletedUser');
+  const tRoles = useTranslations('roles');
+  // The bot posts under its friendly display name (Gérant d'estrade), not its
+  // raw @username, wherever its messages render in the feed.
+  const username =
+    message.memberId === BOT_MEMBER_ID
+      ? tRoles('bot')
+      : (message.member?.username ?? t('deletedUser'));
   const rank: { label: string; color: string; bg: string } =
     (staffRole ? STAFF_RANK_MAP[staffRole] : undefined) ?? getMemberRank(message.member?.messageCount ?? 0);
   const time = formatTime(message.createdAt);
@@ -286,7 +292,7 @@ export const FeedMessage = memo(function FeedMessage({
           <div className="reply-connector relative -top-0.5" />
           <div className="ml-8 min-w-0 overflow-hidden">
             <FeedReplyContext
-              parentUsername={parentMessage.member?.username ?? t('deletedUser')}
+              parentUsername={parentMessage.memberId === BOT_MEMBER_ID ? tRoles('bot') : (parentMessage.member?.username ?? t('deletedUser'))}
               parentAvatarUrl={parentMessage.member?.avatarUrl}
               parentContent={parentMessage.content}
               onClick={onScrollToMessage ? () => onScrollToMessage(parentMessage.id) : undefined}
