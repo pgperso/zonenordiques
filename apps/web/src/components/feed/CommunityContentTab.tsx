@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSupabase } from '@/hooks/useSupabase';
 import { cleanArticleTitle, decodeEntities } from '@/lib/articleText';
-import { formatTime, formatDuration } from '@arena/shared';
+import { formatDate, formatDuration } from '@arena/shared';
 import { Avatar } from '@/components/ui/Avatar';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
@@ -274,7 +274,7 @@ function ContentRow({
           }`}>
             {item.type === 'article' ? tt('article') : tt('podcast')}
           </span>
-          <span className="text-[10px] text-gray-400">{formatTime(item.publishedAt)}</span>
+          <span className="text-[10px] text-gray-400">{formatDate(item.publishedAt)}</span>
           {item.durationSeconds && (
             <span className="text-[10px] text-gray-400">{formatDuration(item.durationSeconds)}</span>
           )}

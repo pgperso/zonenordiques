@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { formatTime, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
+import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { translatedField } from '@/lib/contentTranslation';
 import { findContentAuthorBySlug, type ContentAuthor } from '@/lib/contentAuthors';
@@ -286,7 +286,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                           </p>
                         )}
                         <div className="mt-auto pt-3 text-[11px] text-gray-400">
-                          {formatTime(a.published_at ?? new Date().toISOString())}
+                          {formatDate(a.published_at ?? new Date().toISOString())}
                           {a.view_count > 0 && (
                             <> · {a.view_count.toLocaleString(isFr ? 'fr-CA' : 'en-CA')} {isFr ? 'vues' : 'views'}</>
                           )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
-import { formatTime } from '@arena/shared';
+import { formatDate } from '@arena/shared';
 import { FeedLikeButton } from '@/components/feed/FeedLikeButton';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { AdInArticle } from '@/components/ads/AdInArticle';
@@ -156,7 +156,7 @@ export function ArticleView({ article, communitySlug, communityName, userId, can
               <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{article.author.username}</p>
             )}
             <p className="text-xs text-gray-400">
-              {formatTime(article.published_at ?? article.created_at)}
+              {formatDate(article.published_at ?? article.created_at)}
               {article.view_count > 0 && ` · ${article.view_count} vue${article.view_count > 1 ? 's' : ''}`}
             </p>
           </div>

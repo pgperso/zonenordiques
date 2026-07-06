@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { formatTime } from '@arena/shared';
+import { formatDate } from '@arena/shared';
 import type { FeedArticle } from '@arena/shared';
 import { FeedLikeButton } from './FeedLikeButton';
 import { Avatar } from '@/components/ui/Avatar';
@@ -63,7 +63,7 @@ export function FeedArticleCard({ article, communitySlug, userId, canModerate }:
             <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
               {t('article')}
             </span>
-            <span className="text-xs text-gray-400">{formatTime(article.publishedAt)}</span>
+            <span className="text-xs text-gray-400">{formatDate(article.publishedAt)}</span>
           </div>
 
           {/* Title */}

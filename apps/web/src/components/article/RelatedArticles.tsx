@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
 import { Link } from '@/i18n/navigation';
-import { formatTime, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
+import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { translatedField } from '@/lib/contentTranslation';
 import { cleanArticleTitle } from '@/lib/articleText';
 import { ArticleCoverPlaceholder } from '@/components/press/ArticleCoverPlaceholder';
@@ -154,7 +154,7 @@ export async function RelatedArticles({
                     {title}
                   </h3>
                   <p className="mt-1 text-[11px] text-gray-400">
-                    {authorName} · {formatTime(a.published_at ?? new Date().toISOString())}
+                    {authorName} · {formatDate(a.published_at ?? new Date().toISOString())}
                   </p>
                 </div>
               </Link>

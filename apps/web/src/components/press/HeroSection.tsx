@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { formatTime, displayCommunityName } from '@arena/shared';
+import { formatDate, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
@@ -225,7 +225,7 @@ function TrioHero({ hero, secondary }: { hero: PressGalleryItem; secondary: Pres
               {item.title}
             </h4>
             <div className="mt-1.5 flex items-center text-[11px] text-gray-400">
-              <span>{item.authorName} &middot; {formatTime(item.publishedAt)}</span>
+              <span>{item.authorName} &middot; {formatDate(item.publishedAt)}</span>
               <ShareButton
                 url={shareUrl(item, locale)}
                 title={item.title}
@@ -338,7 +338,7 @@ function HeroOverlay({ item, titleClass, showExcerpt, communityName }: { item: P
       <div className="flex items-center gap-2 text-xs text-gray-300">
         <span className="font-medium">{item.authorName}</span>
         <span>&middot;</span>
-        <span>{formatTime(item.publishedAt)}</span>
+        <span>{formatDate(item.publishedAt)}</span>
       </div>
     </div>
   );

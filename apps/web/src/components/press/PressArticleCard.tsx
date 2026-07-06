@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { formatTime, displayCommunityName } from '@arena/shared';
+import { formatDate, displayCommunityName } from '@arena/shared';
 import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
@@ -76,7 +76,7 @@ export function PressArticleCard({ item }: PressArticleCardProps) {
             {item.authorName}
           </span>
           <span>&middot;</span>
-          <span>{formatTime(item.publishedAt)}</span>
+          <span>{formatDate(item.publishedAt)}</span>
         </div>
       </div>
     </Link>

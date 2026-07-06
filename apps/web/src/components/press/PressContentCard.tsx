@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { formatTime, displayCommunityName } from '@arena/shared';
+import { formatDate, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { ShareButton } from '@/components/ui/ShareButton';
 import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
@@ -162,7 +162,7 @@ export function PressContentCard({ item, variant = 'standard' }: PressContentCar
             {item.authorName}
           </span>
           <span className="shrink-0">&middot;</span>
-          <span className="shrink-0">{formatTime(item.publishedAt)}</span>
+          <span className="shrink-0">{formatDate(item.publishedAt)}</span>
           {item.viewCount >= 10 && (
             <>
               <span className="shrink-0">&middot;</span>

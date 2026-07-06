@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { formatTime, formatDuration } from '@arena/shared';
+import { formatDate, formatDuration } from '@arena/shared';
 import type { FeedPodcast } from '@arena/shared';
 import { FeedLikeButton } from './FeedLikeButton';
 import { FeedLivePlayer } from './FeedLivePlayer';
@@ -104,7 +104,7 @@ export function FeedPodcastCard({ podcast, communitySlug, userId, canModerate }:
                   {t('replay')}
                 </span>
               )}
-              <span className="text-xs text-gray-400">{formatTime(podcast.createdAt)}</span>
+              <span className="text-xs text-gray-400">{formatDate(podcast.createdAt)}</span>
             </div>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">{podcast.title}</h3>
             {podcast.description && (
@@ -216,7 +216,7 @@ export function FeedPodcastCard({ podcast, communitySlug, userId, canModerate }:
               <span className="rounded-full bg-brand-blue/20 px-2 py-0.5 text-xs font-medium text-brand-blue-light">
                 {t('podcast')}
               </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">{formatTime(podcast.createdAt)}</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">{formatDate(podcast.createdAt)}</span>
               {podcast.durationSeconds && (
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatDuration(podcast.durationSeconds)}

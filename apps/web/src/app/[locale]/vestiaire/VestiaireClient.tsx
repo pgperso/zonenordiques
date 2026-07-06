@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { Avatar } from '@/components/ui/Avatar';
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
-import { displayCommunityName, formatTime } from '@arena/shared';
+import { displayCommunityName, formatDate } from '@arena/shared';
 import { PollAdminPanel } from './PollAdminPanel';
 import { BRAND } from '@/lib/brand';
 import type { Poll } from '@/services/pollService';
@@ -634,7 +634,7 @@ function AuthorMetricsPanel({
                   </span>
                   {a.publishedAt && (
                     <span className="hidden shrink-0 text-[11px] text-gray-400 sm:inline">
-                      {formatTime(a.publishedAt)}
+                      {formatDate(a.publishedAt)}
                     </span>
                   )}
                 </Link>

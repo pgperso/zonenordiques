@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
-import { formatTime, displayCommunityName } from '@arena/shared';
+import { formatDate, displayCommunityName } from '@arena/shared';
 import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
@@ -118,7 +118,7 @@ export function PressPodcastCard({ item }: PressPodcastCardProps) {
             {item.authorName}
           </span>
           <span>&middot;</span>
-          <span>{formatTime(item.publishedAt)}</span>
+          <span>{formatDate(item.publishedAt)}</span>
           {durationLabel && (
             <>
               <span>&middot;</span>
