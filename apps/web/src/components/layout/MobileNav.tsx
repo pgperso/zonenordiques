@@ -168,11 +168,11 @@ export function MobileNav({
             <>
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/tribunes"
+                  href="/tribunes/zone-nordiques"
                   onClick={onClose}
                   className="block rounded-lg bg-brand-red px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-brand-red-dark"
                 >
-                  {t('home.allMyTribunes')}
+                  {t('home.theZone')}
                 </Link>
                 <Link
                   href="/"

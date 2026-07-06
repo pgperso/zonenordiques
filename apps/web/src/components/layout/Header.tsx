@@ -79,7 +79,7 @@ export function Header({ categories }: HeaderProps) {
         <div className="flex items-center gap-1.5 sm:gap-2">
           {tribune && (
             <Link
-              href="/tribunes"
+              href="/"
               aria-label={t('a11y.back')}
               className="flex items-center rounded-lg p-1.5 text-gray-600 dark:text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-[#1e1e1e] md:hidden"
             >
@@ -117,16 +117,12 @@ export function Header({ categories }: HeaderProps) {
         {/* Language + Desktop auth */}
         <div className="hidden items-center gap-3 md:flex">
           <SportsMenu categories={categories} />
-          {user ? (
-            <TribunesMenu userTribunes={userTribunes} align="left" />
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
-            >
-              {t('home.myTribunes')}
-            </Link>
-          )}
+          <Link
+            href="/tribunes/zone-nordiques"
+            className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
+          >
+            {t('home.theZone')}
+          </Link>
           <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
           <button
             onClick={cycleTheme}
@@ -243,10 +239,10 @@ export function Header({ categories }: HeaderProps) {
             </button>
           ) : (
             <Link
-              href={user ? '/tribunes' : '/login'}
+              href="/tribunes/zone-nordiques"
               className="rounded-lg bg-brand-red px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-red-dark"
             >
-              {t('home.myTribunes')}
+              {t('home.theZone')}
             </Link>
           )}
         <button
@@ -370,102 +366,6 @@ function SportsMenu({ categories }: SportsMenuProps) {
               );
             })}
           </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface TribunesMenuProps {
-  userTribunes: UserCommunitySummary[];
-  align: 'left' | 'right';
-}
-
-function TribunesMenu({ userTribunes, align }: TribunesMenuProps) {
-  const t = useTranslations();
-  const pathname = usePathname();
-  const isOnGallery = pathname === '/';
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="flex items-center gap-1 rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
-      >
-        {t('home.myTribunes')}
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-
-      {open && (
-        <div
-          className={`absolute top-full z-50 mt-1 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#1e1e1e] ${
-            align === 'right' ? 'right-0' : 'left-0'
-          }`}
-        >
-          <div className="flex flex-col gap-2 p-3">
-            <Link
-              href="/tribunes"
-              onClick={() => setOpen(false)}
-              className="block rounded-lg bg-brand-red px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-brand-red-dark"
-            >
-              {t('home.allMyTribunes')}
-            </Link>
-            {/* The Galerie de presse shortcut would be a self-link when the
-                reader is already on the gallery — hide it there. */}
-            {!isOnGallery && (
-              <Link
-                href="/"
-                onClick={() => setOpen(false)}
-                className="block rounded-lg bg-brand-blue px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-brand-blue-dark"
-              >
-                {t('pressGallery.title')}
-              </Link>
-            )}
-            <Link
-              href="/lnh/pool"
-              onClick={() => setOpen(false)}
-              className="block rounded-lg bg-brand-blue-dark px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-brand-blue"
-            >
-              {t('pool.menuLink')}
-            </Link>
-          </div>
-          {userTribunes.length > 0 && (
-            <div className="border-t border-gray-100 dark:border-gray-800">
-              <p className="px-4 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                {t('home.myTribunes')}
-              </p>
-              <ul className="max-h-64 overflow-y-auto pb-1">
-                {userTribunes.map((c) => (
-                  <li key={c.id}>
-                    <Link
-                      href={`/tribunes/${c.slug}`}
-                      onClick={() => setOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      {c.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       )}
     </div>
