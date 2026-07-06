@@ -108,8 +108,6 @@ export default async function HomePage({
     const excludeArticleIds = featuredItems
       .filter((i) => i.type === 'article')
       .map((i) => i.id);
-    const taverne = communities.find((c) => c.slug === 'la-taverne');
-
     const [mainResult, taverneResult] = await Promise.all([
       fetchPressGalleryItems(supabase, {
         filter: 'all',
@@ -118,15 +116,13 @@ export default async function HomePage({
         excludeArticleIds,
         locale,
       }),
-      taverne
-        ? fetchPressGalleryItems(supabase, {
-            filter: 'articles',
-            sort: 'latest',
-            communityId: taverne.id,
-            limit: 6,
-            locale,
-          })
-        : Promise.resolve({ items: [], hasMore: false }),
+      fetchPressGalleryItems(supabase, {
+        filter: 'articles',
+        sort: 'latest',
+        section: 'taverne',
+        limit: 6,
+        locale,
+      }),
     ]);
 
     initialResult = mainResult;

@@ -5,6 +5,7 @@ import { displayCommunityName } from '@arena/shared';
 
 type FilterType = 'all' | 'articles' | 'podcasts';
 type SortType = 'latest' | 'trending';
+type SectionType = 'all' | 'nordiques' | 'lnh';
 
 interface Community {
   id: number;
@@ -17,10 +18,12 @@ interface Community {
 interface PressFilterBarProps {
   filter: FilterType;
   sort: SortType;
+  section: SectionType;
   communityId: number | undefined;
   communities: Community[];
   onFilterChange: (filter: FilterType) => void;
   onSortChange: (sort: SortType) => void;
+  onSectionChange: (section: SectionType) => void;
   onCommunityChange: (communityId: number | undefined) => void;
 }
 
@@ -35,10 +38,12 @@ interface PressFilterBarProps {
 export function PressFilterBar({
   filter,
   sort,
+  section,
   communityId,
   communities,
   onFilterChange,
   onSortChange,
+  onSectionChange,
   onCommunityChange,
 }: PressFilterBarProps) {
   const t = useTranslations('pressGallery');
@@ -50,12 +55,36 @@ export function PressFilterBar({
     { key: 'podcasts', label: t('podcasts') },
   ];
 
+  // Article themes (Zone Nordiques taxonomy). La Taverne is not here — it has
+  // its own dedicated block at the bottom of the gallery.
+  const sections: { key: SectionType; label: string }[] = [
+    { key: 'all', label: t('sectionAll') },
+    { key: 'nordiques', label: t('sectionNordiques') },
+    { key: 'lnh', label: t('sectionLNH') },
+  ];
+
   // La Taverne has its own dedicated section in the gallery, so it's
   // kept out of the tribune dropdown.
   const filteredCommunities = communities.filter((c) => c.slug !== 'la-taverne');
 
   return (
-    <div className="min-w-0">
+    <div className="flex min-w-0 flex-col gap-2">
+      {/* Theme pills — the primary Zone Nordiques taxonomy */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        {sections.map(({ key, label }) => (
+          <button
+            key={`section-${key}`}
+            onClick={() => onSectionChange(key)}
+            className={`shrink-0 rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+              section === key
+                ? 'bg-brand-blue text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         {/* Type pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
@@ -76,7 +105,7 @@ export function PressFilterBar({
 
         {/* Community dropdown + Sort */}
         <div className="flex min-w-0 items-center gap-2">
-          {filteredCommunities.length > 0 && (
+          {filteredCommunities.length > 1 && (
             <select
               value={communityId ?? ''}
               onChange={(e) =>

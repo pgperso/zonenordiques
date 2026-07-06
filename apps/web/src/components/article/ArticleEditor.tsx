@@ -50,6 +50,7 @@ interface ExistingArticle {
   cover_position_y?: number | null;
   is_published: boolean;
   author_name_override?: string | null;
+  section?: 'nordiques' | 'lnh' | 'taverne' | null;
 }
 
 interface ArticleEditorProps {
@@ -77,6 +78,7 @@ export function ArticleEditor({
   const [selectedCommunitySlug, setSelectedCommunitySlug] = useState(communitySlug);
   const [communities, setCommunities] = useState<{ id: number; name: string; slug: string }[]>([]);
   const [excerpt, setExcerpt] = useState(existingArticle?.excerpt ?? '');
+  const [section, setSection] = useState<'nordiques' | 'lnh' | 'taverne'>(existingArticle?.section ?? 'nordiques');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authorNameOverride, setAuthorNameOverride] = useState(existingArticle?.author_name_override ?? '');
@@ -426,6 +428,7 @@ export function ArticleEditor({
         isPublished: publish,
         authorNameOverride: authorNameOverride.trim() || null,
         isAiGenerated: false,
+        section,
       });
 
       if (updateError) {
@@ -446,6 +449,7 @@ export function ArticleEditor({
         isPublished: publish,
         authorNameOverride: authorNameOverride.trim() || null,
         isAiGenerated: false,
+        section,
       });
 
       if (insertError) {
@@ -506,6 +510,20 @@ export function ArticleEditor({
           {error}
         </div>
       )}
+
+      {/* Article theme (Zone Nordiques taxonomy) */}
+      <div className="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e1e1e] px-3 py-3">
+        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Thème :</p>
+        <select
+          value={section}
+          onChange={(e) => setSection(e.target.value as 'nordiques' | 'lnh' | 'taverne')}
+          className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e1e] px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
+        >
+          <option value="nordiques">Nordiques de Québec</option>
+          <option value="lnh">LNH (général)</option>
+          <option value="taverne">La Taverne</option>
+        </select>
+      </div>
 
       {/* Step 1: Tribune selector */}
       {!isEditMode && communities.length > 1 && (

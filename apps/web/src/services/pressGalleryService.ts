@@ -65,6 +65,11 @@ interface FetchOptions {
   // Viewer locale — selects the translated title/excerpt when the piece
   // was written in another language.
   locale: string;
+  // Article theme. When set, only articles of that section are returned
+  // (podcasts are skipped — they carry no section). When omitted, the
+  // main feed shows every section EXCEPT 'taverne', which has its own
+  // dedicated block in the gallery.
+  section?: 'nordiques' | 'lnh' | 'taverne';
 }
 
 export interface FetchResult {
@@ -149,7 +154,7 @@ export async function fetchPressGalleryItems(
   supabase: SupabaseClient<Database>,
   options: FetchOptions,
 ): Promise<FetchResult> {
-  const { filter, communityId, communityIds, excludeCommunityId, sort, limit, excludeArticleIds, locale } = options;
+  const { filter, communityId, communityIds, excludeCommunityId, sort, limit, excludeArticleIds, locale, section } = options;
   const offset = options.offset ?? 0;
 
   // We re-fetch the whole window from row 0 and slice — so pagination
@@ -159,13 +164,14 @@ export async function fetchPressGalleryItems(
   const need = offset + limit + 1;
   const poolSize = sort === 'trending' ? Math.max(need, TRENDING_POOL) : need;
 
-  const pool = { communityId, communityIds, excludeCommunityId, sort, poolSize, locale };
+  const pool = { communityId, communityIds, excludeCommunityId, sort, poolSize, locale, section };
 
   const [articles, podcasts] = await Promise.all([
     filter === 'podcasts'
       ? Promise.resolve([] as PressGalleryItem[])
       : fetchArticles(supabase, { ...pool, excludeArticleIds }),
-    filter === 'articles'
+    // Podcasts carry no section, so a section filter yields articles only.
+    filter === 'articles' || section
       ? Promise.resolve([] as PressGalleryItem[])
       : fetchPodcasts(supabase, pool),
   ]);
@@ -185,13 +191,14 @@ interface InternalFetchOptions {
   poolSize: number;
   excludeArticleIds?: number[];
   locale: string;
+  section?: 'nordiques' | 'lnh' | 'taverne';
 }
 
 async function fetchArticles(
   supabase: SupabaseClient<Database>,
   options: InternalFetchOptions,
 ): Promise<PressGalleryItem[]> {
-  const { communityId, communityIds, excludeCommunityId, sort, poolSize, excludeArticleIds, locale } = options;
+  const { communityId, communityIds, excludeCommunityId, sort, poolSize, excludeArticleIds, locale, section } = options;
 
   // Articles imported from the legacy Zone Nordiques archive (published
   // before ORIGINAL_CONTENT_CUTOFF) are noindex and excluded from every
@@ -209,6 +216,10 @@ async function fetchArticles(
   if (communityIds && communityIds.length > 0) q = q.in('community_id', communityIds);
   else if (communityId) q = q.eq('community_id', communityId);
   if (excludeCommunityId) q = q.neq('community_id', excludeCommunityId);
+  // Theme filter: a specific section, or (default) everything but 'taverne'
+  // which has its own dedicated gallery block.
+  if (section) q = q.eq('section', section);
+  else q = q.neq('section', 'taverne');
   if (excludeArticleIds && excludeArticleIds.length > 0) {
     q = q.not('id', 'in', `(${excludeArticleIds.join(',')})`);
   }

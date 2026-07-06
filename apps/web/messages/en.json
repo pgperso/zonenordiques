@@ -314,6 +314,9 @@
     "description": "All sports articles and podcasts from the community, in one place.",
     "taverne": "La Taverne",
     "taverneSubtitle": "Off-topic articles and discussions, just for fun.",
+    "sectionAll": "All themes",
+    "sectionNordiques": "Quebec Nordiques",
+    "sectionLNH": "NHL",
     "catSport": "Sports",
     "catTaverne": "News"
   },
