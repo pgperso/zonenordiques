@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { formatTime, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { translatedField } from '@/lib/contentTranslation';
 import { cleanArticleTitle } from '@/lib/articleText';
+import { ArticleCoverPlaceholder } from '@/components/press/ArticleCoverPlaceholder';
 
 interface RelatedArticlesProps {
   // The article we're currently viewing — exclude it from the list.
@@ -139,7 +140,9 @@ export async function RelatedArticles({
                     />
                   </div>
                 ) : (
-                  <div className="h-20 w-28 shrink-0 rounded-md bg-gray-200 dark:bg-gray-700" />
+                  <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-md">
+                    <ArticleCoverPlaceholder title={title} seed={a.id} />
+                  </div>
                 )}
                 <div className="min-w-0 flex-1">
                   {isOtherTribune && (

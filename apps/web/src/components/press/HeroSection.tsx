@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { formatTime, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { ShareButton } from '@/components/ui/ShareButton';
+import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
 function itemHref(item: PressGalleryItem): string {
@@ -106,7 +107,7 @@ function SingleHero({ item }: { item: PressGalleryItem }) {
             priority
           />
         ) : (
-          <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+          <ArticleCoverPlaceholder title={item.title} seed={item.id} />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
         <HeroOverlay item={item} titleClass="text-2xl md:text-4xl" communityName={localizedCommunityName(item, locale)} />
@@ -140,7 +141,7 @@ function DuoHero({ items }: { items: PressGalleryItem[] }) {
                 priority
               />
             ) : (
-              <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+              <ArticleCoverPlaceholder title={item.title} seed={item.id} />
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
             <HeroOverlay item={item} titleClass="text-xl md:text-2xl" communityName={localizedCommunityName(item, locale)} />
@@ -173,7 +174,7 @@ function TrioHero({ hero, secondary }: { hero: PressGalleryItem; secondary: Pres
               priority
             />
           ) : (
-            <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+            <ArticleCoverPlaceholder title={hero.title} seed={hero.id} />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/15" />
           <HeroOverlay item={hero} titleClass="text-2xl md:text-3xl" showExcerpt communityName={localizedCommunityName(hero, locale)} />
@@ -202,7 +203,7 @@ function TrioHero({ hero, secondary }: { hero: PressGalleryItem; secondary: Pres
                 sizes="(max-width: 1024px) 100vw, 22vw"
               />
             ) : (
-              <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+              <ArticleCoverPlaceholder title={item.title} seed={item.id} />
             )}
           </div>
           <div className="flex flex-1 flex-col justify-center p-3">
@@ -268,7 +269,7 @@ function CompactStrip({ items, label }: { items: PressGalleryItem[]; label: stri
                   sizes="64px"
                 />
               ) : (
-                <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+                <ArticleCoverPlaceholder title={item.title} seed={item.id} />
               )}
             </div>
             <div className="flex-1 min-w-0">

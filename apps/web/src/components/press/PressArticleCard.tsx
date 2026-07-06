@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { formatTime, displayCommunityName } from '@arena/shared';
+import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
 interface PressArticleCardProps {
@@ -35,7 +36,7 @@ export function PressArticleCard({ item }: PressArticleCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+          <ArticleCoverPlaceholder title={item.title} seed={item.id} showWordmark />
         )}
       </div>
 

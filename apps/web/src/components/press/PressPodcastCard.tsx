@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useLocale } from 'next-intl';
 import { formatTime, displayCommunityName } from '@arena/shared';
+import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
 interface PressPodcastCardProps {
@@ -41,7 +42,7 @@ export function PressPodcastCard({ item }: PressPodcastCardProps) {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+          <ArticleCoverPlaceholder title={item.title} seed={item.id} showWordmark />
         )}
 
         {/* Play icon overlay */}

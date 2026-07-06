@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import { formatTime, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { ShareButton } from '@/components/ui/ShareButton';
+import { ArticleCoverPlaceholder } from './ArticleCoverPlaceholder';
 import type { PressGalleryItem } from '@/services/pressGalleryService';
 
 interface PressContentCardProps {
@@ -60,7 +61,7 @@ export function PressContentCard({ item, variant = 'standard' }: PressContentCar
               : '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'}
           />
         ) : (
-          <div className="h-full w-full bg-gray-200 dark:bg-gray-700" />
+          <ArticleCoverPlaceholder title={item.title} seed={item.id} showWordmark />
         )}
 
         {/* Fresh-article badge — only for articles published within 24h,
