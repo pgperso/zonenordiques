@@ -1,11 +1,11 @@
 {
-  "name": "La tribune des fans - Communautés sportives",
-  "short_name": "La tribune des fans",
-  "description": "Chat en direct, articles et podcasts avec votre communauté sportive",
+  "name": "Zone Nordiques - Communauté des fans",
+  "short_name": "Zone Nordiques",
+  "description": "Chat en direct, articles et commentaires de la communauté Zone Nordiques",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F9FAFB",
-  "theme_color": "#0B4870",
+  "background_color": "#F7FAFC",
+  "theme_color": "#003E7E",
   "orientation": "portrait-primary",
   "categories": ["sports", "social"],
   "icons": [
@@ -15,13 +15,13 @@
       "type": "image/png"
     },
     {
-      "src": "/images/fanstribune.webp",
+      "src": "/images/zonenordiques.webp",
       "sizes": "192x192",
       "type": "image/webp",
       "purpose": "any"
     },
     {
-      "src": "/images/fanstribune.png",
+      "src": "/images/zonenordiques.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

@@ -37,13 +37,17 @@ export const FEED_AD_INTERVAL = 25;
 export const ARTICLE_AD_WORD_THRESHOLD = 300;
 export const ADSENSE_CLIENT_ID = 'ca-pub-6197042745925907';
 
-// Articles published before this date were imported from the legacy
-// Zone Nordiques archive. The same content is already indexed at
-// zonenordiques.com, so on fanstribune.com these articles are marked
-// noindex and excluded from the sitemap to avoid being flagged as a
-// duplicate scraper by Google (which causes "low value content"
-// AdSense rejections).
-export const ORIGINAL_CONTENT_CUTOFF = '2026-01-01T00:00:00Z';
+// Content-age gate for the press gallery, RSS, sitemap and related-article
+// surfaces. On Fan Tribune this date excluded the legacy Zone Nordiques
+// archive (already canonical at zonenordiques.com) to avoid duplicate-scraper
+// "low value content" AdSense flags.
+//
+// On zonenordiques.com itself that archive IS the site's canonical content,
+// so the date gate is effectively disabled (epoch): every published article
+// flows through the gallery/feed/sitemap. Indexing quality is still governed
+// by MIN_QUALITY_WORD_COUNT below (short articles stay noindex), which keeps
+// the AdSense quality ratio healthy without hiding the archive from readers.
+export const ORIGINAL_CONTENT_CUTOFF = '1970-01-01T00:00:00Z';
 
 // Minimum word count for an article to be considered high-quality enough
 // for indexing. Below this threshold Google tends to file articles under

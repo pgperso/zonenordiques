@@ -18,41 +18,41 @@
  */
 export const BRAND = {
   // Stable identifier — handy once more than one brand exists.
-  id: 'fanstribune',
+  id: 'zonenordiques',
 
   // Primary (French) brand name.
-  name: 'La tribune des fans',
+  name: 'Zone Nordiques',
   // Alternate / English brand name (OpenGraph alternateName, EN copy).
-  nameEn: 'Fans Tribune',
+  nameEn: 'Zone Nordiques',
   // Single-glyph short name for the generated favicon/app icon.
-  shortName: 'LT',
+  shortName: 'ZN',
   // Tagline rendered on the generated OG / Twitter images.
-  tagline: 'Vos tribunes, votre opinion',
+  tagline: "Sports, actualités et plein d'autres patentes",
 
   // Bare host and full origin.
-  domain: 'fanstribune.com',
-  url: 'https://fanstribune.com',
+  domain: 'zonenordiques.com',
+  url: 'https://zonenordiques.com',
 
   // Logo — site-relative path, absolute URL, and intrinsic size.
-  logo: '/images/fanstribune.webp',
-  logoUrl: 'https://fanstribune.com/images/fanstribune.webp',
+  logo: '/images/zonenordiques.webp',
+  logoUrl: 'https://zonenordiques.com/images/zonenordiques.webp',
   logoWidth: 512,
   logoHeight: 512,
 
   // Contact — the single public address (also the Resend sender).
-  email: 'info@fanstribune.com',
+  email: 'info@zonenordiques.com',
 
   // Social.
-  twitterHandle: '@fanstribune',
-  twitterUrl: 'https://x.com/fanstribune',
+  twitterHandle: '@zonenordiques',
+  twitterUrl: 'https://x.com/zonenordiques',
 
   colors: {
-    blue: '#0B4870',
-    blueDark: '#083A5A',
-    blueLight: '#1969B4',
-    orange: '#E67E22',
-    orangeLight: '#F39C12',
+    blue: '#003E7E',
+    blueDark: '#002B57',
+    blueLight: '#6CACE4',
+    orange: '#E4002B',
+    orangeLight: '#F04A5F',
     white: '#FFFFFF',
-    background: '#F9FAFB',
+    background: '#F7FAFC',
   },
 } as const;

@@ -229,7 +229,7 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
               overflow: 'visible',
             }}
           >
-            <polygon points="0,4 0,20 100,12" fill={`color-mix(in srgb, #000000 ${100 - current.average}%, #0B4870 ${current.average}%)`} />
+            <polygon points="0,4 0,20 100,12" fill={`color-mix(in srgb, #000000 ${100 - current.average}%, #003E7E ${current.average}%)`} />
           </svg>
 
           <div
@@ -238,7 +238,7 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
               left: `${CONFIG.pivotX}%`, top: `${CONFIG.pivotY}%`,
               width: '3%', height: '3%',
               transform: 'translate(-50%, -50%)', borderRadius: '50%',
-              background: `color-mix(in srgb, #000000 ${100 - current.average}%, #0B4870 ${current.average}%)`,
+              background: `color-mix(in srgb, #000000 ${100 - current.average}%, #003E7E ${current.average}%)`,
               border: '2px solid rgba(255,255,255,0.8)',
               boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
             }}

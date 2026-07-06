@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "Fans Tribune",
+    "name": "Zone Nordiques",
     "tagline": "Sports, news and all kinds of stuff"
   },
   "a11y": {
@@ -107,7 +107,7 @@
     "startDictation": "Dictate with microphone",
     "stopDictation": "Stop dictation",
     "dictationError": "Voice dictation couldn't start. Check microphone access.",
-    "dictationDenied": "Microphone access denied. Check in order: 1) lock icon left of the address bar → \"Microphone\" → Allow, then reload the page; 2) chrome://settings/content/microphone → remove fanstribune.com from the Blocked list if present, then reload; 3) Windows: Settings → Privacy → Microphone → enable \"Let desktop apps access your microphone\". If none of this helps, open the console (F12) and send me the [voice-dictation] line.",
+    "dictationDenied": "Microphone access denied. Check in order: 1) lock icon left of the address bar → \"Microphone\" → Allow, then reload the page; 2) chrome://settings/content/microphone → remove zonenordiques.com from the Blocked list if present, then reload; 3) Windows: Settings → Privacy → Microphone → enable \"Let desktop apps access your microphone\". If none of this helps, open the console (F12) and send me the [voice-dictation] line.",
     "dictationNoDevice": "No microphone detected. Plug one in or check your system audio devices.",
     "dictationDeviceBusy": "Microphone is in use by another app. Close it (Zoom, Meet, OBS…) and try again.",
     "dictationInsecure": "Voice dictation requires a secure HTTPS connection.",

@@ -21,8 +21,8 @@ export async function generateMetadata({
   const isFr = locale === 'fr';
   const title = isFr ? `Pool LNH — classement en direct | ${BRAND.name}` : `NHL Pool — live standings | ${BRAND.nameEn}`;
   const description = isFr
-    ? "Le pool de hockey de La tribune des fans. Compose ton alignement à plafond salarial et grimpe au classement."
-    : 'The hockey pool from Fans Tribune. Build a salary-cap roster and climb the standings.';
+    ? "Le pool de hockey de Zone Nordiques. Compose ton alignement à plafond salarial et grimpe au classement."
+    : 'The hockey pool from Zone Nordiques. Build a salary-cap roster and climb the standings.';
   return {
     title,
     description,

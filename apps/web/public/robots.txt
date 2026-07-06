@@ -11,7 +11,7 @@ Disallow: /register
 Disallow: /reset-password
 Disallow: /update-password
 
-Sitemap: https://fanstribune.com/sitemap.xml
+Sitemap: https://zonenordiques.com/sitemap.xml
 
 # AI retrieval bots (allowed — needed for AI search citations)
 User-agent: ChatGPT-User

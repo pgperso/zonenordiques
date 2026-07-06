@@ -36,7 +36,7 @@ const WORD_COUNT_TONE_CLASSES: Record<'danger' | 'warn' | 'ok' | 'good' | 'great
 };
 
 const AUTHOR_OPTIONS = [
-  { name: 'Mon profil', initials: '✓', color: '#0B4870', style: '' },
+  { name: 'Mon profil', initials: '✓', color: '#003E7E', style: '' },
   ...AUTHORS,
 ];
 

@@ -1,12 +1,12 @@
 @theme inline {
-  /* Brand */
-  --color-brand-blue: #0B4870;
-  --color-brand-blue-dark: #083A5A;
-  --color-brand-blue-light: #1969B4;
-  --color-brand-red: #dc272d;
-  --color-brand-red-dark: #b82025;
-  --color-brand-orange: #E67E22;
-  --color-brand-orange-light: #F39C12;
+  /* Brand — Zone Nordiques (bleu Nordiques classique) */
+  --color-brand-blue: #003E7E;
+  --color-brand-blue-dark: #002B57;
+  --color-brand-blue-light: #6CACE4;
+  --color-brand-red: #E4002B;
+  --color-brand-red-dark: #B8001F;
+  --color-brand-orange: #E4002B;
+  --color-brand-orange-light: #F04A5F;
 
   /* Gray scale */
   --color-gray-50: #F9FAFB;

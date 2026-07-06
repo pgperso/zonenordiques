@@ -84,8 +84,8 @@ export default async function MentionsLegalesPage({
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  Le site <strong>fanstribune.com</strong> (également désigné sous la marque
-                  « La tribune des fans » et « Fans Tribune ») est édité par&nbsp;:
+                  Le site <strong>zonenordiques.com</strong> (également désigné sous la marque
+                  « Zone Nordiques ») est édité par&nbsp;:
                 </p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>
@@ -100,8 +100,8 @@ export default async function MentionsLegalesPage({
                   </li>
                   <li>
                     <strong>Courriel de contact&nbsp;:</strong>{' '}
-                    <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                      info@fanstribune.com
+                    <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                      info@zonenordiques.com
                     </a>
                   </li>
                 </ul>
@@ -109,8 +109,8 @@ export default async function MentionsLegalesPage({
             ) : (
               <div className="space-y-3">
                 <p>
-                  The website <strong>fanstribune.com</strong> (also operating under the brands
-                  &quot;La tribune des fans&quot; and &quot;Fans Tribune&quot;) is published by:
+                  The website <strong>zonenordiques.com</strong> (also operating under the brands
+                  &quot;Zone Nordiques&quot;) is published by:
                 </p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>
@@ -125,8 +125,8 @@ export default async function MentionsLegalesPage({
                   </li>
                   <li>
                     <strong>Contact email:</strong>{' '}
-                    <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                      info@fanstribune.com
+                    <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                      info@zonenordiques.com
                     </a>
                   </li>
                 </ul>
@@ -198,7 +198,7 @@ export default async function MentionsLegalesPage({
             </h2>
             {isFr ? (
               <div className="space-y-3">
-                <p>Le site fanstribune.com est hébergé par&nbsp;:</p>
+                <p>Le site zonenordiques.com est hébergé par&nbsp;:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
                     <strong>Hébergement web et CDN&nbsp;:</strong> Vercel Inc., 440 N Barranca Avenue #4133,
@@ -244,7 +244,7 @@ export default async function MentionsLegalesPage({
               </div>
             ) : (
               <div className="space-y-3">
-                <p>The fanstribune.com website is hosted by:</p>
+                <p>The zonenordiques.com website is hosted by:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
                     <strong>Web hosting and CDN:</strong> Vercel Inc., 440 N Barranca Avenue #4133,
@@ -297,14 +297,13 @@ export default async function MentionsLegalesPage({
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  L&apos;ensemble du site fanstribune.com — y compris sa structure, son design, son code
+                  L&apos;ensemble du site zonenordiques.com — y compris sa structure, son design, son code
                   source, ses logos, son identité visuelle, ses textes originaux et ses illustrations —
                   est protégé par les lois canadiennes et internationales sur le droit d&apos;auteur et la
                   propriété intellectuelle.
                 </p>
                 <p>
-                  Les marques <strong>« La tribune des fans »</strong>, <strong>« Fans Tribune »</strong>,{' '}
-                  <strong>« Nordiquomètre »</strong>, <strong>« Exposmètre »</strong> et <strong>« La Taverne »</strong>{' '}
+                  Les marques <strong>« Zone Nordiques »</strong> et <strong>« Nordiquomètre »</strong>{' '}
                   sont la propriété de l&apos;éditeur du site. Toute reproduction, représentation,
                   modification, publication, adaptation de tout ou partie des éléments du site, quel que
                   soit le moyen ou le procédé utilisé, est interdite, sauf autorisation écrite préalable.
@@ -312,7 +311,7 @@ export default async function MentionsLegalesPage({
                 <p>
                   Les contenus publiés par les utilisateurs (articles, podcasts, messages) restent la
                   propriété de leurs auteurs. En les publiant sur la plateforme, les utilisateurs
-                  accordent à La tribune des fans une licence non exclusive, mondiale et libre de
+                  accordent à Zone Nordiques une licence non exclusive, mondiale et libre de
                   redevances pour les afficher, reproduire et distribuer dans le cadre du fonctionnement
                   de la plateforme, comme détaillé dans les Conditions d&apos;utilisation.
                 </p>
@@ -326,21 +325,20 @@ export default async function MentionsLegalesPage({
             ) : (
               <div className="space-y-3">
                 <p>
-                  The entirety of the fanstribune.com website — including its structure, design, source
+                  The entirety of the zonenordiques.com website — including its structure, design, source
                   code, logos, visual identity, original texts, and illustrations — is protected by
                   Canadian and international copyright and intellectual property laws.
                 </p>
                 <p>
-                  The trademarks <strong>&quot;La tribune des fans&quot;</strong>, <strong>&quot;Fans Tribune&quot;</strong>,{' '}
-                  <strong>&quot;Nordiquomètre&quot;</strong>, <strong>&quot;Exposmètre&quot;</strong>, and{' '}
-                  <strong>&quot;La Taverne&quot;</strong> are the property of the site publisher. Any
+                  The trademarks <strong>&quot;Zone Nordiques&quot;</strong> and{' '}
+                  <strong>&quot;Nordiquomètre&quot;</strong> are the property of the site publisher. Any
                   reproduction, representation, modification, publication, or adaptation of all or part
                   of the site&apos;s elements, by any means or process, is prohibited without prior
                   written authorization.
                 </p>
                 <p>
                   Content published by users (articles, podcasts, messages) remains the property of
-                  their authors. By publishing on the platform, users grant Fans Tribune a
+                  their authors. By publishing on the platform, users grant Zone Nordiques a
                   non-exclusive, worldwide, royalty-free license to display, reproduce, and distribute
                   it in connection with the platform&apos;s operation, as detailed in the Terms of Use.
                 </p>
@@ -362,7 +360,7 @@ export default async function MentionsLegalesPage({
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  La tribune des fans héberge du contenu généré par les utilisateurs (UGC)&nbsp;: messages
+                  Zone Nordiques héberge du contenu généré par les utilisateurs (UGC)&nbsp;: messages
                   de chat, articles contributifs, podcasts, commentaires. L&apos;éditeur n&apos;exerce pas
                   de contrôle éditorial systématique <em>a priori</em> sur ces contenus, conformément
                   au régime de responsabilité applicable aux hébergeurs de contenus tiers.
@@ -371,8 +369,8 @@ export default async function MentionsLegalesPage({
                   L&apos;éditeur agit promptement pour retirer tout contenu manifestement illicite qui
                   lui serait signalé. Pour signaler un contenu abusif, diffamatoire, harcelant, portant
                   atteinte aux droits d&apos;auteur ou autrement illégal, écrivez à{' '}
-                  <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                    info@fanstribune.com
+                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                    info@zonenordiques.com
                   </a>{' '}
                   en précisant&nbsp;:
                 </p>
@@ -395,7 +393,7 @@ export default async function MentionsLegalesPage({
             ) : (
               <div className="space-y-3">
                 <p>
-                  Fans Tribune hosts user-generated content (UGC): chat messages, contributed articles,
+                  Zone Nordiques hosts user-generated content (UGC): chat messages, contributed articles,
                   podcasts, comments. The publisher does not exercise systematic <em>a priori</em>{' '}
                   editorial control over such content, in accordance with the liability regime
                   applicable to hosts of third-party content.
@@ -404,8 +402,8 @@ export default async function MentionsLegalesPage({
                   The publisher acts promptly to remove any manifestly illegal content reported to it.
                   To report abusive, defamatory, harassing, copyright-infringing, or otherwise illegal
                   content, email{' '}
-                  <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                    info@fanstribune.com
+                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                    info@zonenordiques.com
                   </a>{' '}
                   specifying:
                 </p>
@@ -459,7 +457,7 @@ export default async function MentionsLegalesPage({
             </h2>
             {isFr ? (
               <p>
-                Les présentes mentions légales, ainsi que l&apos;utilisation du site fanstribune.com,
+                Les présentes mentions légales, ainsi que l&apos;utilisation du site zonenordiques.com,
                 sont régies par le droit applicable dans la province de Québec (Canada). Tout litige
                 relatif à l&apos;interprétation ou l&apos;exécution des présentes relève de la compétence
                 exclusive des tribunaux du district judiciaire du domicile de l&apos;éditeur, sauf
@@ -467,7 +465,7 @@ export default async function MentionsLegalesPage({
               </p>
             ) : (
               <p>
-                These legal notices, as well as use of the fanstribune.com website, are governed by the
+                These legal notices, as well as use of the zonenordiques.com website, are governed by the
                 law applicable in the Province of Quebec (Canada). Any dispute relating to the
                 interpretation or performance hereof falls within the exclusive jurisdiction of the
                 courts of the judicial district of the publisher&apos;s domicile, subject to overriding
@@ -484,8 +482,8 @@ export default async function MentionsLegalesPage({
             {isFr ? (
               <p>
                 Pour toute question relative à ces mentions légales, vous pouvez écrire à{' '}
-                <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                  info@fanstribune.com
+                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                  info@zonenordiques.com
                 </a>
                 . Pour les demandes relatives aux données personnelles (Loi 25 Québec / RGPD), consultez
                 également notre{' '}
@@ -500,8 +498,8 @@ export default async function MentionsLegalesPage({
             ) : (
               <p>
                 For any question about these legal notices, you can write to{' '}
-                <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                  info@fanstribune.com
+                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                  info@zonenordiques.com
                 </a>
                 . For personal data requests (Quebec Law 25 / GDPR), also see our{' '}
                 <a

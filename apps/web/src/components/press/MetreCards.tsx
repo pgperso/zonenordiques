@@ -62,7 +62,7 @@ export function MetreCards() {
       tagline: isFr
         ? 'L’indice de confiance du retour des Nordiques'
         : 'The confidence index for the Nordiques’ return',
-      accent: '#0B4870', // Nordiques blue
+      accent: '#003E7E', // Nordiques blue
     },
     {
       key: 'exposmetre' as MetreKey,

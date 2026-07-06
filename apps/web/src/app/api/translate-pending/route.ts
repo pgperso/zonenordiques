@@ -86,8 +86,9 @@ async function handle(request: Request) {
     let podcastsDone = 0;
 
     // ── Articles ──
-    // Only Fans Tribune's own content — legacy Zone Nordiques imports
-    // (published before the cutoff) are noindex and never translated.
+    // Gated by ORIGINAL_CONTENT_CUTOFF. On ZN the cutoff is epoch, so the
+    // whole published archive is eligible for translation (batch-limited
+    // below); watch translation cost when running this over the 631 imports.
     const { data: articles } = await admin
       .from('articles')
       .select('id, source_lang, title, excerpt, body')

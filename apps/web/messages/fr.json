@@ -1,6 +1,6 @@
 {
   "brand": {
-    "name": "La tribune des fans",
+    "name": "Zone Nordiques",
     "tagline": "Sports, actualités et plein d'autres patentes"
   },
   "a11y": {
@@ -107,7 +107,7 @@
     "startDictation": "Dicter au micro",
     "stopDictation": "Arrêter la dictée",
     "dictationError": "La dictée vocale n'a pas pu démarrer. Vérifie l'accès au micro.",
-    "dictationDenied": "Accès au micro refusé. Vérifie dans l'ordre : 1) icône cadenas à gauche de la barre d'adresse → « Micro » → Autoriser, puis recharge la page ; 2) chrome://settings/content/microphone → supprime fanstribune.com de la liste « Bloqué » s'il y est, puis recharge ; 3) Windows : Paramètres → Confidentialité → Microphone → active « Autoriser les applications de bureau à accéder au microphone ». Si rien ne fonctionne, ouvre la console (F12) et envoie-moi la ligne [voice-dictation].",
+    "dictationDenied": "Accès au micro refusé. Vérifie dans l'ordre : 1) icône cadenas à gauche de la barre d'adresse → « Micro » → Autoriser, puis recharge la page ; 2) chrome://settings/content/microphone → supprime zonenordiques.com de la liste « Bloqué » s'il y est, puis recharge ; 3) Windows : Paramètres → Confidentialité → Microphone → active « Autoriser les applications de bureau à accéder au microphone ». Si rien ne fonctionne, ouvre la console (F12) et envoie-moi la ligne [voice-dictation].",
     "dictationNoDevice": "Aucun micro détecté. Branche un micro ou vérifie les périphériques audio du système.",
     "dictationDeviceBusy": "Le micro est occupé par une autre application. Ferme-la (Zoom, Meet, OBS…) puis réessaie.",
     "dictationInsecure": "La dictée vocale exige une connexion HTTPS sécurisée.",

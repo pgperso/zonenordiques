@@ -50,7 +50,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  En accédant au site web <strong>fanstribune.com</strong> (« La tribune des fans » ou « Fans Tribune »),
+                  En accédant au site web <strong>zonenordiques.com</strong> (« Zone Nordiques »),
                   vous acceptez d&apos;être lié par les présentes conditions d&apos;utilisation, toutes les lois et
                   réglementations applicables, et vous acceptez que vous êtes responsable du respect de toutes
                   les lois locales applicables.
@@ -64,7 +64,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-3">
                 <p>
-                  By accessing the website <strong>fanstribune.com</strong> (&quot;La tribune des fans&quot; or &quot;Fans Tribune&quot;),
+                  By accessing the website <strong>zonenordiques.com</strong> (&quot;Zone Nordiques&quot;),
                   you agree to be bound by these terms of use, all applicable laws and regulations, and you
                   agree that you are responsible for compliance with any applicable local laws.
                 </p>
@@ -85,7 +85,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  Pour accéder à certaines fonctionnalités de La tribune des fans, vous devez créer un compte
+                  Pour accéder à certaines fonctionnalités de Zone Nordiques, vous devez créer un compte
                   utilisateur. Vous êtes responsable de maintenir la confidentialité de votre compte et de
                   votre mot de passe, et vous acceptez la responsabilité de toutes les activités effectuées
                   sous votre compte.
@@ -104,7 +104,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-3">
                 <p>
-                  To access certain features of Fans Tribune, you must create a user account. You are
+                  To access certain features of Zone Nordiques, you must create a user account. You are
                   responsible for maintaining the confidentiality of your account and password, and you
                   accept responsibility for all activities that occur under your account.
                 </p>
@@ -128,7 +128,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             </h2>
             {isFr ? (
               <div className="space-y-3">
-                <p>En utilisant La tribune des fans, vous vous engagez à respecter les règles suivantes\u00a0:</p>
+                <p>En utilisant Zone Nordiques, vous vous engagez à respecter les règles suivantes\u00a0:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
                     <strong>Respect mutuel\u00a0:</strong> Traitez les autres utilisateurs avec respect. Les débats
@@ -160,7 +160,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
               </div>
             ) : (
               <div className="space-y-3">
-                <p>By using Fans Tribune, you agree to abide by the following rules:</p>
+                <p>By using Zone Nordiques, you agree to abide by the following rules:</p>
                 <ul className="list-disc pl-6 space-y-2">
                   <li>
                     <strong>Mutual respect:</strong> Treat other users with respect. Passionate sports
@@ -200,12 +200,12 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  Le contenu original de La tribune des fans, y compris le design, les logos, le code source
-                  et les textes, est la propriété de La tribune des fans et est protégé par les lois sur le
+                  Le contenu original de Zone Nordiques, y compris le design, les logos, le code source
+                  et les textes, est la propriété de Zone Nordiques et est protégé par les lois sur le
                   droit d&apos;auteur et la propriété intellectuelle.
                 </p>
                 <p>
-                  En publiant du contenu sur la plateforme, vous accordez à La tribune des fans une licence
+                  En publiant du contenu sur la plateforme, vous accordez à Zone Nordiques une licence
                   non exclusive, mondiale, libre de redevances et transférable pour utiliser, afficher,
                   reproduire et distribuer votre contenu dans le cadre du fonctionnement de la plateforme.
                   Vous conservez tous les droits de propriété sur votre contenu original.
@@ -214,11 +214,11 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-3">
                 <p>
-                  The original content of Fans Tribune, including the design, logos, source code, and texts,
-                  is the property of Fans Tribune and is protected by copyright and intellectual property laws.
+                  The original content of Zone Nordiques, including the design, logos, source code, and texts,
+                  is the property of Zone Nordiques and is protected by copyright and intellectual property laws.
                 </p>
                 <p>
-                  By publishing content on the platform, you grant Fans Tribune a non-exclusive, worldwide,
+                  By publishing content on the platform, you grant Zone Nordiques a non-exclusive, worldwide,
                   royalty-free, and transferable license to use, display, reproduce, and distribute your
                   content in connection with the operation of the platform. You retain all ownership rights
                   to your original content.
@@ -235,34 +235,34 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  La tribune des fans est fournie « telle quelle » et « selon la disponibilité ». Nous ne
+                  Zone Nordiques est fournie « telle quelle » et « selon la disponibilité ». Nous ne
                   garantissons pas que le service sera ininterrompu, sécurisé ou exempt d&apos;erreurs.
                 </p>
                 <p>
-                  En aucun cas, La tribune des fans, ses dirigeants, administrateurs ou employés ne pourront
+                  En aucun cas, Zone Nordiques, ses dirigeants, administrateurs ou employés ne pourront
                   être tenus responsables de tout dommage direct, indirect, accessoire, spécial, consécutif
                   ou punitif résultant de votre utilisation de la plateforme ou de votre incapacité à
                   l&apos;utiliser.
                 </p>
                 <p>
                   Le contenu publié par les utilisateurs représente uniquement les opinions de leurs
-                  auteurs respectifs et ne reflète pas nécessairement les opinions de La tribune des fans.
+                  auteurs respectifs et ne reflète pas nécessairement les opinions de Zone Nordiques.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 <p>
-                  Fans Tribune is provided &quot;as is&quot; and &quot;as available.&quot; We do not guarantee that the service
+                  Zone Nordiques is provided &quot;as is&quot; and &quot;as available.&quot; We do not guarantee that the service
                   will be uninterrupted, secure, or error-free.
                 </p>
                 <p>
-                  In no event shall Fans Tribune, its officers, directors, or employees be liable for any
+                  In no event shall Zone Nordiques, its officers, directors, or employees be liable for any
                   direct, indirect, incidental, special, consequential, or punitive damages resulting from
                   your use of or inability to use the platform.
                 </p>
                 <p>
                   Content published by users represents only the opinions of their respective authors and
-                  does not necessarily reflect the opinions of Fans Tribune.
+                  does not necessarily reflect the opinions of Zone Nordiques.
                 </p>
               </div>
             )}
@@ -276,7 +276,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  La tribune des fans utilise Google AdSense et d&apos;autres services publicitaires pour
+                  Zone Nordiques utilise Google AdSense et d&apos;autres services publicitaires pour
                   afficher des annonces sur la plateforme. Ces annonces nous aident à financer le
                   développement et le maintien de la plateforme.
                 </p>
@@ -290,7 +290,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-3">
                 <p>
-                  Fans Tribune uses Google AdSense and other advertising services to display ads on the
+                  Zone Nordiques uses Google AdSense and other advertising services to display ads on the
                   platform. These ads help us fund the development and maintenance of the platform.
                 </p>
                 <p>
@@ -332,7 +332,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
             </h2>
             {isFr ? (
               <p>
-                La tribune des fans se réserve le droit de modifier ces conditions d&apos;utilisation à tout
+                Zone Nordiques se réserve le droit de modifier ces conditions d&apos;utilisation à tout
                 moment. Les modifications entreront en vigueur dès leur publication sur cette page.
                 Votre utilisation continue de la plateforme après la publication des modifications
                 constitue votre acceptation des nouvelles conditions. Nous vous encourageons à
@@ -341,7 +341,7 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
               </p>
             ) : (
               <p>
-                Fans Tribune reserves the right to modify these terms of use at any time. Changes will
+                Zone Nordiques reserves the right to modify these terms of use at any time. Changes will
                 take effect as soon as they are posted on this page. Your continued use of the platform
                 after the posting of changes constitutes your acceptance of the new terms. We encourage
                 you to review this page regularly for any changes.
@@ -358,15 +358,15 @@ export default async function TermsPage({ params }: { params: Promise<{ locale: 
               <p>
                 Si vous avez des questions concernant ces conditions d&apos;utilisation, vous pouvez nous
                 contacter à l&apos;adresse suivante\u00a0:{' '}
-                <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                  info@fanstribune.com
+                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                  info@zonenordiques.com
                 </a>
               </p>
             ) : (
               <p>
                 If you have any questions about these terms of use, you can contact us at:{' '}
-                <a href="mailto:info@fanstribune.com" className="text-red-600 hover:underline font-medium">
-                  info@fanstribune.com
+                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
+                  info@zonenordiques.com
                 </a>
               </p>
             )}

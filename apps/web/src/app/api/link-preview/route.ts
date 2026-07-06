@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     const response = await fetch(url, {
       signal: controller.signal,
       headers: {
-        'User-Agent': `Mozilla/5.0 (compatible; FansTribuneBot/1.0; +${BRAND.url})`,
+        'User-Agent': `Mozilla/5.0 (compatible; ZoneNordiquesBot/1.0; +${BRAND.url})`,
         'Accept': 'text/html',
       },
       redirect: 'follow',
