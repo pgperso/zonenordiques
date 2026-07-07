@@ -99,6 +99,7 @@ export function ArticleView({ article, communitySlug, communityName, userId, can
           {(canModerate || (!!userId && userId === article.author.id)) && (
             <Link
               href={`/tribunes/${communitySlug}/articles/${article.slug}/modifier`}
+              replace
               className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-blue-dark"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">

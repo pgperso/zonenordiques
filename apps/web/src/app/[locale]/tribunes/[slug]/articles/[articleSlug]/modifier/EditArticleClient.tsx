@@ -35,11 +35,11 @@ export function EditArticleClient({ existingArticle, communityId, communitySlug,
         communitySlug={communitySlug}
         userId={userId}
         existingArticle={existingArticle}
-        // replace (not push) so the editor doesn't linger in history — the
-        // article's "Retour" then goes back to where the reader came from,
-        // not back into the editor.
+        // Always replace toward the article (never push/back), so the editor
+        // never stays in history — the article's "Retour" then goes to
+        // wherever the reader came from, never back into the editor.
         onPublished={(slug, cslug) => router.replace(`/tribunes/${cslug}/articles/${slug}`)}
-        onCancel={() => router.back()}
+        onCancel={() => router.replace(`/tribunes/${communitySlug}/articles/${existingArticle.slug}`)}
       />
     </div>
   );
