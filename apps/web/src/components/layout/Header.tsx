@@ -30,6 +30,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userTribunes, setUserTribunes] = useState<UserCommunitySummary[]>([]);
+  const [canCreate, setCanCreate] = useState(false);
 
   const otherLocale = locale === 'fr' ? 'en' : 'fr';
   const switchLocalePath = `/${otherLocale}${pathname}`;
@@ -58,10 +59,21 @@ export function Header() {
   useEffect(() => {
     if (!user) {
       setUserTribunes([]);
+      setCanCreate(false);
       return;
     }
     const supabase = createClient();
     fetchUserCommunities(supabase, user.id).then(setUserTribunes);
+    // Content-creation entry points (article/podcast) are shown only to staff
+    // (admin/moderator/owner) and creators (Journaliste).
+    void supabase
+      .from('community_member_roles')
+      .select('roles!inner(code)')
+      .eq('member_id', user.id)
+      .then(({ data }: { data: { roles: { code: string } | null }[] | null }) => {
+        const codes = ((data ?? []) as { roles: { code: string } | null }[]).map((r) => r.roles?.code);
+        setCanCreate(codes.some((c) => c === 'admin' || c === 'moderator' || c === 'owner' || c === 'creator'));
+      });
   }, [user]);
 
   return (
@@ -190,6 +202,31 @@ export function Header() {
                     </svg>
                     {t('vestiaire.title')}
                   </Link>
+                  {canCreate && (
+                    <>
+                      <Link
+                        href="/tribunes/zone-nordiques/creer-article"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" aria-hidden="true">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                        </svg>
+                        {locale === 'fr' ? 'Créer un article' : 'New article'}
+                      </Link>
+                      <Link
+                        href="/tribunes/zone-nordiques/creer-podcast"
+                        onClick={() => setDropdownOpen(false)}
+                        className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+                      >
+                        <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+                          <path d="M6 10.5a.75.75 0 01.75.75v.75a5.25 5.25 0 1010.5 0v-.75a.75.75 0 011.5 0v.75a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-.75A.75.75 0 016 10.5z" />
+                        </svg>
+                        {locale === 'fr' ? 'Créer un podcast' : 'New podcast'}
+                      </Link>
+                    </>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950"
