@@ -11,13 +11,17 @@ interface Props {
 
 export function NewPodcastClient({ communityId, communitySlug, userId }: Props) {
   const router = useRouter();
-  const back = () => router.push(`/tribunes/${communitySlug}`);
   return (
     <div
       className="mx-auto w-full max-w-4xl overflow-y-auto px-4 py-6"
       style={{ height: 'calc(100dvh - 4rem)' }}
     >
-      <PodcastEditor communityId={communityId} userId={userId} onSaved={back} onCancel={back} />
+      <PodcastEditor
+        communityId={communityId}
+        userId={userId}
+        onSaved={() => router.replace(`/tribunes/${communitySlug}`)}
+        onCancel={() => router.back()}
+      />
     </div>
   );
 }

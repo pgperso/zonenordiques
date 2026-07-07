@@ -25,9 +25,6 @@ interface Props {
 
 export function EditArticleClient({ existingArticle, communityId, communitySlug, userId }: Props) {
   const router = useRouter();
-  const backToArticle = () =>
-    router.push(`/tribunes/${communitySlug}/articles/${existingArticle.slug}`);
-
   return (
     <div
       className="mx-auto w-full max-w-4xl overflow-y-auto px-4 py-6"
@@ -38,8 +35,11 @@ export function EditArticleClient({ existingArticle, communityId, communitySlug,
         communitySlug={communitySlug}
         userId={userId}
         existingArticle={existingArticle}
-        onPublished={(slug, cslug) => router.push(`/tribunes/${cslug}/articles/${slug}`)}
-        onCancel={backToArticle}
+        // replace (not push) so the editor doesn't linger in history — the
+        // article's "Retour" then goes back to where the reader came from,
+        // not back into the editor.
+        onPublished={(slug, cslug) => router.replace(`/tribunes/${cslug}/articles/${slug}`)}
+        onCancel={() => router.back()}
       />
     </div>
   );

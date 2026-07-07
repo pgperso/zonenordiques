@@ -20,8 +20,8 @@ export function NewArticleClient({ communityId, communitySlug, userId }: Props) 
         communityId={communityId}
         communitySlug={communitySlug}
         userId={userId}
-        onPublished={(slug, cslug) => router.push(`/tribunes/${cslug}/articles/${slug}`)}
-        onCancel={() => router.push('/')}
+        onPublished={(slug, cslug) => router.replace(`/tribunes/${cslug}/articles/${slug}`)}
+        onCancel={() => router.back()}
       />
     </div>
   );
