@@ -8,7 +8,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import { Avatar } from '@/components/ui/Avatar';
 import type { UserCommunitySummary } from '@/services/communityService';
 import type { ThemePref } from '@/hooks/useDarkMode';
-import type { CategoryNavItem } from '@/components/press/CategoryNav';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -18,7 +17,6 @@ interface MobileNavProps {
   avatarUrl?: string | null;
   onLogout: () => void;
   userTribunes: UserCommunitySummary[];
-  categories: CategoryNavItem[];
   theme: ThemePref;
   onSetTheme: (t: ThemePref) => void;
   otherLocale: string;
@@ -37,7 +35,6 @@ export function MobileNav({
   avatarUrl,
   onLogout,
   userTribunes,
-  categories,
   theme,
   onSetTheme,
   otherLocale,
@@ -57,33 +54,6 @@ export function MobileNav({
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
-
-  // Sport-categories section — shared by both logged-in and logged-out
-  // variants. Renders nothing when the categories list is empty so we
-  // don't leave a section header dangling.
-  const sportsSection = categories.length > 0 && (
-    <>
-      <p className="mt-4 px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-        {ta('sportCategories')}
-      </p>
-      <ul>
-        {categories.map((c) => {
-          const label = locale === 'en' && c.name_en ? c.name_en : c.name;
-          return (
-            <li key={c.slug}>
-              <Link
-                href={`/sport/${c.slug}`}
-                onClick={onClose}
-                className="block rounded-lg px-3 py-2 text-sm text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-              >
-                {label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </>
-  );
 
   // Three-way appearance switcher — defined once, rendered in both the
   // logged-in and logged-out variants of the drawer.
@@ -183,8 +153,6 @@ export function MobileNav({
                 </Link>
               </div>
 
-              {sportsSection}
-
               {userTribunes.length > 0 && (
                 <>
                   <p className="mt-4 px-3 pb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
@@ -253,8 +221,6 @@ export function MobileNav({
               >
                 {t('auth.register')}
               </Link>
-
-              {sportsSection}
 
               <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
 

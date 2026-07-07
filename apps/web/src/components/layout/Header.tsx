@@ -14,16 +14,8 @@ import { NotificationBell } from './NotificationBell';
 import { fetchUserCommunities, type UserCommunitySummary } from '@/services/communityService';
 import { BRAND } from '@/lib/brand';
 import { Sun, Moon, Monitor } from 'lucide-react';
-import type { CategoryNavItem } from '@/components/press/CategoryNav';
 
-interface HeaderProps {
-  // Sport categories shown inside the navigation dropdown (desktop) and
-  // the mobile drawer. Sourced from the layout so the same list is
-  // available across every route without each page refetching.
-  categories: CategoryNavItem[];
-}
-
-export function Header({ categories }: HeaderProps) {
+export function Header() {
   const router = useRouter();
   const { user, username, avatarUrl, loading } = useAuth();
   const t = useTranslations();
@@ -288,7 +280,6 @@ export function Header({ categories }: HeaderProps) {
         avatarUrl={avatarUrl}
         onLogout={handleLogout}
         userTribunes={userTribunes}
-        categories={categories}
         theme={theme}
         onSetTheme={setTheme}
         otherLocale={otherLocale}

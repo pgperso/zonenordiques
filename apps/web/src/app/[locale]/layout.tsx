@@ -9,8 +9,6 @@ import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
 import { BRAND } from '@/lib/brand';
-import { createClient } from '@/lib/supabase/server';
-import type { CategoryNavItem } from '@/components/press/CategoryNav';
 
 const jsonLd = [
   {
@@ -86,17 +84,6 @@ export default async function LocaleLayout({
   const t = await getTranslations({ locale, namespace: 'a11y' });
   const nonce = (await headers()).get('x-nonce') ?? '';
 
-  // Sport categories are now part of the global header menu (The Athletic
-  // pattern — single bar, all navigation behind it). Fetched once per
-  // server render and passed down; the categories table is tiny and
-  // already covered by Supabase's HTTP caching.
-  const supabase = await createClient();
-  const { data: catRes } = await supabase
-    .from('categories')
-    .select('id, slug, name, name_en')
-    .order('sort_order');
-  const categories = (catRes ?? []) as unknown as CategoryNavItem[];
-
   return (
     // suppressHydrationWarning: the bootstrap script in <head> may set the
     // `dark` class on <html> before React hydrates, so React's diff of the
@@ -126,7 +113,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages}>
           <TribuneProvider>
             <div className="flex flex-1 min-h-dvh flex-col">
-              <Header categories={categories} />
+              <Header />
               <main id="main-content" className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
               <Footer />
               <CookieConsent />
