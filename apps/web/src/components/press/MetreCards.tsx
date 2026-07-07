@@ -17,7 +17,7 @@ export function MetreCards() {
   const cards = [
     {
       href: '/nordiquometre',
-      bg: '#003E7E',
+      bg: '#002B57',
       image: '/images/nordiquometre.png',
       title: isFr ? 'Nordiquomètre' : 'Nordiquometer',
       tagline: isFr
@@ -26,7 +26,7 @@ export function MetreCards() {
     },
     {
       href: '/tribunes/zone-nordiques',
-      bg: '#1969B4',
+      bg: '#0B4870',
       image: '/images/la-zone-podcast.webp',
       title: 'La Zone',
       tagline: isFr ? 'Rejoins la discussion en direct' : 'Join the live discussion',
@@ -39,7 +39,7 @@ export function MetreCards() {
         <Link
           key={c.href}
           href={c.href}
-          className="group relative flex items-center overflow-hidden rounded-xl px-4 py-4 text-white shadow-sm transition hover:shadow-md"
+          className="group relative flex items-center overflow-hidden rounded-xl px-4 py-4 text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
           style={{ backgroundColor: c.bg }}
         >
           {/* Faded background image */}
@@ -48,14 +48,14 @@ export function MetreCards() {
             src={c.image}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 transition-opacity duration-200 group-hover:opacity-30"
           />
           <span className="relative z-10 min-w-0">
             <span className="block text-base font-bold leading-tight drop-shadow">{c.title}</span>
             <span className="block text-xs text-white/80 drop-shadow">{c.tagline}</span>
           </span>
           <ChevronRight
-            className="relative z-10 ml-auto shrink-0 text-white/70 transition group-hover:text-white"
+            className="relative z-10 ml-auto shrink-0 text-white/70 transition group-hover:translate-x-0.5 group-hover:text-white"
             size={18}
             aria-hidden="true"
           />
