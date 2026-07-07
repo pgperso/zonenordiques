@@ -72,10 +72,6 @@ export function useVoiceDictation({ lang, onTranscript }: UseVoiceDictationOptio
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<VoiceDictationError | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
-  // Running concatenation of all finalized segments since the current
-  // start() call. Reset on every start() so a stopped-then-restarted
-  // dictation session doesn't carry text over from the previous one.
-  const sessionFinalRef = useRef('');
 
   // Keep the callback in a ref so the recognition instance — which is built
   // once per session — always invokes the latest closure instead of a stale one.
@@ -161,21 +157,20 @@ export function useVoiceDictation({ lang, onTranscript }: UseVoiceDictationOptio
     recognition.lang = lang;
     recognition.continuous = true;
     recognition.interimResults = true;
-    sessionFinalRef.current = '';
 
     recognition.onresult = (event) => {
-      // event.results is cumulative across the whole session. event.resultIndex
-      // tells us which index changed, so we only process new segments. New
-      // final segments get appended to sessionFinalRef; the interim portion
-      // is rebuilt fresh each event from the still-in-progress results.
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const result = event.results[i];
-        const transcript = result[0]?.transcript ?? '';
-        if (result.isFinal) sessionFinalRef.current += transcript;
-        else interim += transcript;
+      // event.results is the cumulative, stable result list for this session:
+      // finalized segments keep their index, the in-progress interim sits at
+      // the end. Rebuild the whole transcript from index 0 every event — this
+      // is idempotent, so a browser that re-fires an already-final result
+      // (common on mobile) can't append it twice. The previous approach kept a
+      // `+=` accumulator keyed on event.resultIndex, which double-counted those
+      // re-fired finals and made dictated phrases repeat.
+      let text = '';
+      for (let i = 0; i < event.results.length; i++) {
+        text += event.results[i][0]?.transcript ?? '';
       }
-      onTranscriptRef.current({ text: sessionFinalRef.current + interim });
+      onTranscriptRef.current({ text });
     };
 
     recognition.onerror = (event) => {
@@ -220,11 +215,9 @@ export function useVoiceDictation({ lang, onTranscript }: UseVoiceDictationOptio
     // Detach the result handler before issuing stop(): SpeechRecognition can
     // emit one more onresult between stop() and onend, and that trailing
     // event would otherwise reach the consumer after they had cleared the
-    // input on send — re-populating it with the just-sent message. Also
-    // wipe the session accumulator so a restarted session begins blank.
+    // input on send — re-populating it with the just-sent message.
     r.onresult = null;
     r.onerror = null;
-    sessionFinalRef.current = '';
     r.stop();
   }, []);
 

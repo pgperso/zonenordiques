@@ -101,7 +101,7 @@
   },
   "tribune": {
     "online": "{count} en ligne",
-    "writeMessage": "Écrire un message... (Enter pour envoyer)",
+    "writeMessage": "Écrire un message…",
     "replyTo": "Répondre à @{username}...",
     "uploadingImages": "Envoi des images...",
     "addImages": "Ajouter des images",
