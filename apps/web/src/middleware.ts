@@ -2,8 +2,40 @@ import { type NextRequest, NextResponse } from 'next/server';
 import createIntlMiddleware from 'next-intl/middleware';
 import { updateSession, type RouteKind } from '@/lib/supabase/middleware';
 import { routing } from '@/i18n/routing';
+import legacyRedirects from '@/lib/legacyRedirects.json';
 
 const intlMiddleware = createIntlMiddleware(routing);
+
+// Zone Nordiques is a single-community site; legacy PHP URLs all map to it.
+const ZN_LOCALE = 'fr';
+const ZN_TRIBUNE = 'zone-nordiques';
+
+// 301-redirect the old site's PHP URLs (still indexed by Google) to their
+// new pages, preserving SEO. Runs BEFORE next-intl so "/chroniques.php" isn't
+// first bounced to "/fr/chroniques.php" (a 307 we'd return early on). Unknown
+// or since-removed content lands softly on the gallery / tribune instead of 404.
+function legacyPhpRedirect(request: NextRequest): NextResponse | null {
+  const { pathname, searchParams } = request.nextUrl;
+  if (pathname !== '/chroniques.php' && pathname !== '/podcasts.php') return null;
+
+  const url = request.nextUrl.clone();
+  url.search = '';
+
+  if (pathname === '/chroniques.php') {
+    const no = searchParams.get('no_chronique');
+    const slug = no ? (legacyRedirects.articles as Record<string, string>)[no] : undefined;
+    url.pathname = slug
+      ? `/${ZN_LOCALE}/tribunes/${ZN_TRIBUNE}/articles/${slug}`
+      : `/${ZN_LOCALE}`;
+  } else {
+    const no = searchParams.get('no_podcast');
+    const pid = no ? (legacyRedirects.podcasts as Record<string, number>)[no] : undefined;
+    url.pathname = pid
+      ? `/${ZN_LOCALE}/tribunes/${ZN_TRIBUNE}/podcasts/${pid}`
+      : `/${ZN_LOCALE}/tribunes/${ZN_TRIBUNE}`;
+  }
+  return NextResponse.redirect(url, 301);
+}
 
 const SECURITY_HEADERS: Record<string, string> = {
   'X-Frame-Options': 'DENY',
@@ -78,6 +110,10 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // Legacy PHP URL redirects run first — they need no locale/auth handling.
+  const legacy = legacyPhpRedirect(request);
+  if (legacy) return legacy;
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
