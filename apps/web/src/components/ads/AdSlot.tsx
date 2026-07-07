@@ -143,12 +143,15 @@ function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }:
     ? { minHeight: '100px', width: '100%' }
     : { minHeight: size.height, maxWidth: '100%', width: '100%' };
 
-  // Ins style: fluid = block, display = block responsive (no fixed dimensions)
+  // Ins style: always give the <ins> an explicit width. As a flex child in a
+  // justify-center container, a bare display:block <ins> collapses to width 0,
+  // so adsbygoogle sees availableWidth=0 and never fills. width:100% makes the
+  // slot take the container's width so AdSense can measure and serve.
   const insStyle = isFluid
     ? isInArticle
-      ? { display: 'block', textAlign: 'center' as const }
-      : { display: 'block' }
-    : { display: 'block' };
+      ? { display: 'block', width: '100%', textAlign: 'center' as const }
+      : { display: 'block', width: '100%' }
+    : { display: 'block', width: '100%' };
 
   return (
     <div
