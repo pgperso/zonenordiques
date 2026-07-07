@@ -1,100 +1,66 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { ChevronRight, MessageCircle } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
-import { useSupabase } from '@/hooks/useSupabase';
 
 /**
- * Two stacked sidebar cards: the live Nordiquomètre confidence index (the
- * average of every vote, all horizons pooled) and a "La Zone" shortcut badge
- * straight into the Zone Nordiques chat. Rendered in the gallery sidebar
- * between the poll and "Top of the week".
+ * Two stacked sidebar cards — the Nordiquomètre voting page and a shortcut into
+ * the Zone Nordiques chat ("La Zone"). Each is a solid brand-blue tile with a
+ * faded background image (the meter's dial / the podcast cover). Rendered in
+ * the gallery sidebar between the poll and "Top of the week".
  */
 export function MetreCards() {
   const locale = useLocale();
-  const supabase = useSupabase();
   const isFr = locale === 'fr';
 
-  // Nordiquomètre confidence index — null when there are no votes yet.
-  const [nordAverage, setNordAverage] = useState<number | null>(null);
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const { data } = await supabase.from('nordiquometre_votes').select('vote');
-      if (cancelled) return;
-      const rows = data as { vote: number }[] | null;
-      setNordAverage(
-        rows && rows.length
-          ? Math.round(rows.reduce((sum, r) => sum + r.vote, 0) / rows.length)
-          : null,
-      );
-      setLoaded(true);
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, [supabase]);
+  const cards = [
+    {
+      href: '/nordiquometre',
+      bg: '#003E7E',
+      image: '/images/nordiquometre.png',
+      title: isFr ? 'Nordiquomètre' : 'Nordiquometer',
+      tagline: isFr
+        ? 'L’indice de confiance du retour des Nordiques'
+        : 'The confidence index for the Nordiques’ return',
+    },
+    {
+      href: '/tribunes/zone-nordiques',
+      bg: '#1969B4',
+      image: '/images/la-zone-podcast.webp',
+      title: 'La Zone',
+      tagline: isFr ? 'Rejoins la discussion en direct' : 'Join the live discussion',
+    },
+  ];
 
   return (
     <div className="space-y-3">
-      {/* Nordiquomètre — live confidence index */}
-      <Link
-        href="/nordiquometre"
-        className="group flex items-center gap-3 rounded-xl px-4 py-3 text-white shadow-sm transition hover:shadow-md"
-        style={{ backgroundColor: '#003E7E' }}
-      >
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15">
-          {loaded ? (
-            <span className="text-base font-extrabold leading-none tabular-nums">
-              {nordAverage === null ? '—' : `${nordAverage}%`}
-            </span>
-          ) : (
-            <span className="h-4 w-8 animate-pulse rounded bg-white/30" aria-hidden="true" />
-          )}
-        </span>
-        <span className="min-w-0">
-          <span className="block text-base font-bold leading-tight">
-            {isFr ? 'Nordiquomètre' : 'Nordiquometer'}
+      {cards.map((c) => (
+        <Link
+          key={c.href}
+          href={c.href}
+          className="group relative flex items-center overflow-hidden rounded-xl px-4 py-4 text-white shadow-sm transition hover:shadow-md"
+          style={{ backgroundColor: c.bg }}
+        >
+          {/* Faded background image */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={c.image}
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
+          />
+          <span className="relative z-10 min-w-0">
+            <span className="block text-base font-bold leading-tight drop-shadow">{c.title}</span>
+            <span className="block text-xs text-white/80 drop-shadow">{c.tagline}</span>
           </span>
-          <span className="block text-xs text-white/70">
-            {isFr
-              ? 'L’indice de confiance du retour des Nordiques'
-              : 'The confidence index for the Nordiques’ return'}
-          </span>
-        </span>
-        <ChevronRight
-          className="ml-auto shrink-0 text-white/50 transition group-hover:text-white"
-          size={18}
-          aria-hidden="true"
-        />
-      </Link>
-
-      {/* La Zone — shortcut into the live chat */}
-      <Link
-        href="/tribunes/zone-nordiques"
-        className="group flex items-center gap-3 rounded-xl px-4 py-3 text-white shadow-sm transition hover:shadow-md"
-        style={{ backgroundColor: '#1969B4' }}
-      >
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white/15">
-          <MessageCircle size={22} aria-hidden="true" />
-        </span>
-        <span className="min-w-0">
-          <span className="block text-base font-bold leading-tight">La Zone</span>
-          <span className="block text-xs text-white/70">
-            {isFr ? 'Rejoins la discussion en direct' : 'Join the live discussion'}
-          </span>
-        </span>
-        <ChevronRight
-          className="ml-auto shrink-0 text-white/50 transition group-hover:text-white"
-          size={18}
-          aria-hidden="true"
-        />
-      </Link>
+          <ChevronRight
+            className="relative z-10 ml-auto shrink-0 text-white/70 transition group-hover:text-white"
+            size={18}
+            aria-hidden="true"
+          />
+        </Link>
+      ))}
     </div>
   );
 }
