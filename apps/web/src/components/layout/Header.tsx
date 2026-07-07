@@ -106,13 +106,13 @@ export function Header() {
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
                 <div className="hidden md:block">
                   <span className="text-lg font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:text-xl">{t('brand.name')}</span>
-                  <p className="text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100">{t('brand.tagline')}</p>
+                  <p className="text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100"><span className="font-bold text-brand-red">{t('brand.taglineLead')}</span>{t('brand.taglineRest')}</p>
                 </div>
               </>
             ) : (
               <div>
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 sm:text-lg md:text-xl">{t('brand.name')}</span>
-                <p className="hidden text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block">{t('brand.tagline')}</p>
+                <p className="hidden text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block"><span className="font-bold text-brand-red">{t('brand.taglineLead')}</span>{t('brand.taglineRest')}</p>
               </div>
             )}
           </Link>

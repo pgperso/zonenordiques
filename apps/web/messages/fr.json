@@ -1,7 +1,9 @@
 {
   "brand": {
     "name": "Zone Nordiques",
-    "tagline": "L'antichambre du hockey"
+    "tagline": "L'antichambre du hockey",
+    "taglineLead": "L'antichambre",
+    "taglineRest": " du hockey"
   },
   "a11y": {
     "toggleDarkMode": "Basculer le mode sombre",
