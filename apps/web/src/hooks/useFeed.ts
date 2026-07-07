@@ -424,6 +424,7 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
           .eq('community_id', communityId)
           .eq('is_published', true)
           .or('is_removed.eq.false,is_removed.is.null')
+          .or('hidden_from_feed.eq.false,hidden_from_feed.is.null')
           .order('created_at', { ascending: false })
           .limit(FEED_INITIAL_LIMIT),
       ]);
