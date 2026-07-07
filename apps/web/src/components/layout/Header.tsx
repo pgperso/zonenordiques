@@ -279,7 +279,7 @@ export function Header() {
               href={tribune ? '/' : '/tribunes/zone-nordiques'}
               className="rounded-lg bg-brand-red px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-red-dark"
             >
-              {tribune ? t('pressGallery.title') : t('home.theZone')}
+              {tribune ? t('pressGallery.title') : t('home.theZoneShort')}
             </Link>
           )}
         <button
