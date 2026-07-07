@@ -23,7 +23,9 @@ export function FeedArticleCard({ article, communitySlug, userId, canModerate }:
   const [removed, setRemoved] = useState(false);
 
   const isOwn = !!(userId && article.author.id === userId);
-  const canRemove = isOwn || !!canModerate;
+  // Only staff (admin/moderator/owner) can pull an article promo from the chat.
+  // Members — including authors — always see the promos, to nudge them to read.
+  const canRemove = !!canModerate;
 
   // Hide the promo from the chat feed only — the article stays published in
   // the press gallery (gallery queries don't filter hidden_from_feed).
