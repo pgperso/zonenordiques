@@ -19,7 +19,7 @@ export function MetreCards() {
       href: '/nordiquometre',
       bg: '#002B57',
       image: '/images/nordiquometre.png',
-      title: isFr ? 'Nordiquomètre' : 'Nordiquometer',
+      title: isFr ? 'Le Nordiquomètre' : 'The Nordiquometer',
       tagline: isFr
         ? 'L’indice de confiance du retour des Nordiques'
         : 'The confidence index for the Nordiques’ return',
@@ -51,7 +51,7 @@ export function MetreCards() {
             className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15 transition-opacity duration-200 group-hover:opacity-30"
           />
           <span className="relative z-10 min-w-0">
-            <span className="block text-base font-bold leading-tight drop-shadow">{c.title}</span>
+            <span className="block text-base font-bold uppercase tracking-wide leading-tight drop-shadow">{c.title}</span>
             <span className="block text-xs text-white/80 drop-shadow">{c.tagline}</span>
           </span>
           <ChevronRight
