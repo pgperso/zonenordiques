@@ -116,7 +116,6 @@ export function Header({ categories }: HeaderProps) {
 
         {/* Language + Desktop auth */}
         <div className="hidden items-center gap-3 md:flex">
-          {!tribune && <SportsMenu categories={categories} />}
           {tribune ? (
             <Link
               href="/"
@@ -296,87 +295,5 @@ export function Header({ categories }: HeaderProps) {
         switchLocalePath={switchLocalePath}
       />
     </header>
-  );
-}
-
-interface SportsMenuProps {
-  categories: CategoryNavItem[];
-}
-
-/** Sport-categories dropdown, separate from the tribunes menu so each
- *  button has a single concern and neither drawer grows long. Visible
- *  on desktop only; mobile uses the burger drawer. */
-function SportsMenu({ categories }: SportsMenuProps) {
-  const ta = useTranslations('a11y');
-  const th = useTranslations('home');
-  const locale = useLocale();
-  const pathname = usePathname();
-  const isOnGallery = pathname === '/';
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [open]);
-
-  if (categories.length === 0) return null;
-
-  return (
-    <div ref={ref} className="relative">
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
-      >
-        {ta('sportCategories')}
-        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-        </svg>
-      </button>
-
-      {open && (
-        <div className="absolute left-0 top-full z-50 mt-1 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-[#1e1e1e]">
-          {/* Home shortcut at the top so readers browsing a sport hub
-              can return to the gallery without hunting for the logo.
-              Hidden when already on the gallery — same rule as the
-              Tribunes menu — so the menu never offers a self-link. */}
-          {!isOnGallery && (
-            <ul className="py-1">
-              <li>
-                <Link
-                  href="/"
-                  onClick={() => setOpen(false)}
-                  className="block border-b border-gray-100 px-4 py-2 text-sm font-semibold text-gray-900 transition hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-800"
-                >
-                  {th('home')}
-                </Link>
-              </li>
-            </ul>
-          )}
-          <ul className="max-h-72 overflow-y-auto py-1">
-            {categories.map((c) => {
-              const label = locale === 'en' && c.name_en ? c.name_en : c.name;
-              return (
-                <li key={c.slug}>
-                  <Link
-                    href={`/sport/${c.slug}`}
-                    onClick={() => setOpen(false)}
-                    className="block px-4 py-2 text-sm text-gray-700 transition hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                  >
-                    {label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </div>
   );
 }
