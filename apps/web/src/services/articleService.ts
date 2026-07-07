@@ -156,7 +156,17 @@ export async function updateArticle(
   if (data.isPublished !== undefined) {
     update.is_published = data.isPublished;
     if (data.isPublished) {
-      update.published_at = new Date().toISOString();
+      // Stamp published_at only on the FIRST publish. Editing an already-live
+      // article must not reset it to "now" — that bumped edited articles back
+      // to the top of the feed and into the hero ("la une").
+      const { data: cur } = await supabase
+        .from('articles')
+        .select('published_at')
+        .eq('id', articleId)
+        .single();
+      if (!(cur as { published_at: string | null } | null)?.published_at) {
+        update.published_at = new Date().toISOString();
+      }
     }
   }
 
