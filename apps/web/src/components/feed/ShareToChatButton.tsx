@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import type { LinkPreview } from '@arena/shared';
@@ -39,12 +39,17 @@ export function ShareToChatButton({
   const locale = useLocale();
   const fr = locale === 'fr';
   const [state, setState] = useState<ShareState>('idle');
+  const revertTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Clear the "done" auto-revert timer if the component unmounts mid-flight.
+  useEffect(() => () => clearTimeout(revertTimer.current), []);
 
   // Only logged-in members can share into the chat.
   if (!userId) return null;
 
   async function handleShare() {
-    if (state === 'sharing' || state === 'done') return;
+    // Allow repeat shares — only block while a share is in flight.
+    if (state === 'sharing') return;
     setState('sharing');
     const supabase = createClient();
 
@@ -82,7 +87,14 @@ export function ShareToChatButton({
       link_previews: [preview],
     } as never);
 
-    setState(error ? 'error' : 'done');
+    if (error) {
+      setState('error');
+      return;
+    }
+    // Flash the confirmation, then return to idle so it can be shared again.
+    setState('done');
+    clearTimeout(revertTimer.current);
+    revertTimer.current = setTimeout(() => setState('idle'), 2500);
   }
 
   const label =
@@ -98,7 +110,7 @@ export function ShareToChatButton({
     <button
       type="button"
       onClick={handleShare}
-      disabled={state === 'sharing' || state === 'done'}
+      disabled={state === 'sharing'}
       className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition disabled:cursor-default disabled:opacity-80 ${
         state === 'done'
           ? 'bg-green-600 text-white'
