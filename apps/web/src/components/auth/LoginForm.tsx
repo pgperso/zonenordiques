@@ -81,10 +81,6 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-lg border border-brand-blue/30 bg-brand-blue/5 px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-        {t('legacyImportNotice')}
-      </div>
-
       {error && (
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
