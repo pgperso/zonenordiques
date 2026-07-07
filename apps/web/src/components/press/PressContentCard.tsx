@@ -80,8 +80,9 @@ export function PressContentCard({ item, variant = 'standard' }: PressContentCar
             {/* Play icon */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm transition-transform group-hover:scale-110">
-                <svg className="ml-1 h-5 w-5 text-white" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
+                <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8.25 4.5a3.75 3.75 0 117.5 0v8.25a3.75 3.75 0 11-7.5 0V4.5z" />
+                  <path d="M6 10.5a.75.75 0 01.75.75v.75a5.25 5.25 0 1010.5 0v-.75a.75.75 0 011.5 0v.75a6.751 6.751 0 01-6 6.709v2.291h3a.75.75 0 010 1.5h-7.5a.75.75 0 010-1.5h3v-2.291a6.751 6.751 0 01-6-6.709v-.75A.75.75 0 016 10.5z" />
                 </svg>
               </div>
             </div>
