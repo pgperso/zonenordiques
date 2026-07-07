@@ -85,16 +85,29 @@ export function ArticleView({ article, communitySlug, communityName, userId, can
     <div className="flex justify-center gap-8 px-4 py-6">
       {/* Main article content */}
       <article className="w-full min-w-0 flex-1 overflow-hidden">
-        {/* Back button — returns to previous page (gallery or tribune) */}
-        <button
-          onClick={handleBack}
-          className="mb-4 inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-        >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
-          Retour
-        </button>
+        {/* Top actions: back (left) + edit for staff/author (right) */}
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+            Retour
+          </button>
+          {(canModerate || (!!userId && userId === article.author.id)) && (
+            <Link
+              href={`/tribunes/${communitySlug}/articles/${article.slug}/modifier`}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-blue px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-brand-blue-dark"
+            >
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+              </svg>
+              {locale === 'fr' ? 'Éditer' : 'Edit'}
+            </Link>
+          )}
+        </div>
 
         {/* Cover image */}
         {article.cover_image_url && (
