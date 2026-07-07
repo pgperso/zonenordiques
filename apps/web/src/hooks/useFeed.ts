@@ -761,9 +761,16 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
     async (messageId: number) => {
       if (!userId) return;
       dispatch({ type: 'REMOVE_MESSAGE', messageId });
+      // Soft-delete: chat_messages has no DELETE RLS policy (a hard delete was
+      // silently rejected, so messages came back on refresh). is_removed is
+      // filtered out of the feed on load and allowed by the UPDATE policy.
       await supabaseRef.current
         .from('chat_messages')
-        .delete()
+        .update({
+          is_removed: true,
+          removed_at: new Date().toISOString(),
+          removed_by: userId,
+        } as never)
         .eq('id', messageId);
     },
     [userId],
