@@ -1,4 +1,4 @@
-export { formatTime, formatDuration } from './date';
+export { formatTime, formatDate, formatDuration } from './date';
 export { slugify } from './text';
 export {
   displayCommunityName,
