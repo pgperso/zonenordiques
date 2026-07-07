@@ -78,7 +78,7 @@ export function ArticleEditor({
   const [selectedCommunitySlug, setSelectedCommunitySlug] = useState(communitySlug);
   const [communities, setCommunities] = useState<{ id: number; name: string; slug: string }[]>([]);
   const [excerpt, setExcerpt] = useState(existingArticle?.excerpt ?? '');
-  const [section, setSection] = useState<'nordiques' | 'lnh' | 'taverne'>(existingArticle?.section ?? 'nordiques');
+  const [section, setSection] = useState<'lnh' | 'taverne'>(existingArticle?.section === 'taverne' ? 'taverne' : 'lnh');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [authorNameOverride, setAuthorNameOverride] = useState(existingArticle?.author_name_override ?? '');
@@ -511,17 +511,16 @@ export function ArticleEditor({
         </div>
       )}
 
-      {/* Article theme (Zone Nordiques taxonomy) */}
+      {/* Article section: main LNH feed vs off-topic La Taverne */}
       <div className="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e1e1e] px-3 py-3">
-        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Thème :</p>
+        <p className="mb-2 text-xs font-medium text-gray-500 dark:text-gray-400">Section :</p>
         <select
           value={section}
-          onChange={(e) => setSection(e.target.value as 'nordiques' | 'lnh' | 'taverne')}
+          onChange={(e) => setSection(e.target.value as 'lnh' | 'taverne')}
           className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e1e] px-3 py-2 text-sm text-gray-900 dark:text-gray-100 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
         >
-          <option value="nordiques">Nordiques de Québec</option>
-          <option value="lnh">LNH (général)</option>
-          <option value="taverne">La Taverne</option>
+          <option value="lnh">LNH (fil principal)</option>
+          <option value="taverne">La Taverne (hors-sujet)</option>
         </select>
       </div>
 

@@ -19,7 +19,6 @@ import { Link } from '@/i18n/navigation';
 
 type FilterType = 'all' | 'articles' | 'podcasts';
 type SortType = 'latest' | 'trending';
-type SectionType = 'all' | 'nordiques' | 'lnh';
 
 interface Community {
   id: number;
@@ -78,7 +77,6 @@ export function PressGalleryClient({
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [filter, setFilter] = useState<FilterType>('all');
   const [sort, setSort] = useState<SortType>('latest');
-  const [section, setSection] = useState<SectionType>('all');
   const [communityId, setCommunityId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,16 +96,15 @@ export function PressGalleryClient({
   const heroMode = useMemo(() => {
     if (visibleFeatured.length === 0) return 'hidden' as const;
     // Full hero for the default view (no tribune filter, latest sort).
-    if (sort === 'latest' && communityId === undefined && filter === 'all' && section === 'all') return 'full' as const;
+    if (sort === 'latest' && communityId === undefined && filter === 'all') return 'full' as const;
     return 'compact' as const;
-  }, [visibleFeatured, sort, communityId, filter, section]);
+  }, [visibleFeatured, sort, communityId, filter]);
 
   const fetchItems = useCallback(
     async (
       f: FilterType,
       s: SortType,
       cId: number | undefined,
-      sec: SectionType,
       off: number,
       append: boolean,
     ) => {
@@ -123,7 +120,6 @@ export function PressGalleryClient({
           filter: f,
           sort: s,
           communityId: cId,
-          section: sec === 'all' ? undefined : sec,
           offset: off,
           limit: PAGE_SIZE,
           excludeArticleIds: heroArticleIds,
@@ -154,32 +150,25 @@ export function PressGalleryClient({
     setFilter(f);
     setItems([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchItems(f, sort, communityId, section, 0, false);
+    fetchItems(f, sort, communityId, 0, false);
   };
 
   const handleSortChange = (s: SortType) => {
     setSort(s);
     setItems([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchItems(filter, s, communityId, section, 0, false);
+    fetchItems(filter, s, communityId, 0, false);
   };
 
   const handleCommunityChange = (cId: number | undefined) => {
     setCommunityId(cId);
     setItems([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchItems(filter, sort, cId, section, 0, false);
-  };
-
-  const handleSectionChange = (sec: SectionType) => {
-    setSection(sec);
-    setItems([]);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchItems(filter, sort, communityId, sec, 0, false);
+    fetchItems(filter, sort, cId, 0, false);
   };
 
   const handleLoadMore = () => {
-    fetchItems(filter, sort, communityId, section, offset, true);
+    fetchItems(filter, sort, communityId, offset, true);
   };
 
   return (
@@ -254,12 +243,10 @@ export function PressGalleryClient({
                 <PressFilterBar
                   filter={filter}
                   sort={sort}
-                  section={section}
                   communityId={communityId}
                   communities={communities}
                   onFilterChange={handleFilterChange}
                   onSortChange={handleSortChange}
-                  onSectionChange={handleSectionChange}
                   onCommunityChange={handleCommunityChange}
                 />
               </div>
