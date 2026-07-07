@@ -13,6 +13,7 @@ import { Link, useRouter } from '@/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { BRAND } from '@/lib/brand';
 import { ShareButton } from '@/components/ui/ShareButton';
+import { ShareToChatButton } from '@/components/feed/ShareToChatButton';
 
 interface ArticleViewProps {
   article: {
@@ -211,11 +212,21 @@ export function ArticleView({ article, communitySlug, communityName, userId, can
             initialLikeCount={article.like_count}
             userId={userId}
           />
-          <ShareButton
-            url={`${BRAND.url}/${locale}/tribunes/${communitySlug}/articles/${article.slug}`}
-            title={article.title}
-            label
-          />
+          <div className="flex items-center gap-2">
+            <ShareToChatButton
+              url={`${BRAND.url}/${locale}/tribunes/${communitySlug}/articles/${article.slug}`}
+              title={article.title}
+              description={article.excerpt}
+              image={article.cover_image_url}
+              communitySlug={communitySlug}
+              userId={userId}
+            />
+            <ShareButton
+              url={`${BRAND.url}/${locale}/tribunes/${communitySlug}/articles/${article.slug}`}
+              title={article.title}
+              label
+            />
+          </div>
         </div>
 
         {/* Related articles — server-rendered exit ramp before comments */}

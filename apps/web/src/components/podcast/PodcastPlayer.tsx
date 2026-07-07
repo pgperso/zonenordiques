@@ -7,6 +7,7 @@ import { AdSlot } from '@/components/ads/AdSlot';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { BRAND } from '@/lib/brand';
+import { ShareToChatButton } from '@/components/feed/ShareToChatButton';
 
 interface PodcastPlayerProps {
   podcast: {
@@ -266,6 +267,18 @@ export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerP
             </svg>
           </a>
         </div>
+      </div>
+
+      {/* Share into the tribune chat (logged-in members) */}
+      <div className="mt-4 flex justify-center">
+        <ShareToChatButton
+          url={`${BRAND.url}/fr/tribunes/${communitySlug}/podcasts/${podcast.id}`}
+          title={podcast.title}
+          description={podcast.description}
+          image={podcast.cover_image_url}
+          communitySlug={communitySlug}
+          userId={userId}
+        />
       </div>
     </div>
   );
