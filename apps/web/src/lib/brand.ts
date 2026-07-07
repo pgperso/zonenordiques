@@ -27,7 +27,7 @@ export const BRAND = {
   // Single-glyph short name for the generated favicon/app icon.
   shortName: 'ZN',
   // Tagline rendered on the generated OG / Twitter images.
-  tagline: "Sports, actualités et plein d'autres patentes",
+  tagline: "L'antichambre du hockey",
 
   // Bare host and full origin.
   domain: 'zonenordiques.com',

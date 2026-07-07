@@ -1,7 +1,7 @@
 {
   "brand": {
     "name": "Zone Nordiques",
-    "tagline": "Sports, actualités et plein d'autres patentes"
+    "tagline": "L'antichambre du hockey"
   },
   "a11y": {
     "toggleDarkMode": "Basculer le mode sombre",
@@ -87,7 +87,7 @@
     "subtitle": "Du sport, ben du sport et plein d'autres affaires...",
     "accessTribunes": "Accéder à mes tribunes",
     "myTribunes": "Mes tribunes",
-    "theZone": "La zone",
+    "theZone": "Rejoindre La Zone",
     "allMyTribunes": "Toutes les tribunes",
     "noTribunes": "Aucune tribune disponible pour le moment.",
     "joinNewTribune": "Rejoindre une nouvelle tribune",
