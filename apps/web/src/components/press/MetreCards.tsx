@@ -48,7 +48,7 @@ export function MetreCards() {
             src={c.image}
             alt=""
             aria-hidden="true"
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-30"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-15"
           />
           <span className="relative z-10 min-w-0">
             <span className="block text-base font-bold leading-tight drop-shadow">{c.title}</span>
