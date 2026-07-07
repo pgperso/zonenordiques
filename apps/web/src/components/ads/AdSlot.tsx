@@ -80,8 +80,10 @@ export function AdSlot({ slotId, format = 'rectangle', className = '', layoutKey
 
 function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }: AdSlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const insRef = useRef<HTMLModElement>(null);
   const pushed = useRef(false);
   const [visible, setVisible] = useState(false);
+  const [status, setStatus] = useState<'pending' | 'filled' | 'unfilled'>('pending');
   const size = FORMAT_SIZES[format];
   const isFluid = format === 'in-feed' || format === 'in-article';
   const isInArticle = format === 'in-article';
@@ -114,6 +116,28 @@ function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }:
     }
   }, [visible]);
 
+  // Watch AdSense's fill result. When there is no ad to serve, AdSense sets
+  // data-ad-status="unfilled" on the <ins>; we then collapse the slot so it
+  // never leaves an empty framed box on the page (common on a fresh domain).
+  useEffect(() => {
+    if (!visible) return;
+    const ins = insRef.current;
+    if (!ins) return;
+
+    const read = () => {
+      const s = ins.getAttribute('data-ad-status');
+      if (s === 'filled') setStatus('filled');
+      else if (s === 'unfilled') setStatus('unfilled');
+    };
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(ins, { attributes: true, attributeFilter: ['data-ad-status'] });
+    return () => observer.disconnect();
+  }, [visible]);
+
+  // No ad served → render nothing (no empty placeholder box).
+  if (status === 'unfilled') return null;
+
   // Container: fluid ads need flexible height, display ads need min-height only
   const containerStyle = isFluid
     ? { minHeight: '100px', width: '100%' }
@@ -129,11 +153,12 @@ function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }:
   return (
     <div
       ref={containerRef}
-      className={`flex items-center justify-center overflow-hidden rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-[#1e1e1e] ${className}`}
+      className={`flex items-center justify-center overflow-hidden ${className}`}
       style={containerStyle}
     >
-      {visible ? (
+      {visible && (
         <ins
+          ref={insRef}
           className="adsbygoogle"
           style={insStyle}
           data-ad-client={ADSENSE_CLIENT_ID}
@@ -143,8 +168,6 @@ function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }:
           data-ad-layout-key={format === 'in-feed' && layoutKey ? layoutKey : undefined}
           data-full-width-responsive="true"
         />
-      ) : (
-        <p className="text-xs font-medium uppercase tracking-wider text-gray-400">Publicité</p>
       )}
     </div>
   );
