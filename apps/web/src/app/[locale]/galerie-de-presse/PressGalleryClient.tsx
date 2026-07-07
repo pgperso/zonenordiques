@@ -85,22 +85,14 @@ export function PressGalleryClient({
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // heroMode is computed after visibleFeatured (below)
-
-  // Filter featured items to match the current type filter.
-  const visibleFeatured = useMemo(() => {
-    let items = featuredItems;
-    if (filter === 'articles') items = items.filter((i) => i.type === 'article');
-    if (filter === 'podcasts') items = items.filter((i) => i.type === 'podcast');
-    return items;
-  }, [featuredItems, filter]);
-
-  const heroMode = useMemo(() => {
-    if (visibleFeatured.length === 0) return 'hidden' as const;
-    // Full hero for the default view (no tribune filter, latest sort).
-    if (sort === 'latest' && communityId === undefined && filter === 'all') return 'full' as const;
-    return 'compact' as const;
-  }, [visibleFeatured, sort, communityId, filter]);
+  // The hero ("la une") is independent of the Tout/Articles/Podcasts filter so
+  // it stays put when toggling — only the grid below reacts. Otherwise
+  // filtering out the featured articles collapsed the hero and shifted the
+  // whole page.
+  const heroMode = useMemo(
+    () => (featuredItems.length > 0 ? ('full' as const) : ('hidden' as const)),
+    [featuredItems],
+  );
 
   const fetchItems = useCallback(
     async (
@@ -211,7 +203,7 @@ export function PressGalleryClient({
 
         {/* Hero section */}
         {heroMode !== 'hidden' && (
-          <HeroSection featuredItems={visibleFeatured} mode={heroMode} />
+          <HeroSection featuredItems={featuredItems} mode={heroMode} />
         )}
 
         {/* Ad banner after hero */}
