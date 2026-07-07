@@ -76,7 +76,9 @@ export function PressGalleryClient({
   const [offset, setOffset] = useState(initialItems.length);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [filter, setFilter] = useState<FilterType>('all');
-  const [sort, setSort] = useState<SortType>('latest');
+  // Sort is fixed to latest — the Récents/Tendances toggle was dropped as
+  // unnecessary. Kept as a constant because the fetch + hero logic read it.
+  const sort: SortType = 'latest';
   const [communityId, setCommunityId] = useState<number | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -151,13 +153,6 @@ export function PressGalleryClient({
     setItems([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
     fetchItems(f, sort, communityId, 0, false);
-  };
-
-  const handleSortChange = (s: SortType) => {
-    setSort(s);
-    setItems([]);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    fetchItems(filter, s, communityId, 0, false);
   };
 
   const handleCommunityChange = (cId: number | undefined) => {
@@ -242,11 +237,9 @@ export function PressGalleryClient({
               <div className="min-w-0 md:flex-shrink-0">
                 <PressFilterBar
                   filter={filter}
-                  sort={sort}
                   communityId={communityId}
                   communities={communities}
                   onFilterChange={handleFilterChange}
-                  onSortChange={handleSortChange}
                   onCommunityChange={handleCommunityChange}
                 />
               </div>

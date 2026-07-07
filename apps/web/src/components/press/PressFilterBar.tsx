@@ -4,7 +4,6 @@ import { useTranslations, useLocale } from 'next-intl';
 import { displayCommunityName } from '@arena/shared';
 
 type FilterType = 'all' | 'articles' | 'podcasts';
-type SortType = 'latest' | 'trending';
 
 interface Community {
   id: number;
@@ -16,28 +15,23 @@ interface Community {
 
 interface PressFilterBarProps {
   filter: FilterType;
-  sort: SortType;
   communityId: number | undefined;
   communities: Community[];
   onFilterChange: (filter: FilterType) => void;
-  onSortChange: (sort: SortType) => void;
   onCommunityChange: (communityId: number | undefined) => void;
 }
 
 /**
  * Gallery toolbar: a content-type segmented control (all / articles /
- * podcasts) on the left and the sort toggle on the right — a single clean
- * row. The tribune dropdown only appears with more than one community (never
- * on the single-tribune Zone Nordiques site). La Taverne is excluded — it has
- * its own dedicated block at the bottom of the gallery.
+ * podcasts). The tribune dropdown only appears with more than one community
+ * (never on the single-tribune Zone Nordiques site). La Taverne is excluded —
+ * it has its own dedicated block at the bottom of the gallery.
  */
 export function PressFilterBar({
   filter,
-  sort,
   communityId,
   communities,
   onFilterChange,
-  onSortChange,
   onCommunityChange,
 }: PressFilterBarProps) {
   const t = useTranslations('pressGallery');
@@ -73,33 +67,22 @@ export function PressFilterBar({
         ))}
       </div>
 
-      <div className="flex min-w-0 items-center gap-2">
-        {filteredCommunities.length > 1 && (
-          <select
-            value={communityId ?? ''}
-            onChange={(e) =>
-              onCommunityChange(e.target.value ? Number(e.target.value) : undefined)
-            }
-            className="min-w-0 max-w-[180px] truncate rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 dark:border-gray-600 dark:bg-[#1e1e1e] dark:text-gray-300"
-          >
-            <option value="">{t('allCommunities')}</option>
-            {filteredCommunities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {displayCommunityName(c, locale)}
-              </option>
-            ))}
-          </select>
-        )}
-
-        <div className="flex shrink-0 rounded-lg border border-gray-300 dark:border-gray-600">
-          <button onClick={() => onSortChange('latest')} className={segItem(sort === 'latest', 'l')}>
-            {t('latest')}
-          </button>
-          <button onClick={() => onSortChange('trending')} className={segItem(sort === 'trending', 'r')}>
-            {t('trending')}
-          </button>
-        </div>
-      </div>
+      {filteredCommunities.length > 1 && (
+        <select
+          value={communityId ?? ''}
+          onChange={(e) =>
+            onCommunityChange(e.target.value ? Number(e.target.value) : undefined)
+          }
+          className="min-w-0 max-w-[180px] truncate rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 dark:border-gray-600 dark:bg-[#1e1e1e] dark:text-gray-300"
+        >
+          <option value="">{t('allCommunities')}</option>
+          {filteredCommunities.map((c) => (
+            <option key={c.id} value={c.id}>
+              {displayCommunityName(c, locale)}
+            </option>
+          ))}
+        </select>
+      )}
     </div>
   );
 }
