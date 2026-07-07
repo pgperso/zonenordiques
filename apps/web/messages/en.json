@@ -403,12 +403,12 @@
     "weeks": "{count}w"
   },
   "pool": {
-    "navTitle": "TRIBUNE POOL",
+    "navTitle": "LA ZONE POOL",
     "menuLink": "NHL Pool",
     "title": "NHL Pool",
     "tagline": "Build a salary-cap roster and climb the standings.",
     "cta": "Join",
-    "bannerTitle": "<b>La Tribune</b> hockey pool",
+    "bannerTitle": "<b>LA ZONE</b> hockey pool",
     "myTeam": "My team",
     "standings": "Standings",
     "navHome": "Home",
