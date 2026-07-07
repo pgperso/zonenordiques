@@ -130,6 +130,17 @@ export const FeedMessage = memo(function FeedMessage({
     }
   }, [editing, message.content]);
 
+  // Grow the edit box to fit its content — on open AND on every change — so a
+  // long message isn't clipped to a single line (notably on iPhone, where the
+  // one-line box hid the rest of the text).
+  useEffect(() => {
+    const el = editRef.current;
+    if (editing && el) {
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+    }
+  }, [editing, editContent]);
+
   useEffect(() => {
     if (!mobileToolbar) return;
     function handlePointer(e: PointerEvent) {
@@ -195,12 +206,12 @@ export const FeedMessage = memo(function FeedMessage({
         onChange={(e) => setEditContent(e.target.value)}
         onKeyDown={handleEditKeyDown}
         rows={1}
-        className="w-full resize-none rounded-md border border-brand-blue bg-gray-50 dark:bg-[#1e1e1e] px-2 py-1 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-blue"
+        className="max-h-60 w-full resize-none overflow-y-auto rounded-md border border-brand-blue bg-gray-50 dark:bg-[#1e1e1e] px-2 py-1 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-1 focus:ring-brand-blue"
         style={{ height: 'auto', minHeight: '2rem' }}
         onInput={(e) => {
           const t = e.currentTarget;
           t.style.height = 'auto';
-          t.style.height = `${Math.min(t.scrollHeight, 120)}px`;
+          t.style.height = `${Math.min(t.scrollHeight, 240)}px`;
         }}
       />
       <p className="mt-0.5 text-[10px] text-gray-400">
