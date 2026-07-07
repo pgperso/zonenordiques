@@ -93,9 +93,9 @@ export function OnlineMembers({
         </p>
       </div>
 
-      {/* Per-tribune article-notification toggle — on = you get the bell
-          alert when an article is published here. */}
-      {userId && (
+      {/* Per-tribune article-notification toggle — staff only. Members can't
+          mute "new article" alerts, so they keep getting nudged to read. */}
+      {userId && canModerate && (
         <button
           type="button"
           onClick={toggleMute}
