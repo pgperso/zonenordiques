@@ -20,9 +20,9 @@ export function FeedReplyContext({
     <button
       onClick={onClick}
       disabled={!onClick}
-      className="mb-0.5 flex max-w-full items-center gap-1.5 overflow-hidden rounded-md border-l-2 border-brand-blue bg-gray-100 px-2 py-1 text-xs leading-tight text-gray-600 transition hover:bg-gray-200 disabled:hover:bg-gray-100 dark:bg-[#272525] dark:text-gray-300 dark:hover:bg-[#302e2e] dark:disabled:hover:bg-[#272525]"
+      className="mb-0.5 flex max-w-full items-center gap-1.5 overflow-hidden rounded-md bg-gray-100 px-2 py-1 text-xs leading-tight text-gray-900 transition hover:bg-gray-200 disabled:hover:bg-gray-100 dark:bg-[#272525] dark:text-gray-300 dark:hover:bg-[#302e2e] dark:disabled:hover:bg-[#272525]"
     >
-      <CornerDownRight className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden="true" />
+      <CornerDownRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
       {parentAvatarUrl ? (
         <Image
           src={parentAvatarUrl}
@@ -37,7 +37,7 @@ export function FeedReplyContext({
         </div>
       )}
       <span className="min-w-0 truncate">
-        <strong className="font-semibold text-brand-blue">{parentUsername}</strong>
+        <strong className="font-semibold">{parentUsername}</strong>
         {parentContent && <span className="ml-1">{parentContent}</span>}
       </span>
     </button>
