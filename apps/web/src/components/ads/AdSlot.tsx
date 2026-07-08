@@ -53,6 +53,9 @@ const SLOT_MAP: Record<string, string> = {
   'podcast-below-description': '6723241541',
   'press-hero-banner': '3236362029',
   'press-sidebar': '3787026366',
+  // Shares the responsive home-bottom unit for now. Swap to a dedicated
+  // "Nordiquomètre/Exposmètre" AdSense unit ID for per-page reporting.
+  'meter-bottom': '7034968820',
 };
 
 // Feed ads all use the same slot

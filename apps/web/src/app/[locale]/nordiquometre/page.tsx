@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Nordiquometre } from '@/components/feed/Nordiquometre';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { BRAND } from '@/lib/brand';
 
 export const revalidate = 300;
@@ -87,6 +88,11 @@ export default async function NordiquometrePage({
       </header>
       <div className="flex min-h-0 flex-1 flex-col">
         <Nordiquometre canModerate={canModerate} />
+      </div>
+      {/* Bottom banner. Collapses to nothing when AdSense has no fill, so it
+          never leaves an empty box on this single-screen layout. */}
+      <div className="shrink-0 border-t border-gray-200 px-4 py-2 dark:border-gray-700">
+        <AdSlot slotId="meter-bottom" format="leaderboard" className="mx-auto" />
       </div>
     </div>
   );
