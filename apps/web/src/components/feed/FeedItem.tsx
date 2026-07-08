@@ -6,6 +6,7 @@ import { FeedMessage } from './FeedMessage';
 import { FeedArticleCard } from './FeedArticleCard';
 import { FeedPodcastCard } from './FeedPodcastCard';
 import { PoolPromoCard, POOL_PROMO_SENTINEL } from './PoolPromoCard';
+import { NordiquometrePromoCard, NORDIQUOMETRE_PROMO_SENTINEL } from './NordiquometrePromoCard';
 
 interface FeedItemProps {
   item: FeedItemType;
@@ -48,16 +49,19 @@ export const FeedItem = memo(function FeedItem({
 }: FeedItemProps) {
   switch (item.feedType) {
     case 'message':
-      // Staff /pool promo: a sentinel message rendered as a standalone card.
-      // Only render it when the POSTER is staff — otherwise a member could
-      // craft the sentinel directly and fake a promo card. staffRoles is
-      // computed server-side, so this gate can't be bypassed client-side.
-      if (item.content === POOL_PROMO_SENTINEL) {
+      // Staff promo cards (/pool, /meter): a sentinel message rendered as a
+      // standalone card. Only render when the POSTER is staff — otherwise a
+      // member could craft the sentinel directly and fake a promo card.
+      // staffRoles is computed server-side, so this gate can't be bypassed.
+      if (item.content === POOL_PROMO_SENTINEL || item.content === NORDIQUOMETRE_PROMO_SENTINEL) {
         const posterRole = staffRoles?.[item.memberId ?? ''];
-        if (posterRole === 'owner' || posterRole === 'admin' || posterRole === 'moderator') {
-          return <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />;
-        }
-        return null; // faked sentinel from a non-staff member — ignore it
+        const isStaff = posterRole === 'owner' || posterRole === 'admin' || posterRole === 'moderator';
+        if (!isStaff) return null; // faked sentinel from a non-staff member — ignore it
+        return item.content === POOL_PROMO_SENTINEL ? (
+          <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />
+        ) : (
+          <NordiquometrePromoCard messageId={item.id} userId={userId} canModerate={canModerate} />
+        );
       }
       return (
         <FeedMessage

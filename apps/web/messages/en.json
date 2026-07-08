@@ -441,6 +441,12 @@
     "days": "{count}d",
     "weeks": "{count}w"
   },
+  "nordiquometrePromo": {
+    "pill": "NORDIQUOMETER",
+    "bannerTitle": "The <b>Nordiquometer</b>",
+    "tagline": "Do you believe the Nordiques will return? Vote and follow the fan pulse live.",
+    "cta": "Vote now"
+  },
   "pool": {
     "navTitle": "LA ZONE POOL",
     "menuLink": "NHL Pool",

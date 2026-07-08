@@ -447,6 +447,12 @@
     "days": "{count}j",
     "weeks": "{count} sem."
   },
+  "nordiquometrePromo": {
+    "pill": "NORDIQUOMÈTRE",
+    "bannerTitle": "Le <b>Nordiquomètre</b>",
+    "tagline": "Crois-tu au retour des Nordiques ? Vote et suis le pouls des partisans en direct.",
+    "cta": "Voter maintenant"
+  },
   "pool": {
     "navTitle": "POOL LA ZONE",
     "menuLink": "Pool LNH",

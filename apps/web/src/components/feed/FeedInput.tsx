@@ -11,12 +11,14 @@ import { useVoiceDictation } from '@/hooks/useVoiceDictation';
 import { Avatar } from '@/components/ui/Avatar';
 import { createClient } from '@/lib/supabase/client';
 import { POOL_PROMO_SENTINEL } from './PoolPromoCard';
+import { NORDIQUOMETRE_PROMO_SENTINEL } from './NordiquometrePromoCard';
 
 // Staff-only chat slash commands. Each posts a message whose content is a
 // sentinel that FeedItem renders as a rich promo card (not plain text).
 type SlashCommand = { match: RegExp; content: string };
 const SLASH_COMMANDS: SlashCommand[] = [
   { match: /^\/pool$/i, content: POOL_PROMO_SENTINEL },
+  { match: /^\/meter$/i, content: NORDIQUOMETRE_PROMO_SENTINEL },
 ];
 
 interface FeedInputProps {
