@@ -36,10 +36,13 @@ export function PoolPromoCard({ messageId, userId, canModerate }: PoolPromoCardP
         .maybeSingle();
       const seasonId = (season as { id: number } | null)?.id;
       if (!seasonId) return;
+      // Match the standings page (getStandings): only confirmed teams count
+      // as "inscrites" — drafts in progress are excluded.
       const { count } = await supabase
         .from('pool_entries')
         .select('id', { count: 'exact', head: true })
-        .eq('season_id', seasonId);
+        .eq('season_id', seasonId)
+        .eq('is_confirmed', true);
       if (!cancelled && typeof count === 'number') setTeamCount(count);
     })();
     return () => {
