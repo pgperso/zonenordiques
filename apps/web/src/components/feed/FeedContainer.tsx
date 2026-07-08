@@ -339,6 +339,7 @@ export function FeedContainer({
             placeholder={getInputPlaceholder()}
             communityId={communityId}
             userId={user.id}
+            canModerate={canModerate}
             autoFocus={!!replyTarget}
           />
         ) : (
