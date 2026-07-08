@@ -52,9 +52,6 @@ export function NordiquometrePromoCard({ messageId, userId, canModerate }: Nordi
               brightness, then a bottom gradient for the pill/text. */}
           <div className="absolute inset-0 bg-gray-950/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-transparent" />
-          <span className="absolute left-3 top-3 rounded-full bg-brand-blue/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-blue-light">
-            {t('pill')}
-          </span>
         </div>
 
         {/* Body */}
