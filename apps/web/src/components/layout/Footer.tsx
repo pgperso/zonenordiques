@@ -1,13 +1,51 @@
 'use client';
 
-import { Link } from '@/i18n/navigation';
+import { Link, usePathname } from '@/i18n/navigation';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { BRAND } from '@/lib/brand';
 
+// Feed/chat pages are full-height, app-like views where the tall marketing
+// footer wastes vertical space. On those routes we render a slim one-line bar
+// instead.
+function isChatRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith('/tribunes/') ||
+    pathname === '/exposmetre' ||
+    pathname === '/nordiquometre'
+  );
+}
+
 export function Footer() {
   const t = useTranslations();
+  const pathname = usePathname();
   const year = new Date().getFullYear();
+
+  if (isChatRoute(pathname)) {
+    const legal = [
+      { href: '/conditions-utilisation', label: t('footer.terms') },
+      { href: '/politique-confidentialite', label: t('footer.privacy') },
+      { href: '/mentions-legales', label: t('footer.legal') },
+    ];
+    return (
+      <footer className="border-t border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-[#1e1e1e]">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
+          <span>
+            &copy; {year} {t('brand.name')}
+          </span>
+          {legal.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="transition hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </footer>
+    );
+  }
 
   const explore = [
     { href: '/', label: t('footer.home') },
