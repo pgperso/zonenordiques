@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
@@ -21,6 +21,31 @@ export function PoolPromoCard({ messageId, userId, canModerate }: PoolPromoCardP
   const tc = useTranslations('common');
   const supabase = useSupabase();
   const [removed, setRemoved] = useState(false);
+  const [teamCount, setTeamCount] = useState<number | null>(null);
+
+  // Live count of registered teams in the current season — social proof that
+  // nudges sign-ups. Best-effort: a failure just hides the line.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: season } = await supabase
+        .from('pool_seasons')
+        .select('id')
+        .order('nhl_season', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const seasonId = (season as { id: number } | null)?.id;
+      if (!seasonId) return;
+      const { count } = await supabase
+        .from('pool_entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('season_id', seasonId);
+      if (!cancelled && typeof count === 'number') setTeamCount(count);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
 
   if (removed) return null;
 
@@ -59,6 +84,11 @@ export function PoolPromoCard({ messageId, userId, canModerate }: PoolPromoCardP
             {t.rich('bannerTitle', { b: (chunks) => <span className="text-brand-red">{chunks}</span> })}
           </h3>
           <p className="mt-1 text-sm text-gray-400">{t('tagline')}</p>
+          {teamCount !== null && teamCount > 0 && (
+            <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-brand-blue-light">
+              {t('teamsRegistered', { count: teamCount })}
+            </p>
+          )}
           <span className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-brand-blue px-4 py-2 text-sm font-semibold text-white">
             {t('cta')}
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
