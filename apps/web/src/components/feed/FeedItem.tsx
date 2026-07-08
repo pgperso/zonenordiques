@@ -5,6 +5,7 @@ import type { FeedItem as FeedItemType, FeedMessage as FeedMessageType } from '@
 import { FeedMessage } from './FeedMessage';
 import { FeedArticleCard } from './FeedArticleCard';
 import { FeedPodcastCard } from './FeedPodcastCard';
+import { PoolPromoCard, POOL_PROMO_SENTINEL } from './PoolPromoCard';
 
 interface FeedItemProps {
   item: FeedItemType;
@@ -47,6 +48,10 @@ export const FeedItem = memo(function FeedItem({
 }: FeedItemProps) {
   switch (item.feedType) {
     case 'message':
+      // Staff /pool promo: a sentinel message rendered as a standalone card.
+      if (item.content === POOL_PROMO_SENTINEL) {
+        return <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />;
+      }
       return (
         <FeedMessage
           message={item}

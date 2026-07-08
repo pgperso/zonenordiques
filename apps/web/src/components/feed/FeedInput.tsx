@@ -10,24 +10,13 @@ import { useMentionAutocomplete, type MentionMember } from '@/hooks/useMentionAu
 import { useVoiceDictation } from '@/hooks/useVoiceDictation';
 import { Avatar } from '@/components/ui/Avatar';
 import { createClient } from '@/lib/supabase/client';
-import { BRAND } from '@/lib/brand';
-import type { LinkPreview } from '@arena/shared';
+import { POOL_PROMO_SENTINEL } from './PoolPromoCard';
 
-// Staff-only chat slash commands. Each posts a rich promo card (via the
-// existing link_previews rendering) instead of a plain message.
-type SlashCommand = { match: RegExp; build: (locale: string) => LinkPreview; message: string };
+// Staff-only chat slash commands. Each posts a message whose content is a
+// sentinel that FeedItem renders as a rich promo card (not plain text).
+type SlashCommand = { match: RegExp; content: string };
 const SLASH_COMMANDS: SlashCommand[] = [
-  {
-    match: /^\/pool$/i,
-    message: '🏒 Rejoins le Pool LNH de La Zone !',
-    build: (locale) => ({
-      url: `${BRAND.url}/${locale}/lnh/pool`,
-      title: 'Pool de hockey — LA ZONE 🏒',
-      description: 'Compose ton équipe, choisis tes vedettes et grimpe au classement. Inscris-toi maintenant !',
-      image: `${BRAND.url}/images/bg_pool.png`,
-      domain: 'zonenordiques.com',
-    }),
-  },
+  { match: /^\/pool$/i, content: POOL_PROMO_SENTINEL },
 ];
 
 interface FeedInputProps {
@@ -153,8 +142,7 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
         .insert({
           community_id: communityId,
           member_id: userId,
-          content: cmd.message,
-          link_previews: [cmd.build(locale)],
+          content: cmd.content,
         } as never);
       if (cmdErr) setError(cmdErr.message);
       return;
@@ -191,7 +179,7 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
       setError(message);
     }
     textarea?.focus();
-  }, [content, disabled, uploading, images, userId, communityId, canModerate, locale, mention, onSend, uploadAll, clearImages, dictation]);
+  }, [content, disabled, uploading, images, userId, communityId, canModerate, mention, onSend, uploadAll, clearImages, dictation]);
 
   function handleKeyDown(e: React.KeyboardEvent) {
     // While the mention popup is open it owns the arrow / enter / escape keys.
