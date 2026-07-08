@@ -370,12 +370,6 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
             )}
           </button>
 
-          {/* Upload spinner */}
-          {uploading && (
-            <div className="flex items-center px-3 py-2.5">
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
-            </div>
-          )}
         </div>
       </div>
 

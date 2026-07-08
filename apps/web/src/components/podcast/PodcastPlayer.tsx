@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useLocale } from 'next-intl';
 import { formatDuration } from '@arena/shared';
 import { FeedLikeButton } from '@/components/feed/FeedLikeButton';
 import { AdSlot } from '@/components/ads/AdSlot';
@@ -29,6 +30,7 @@ interface PodcastPlayerProps {
 }
 
 export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerProps) {
+  const locale = useLocale();
   const audioRef = useRef<HTMLAudioElement>(null);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -245,7 +247,7 @@ export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerP
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-400">Partager</span>
           <a
-            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${BRAND.url}/fr/tribunes/${communitySlug}/podcasts/${podcast.id}`)}`}
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(`${BRAND.url}/${locale}/tribunes/${communitySlug}/podcasts/${podcast.id}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center rounded-lg p-2 text-gray-400 transition hover:bg-blue-50 dark:hover:bg-blue-950 hover:text-blue-600"
@@ -256,7 +258,7 @@ export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerP
             </svg>
           </a>
           <a
-            href={`https://x.com/intent/tweet?url=${encodeURIComponent(`${BRAND.url}/fr/tribunes/${communitySlug}/podcasts/${podcast.id}`)}&text=${encodeURIComponent(podcast.title)}`}
+            href={`https://x.com/intent/tweet?url=${encodeURIComponent(`${BRAND.url}/${locale}/tribunes/${communitySlug}/podcasts/${podcast.id}`)}&text=${encodeURIComponent(podcast.title)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-[#1e1e1e] hover:text-gray-900 dark:text-gray-100"
@@ -272,7 +274,7 @@ export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerP
       {/* Share into the tribune chat (logged-in members) */}
       <div className="mt-4 flex justify-center">
         <ShareToChatButton
-          url={`${BRAND.url}/fr/tribunes/${communitySlug}/podcasts/${podcast.id}`}
+          url={`${BRAND.url}/${locale}/tribunes/${communitySlug}/podcasts/${podcast.id}`}
           title={podcast.title}
           description={podcast.description}
           image={podcast.cover_image_url}

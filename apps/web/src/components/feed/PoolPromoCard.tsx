@@ -25,11 +25,11 @@ export function PoolPromoCard({ messageId, userId, canModerate }: PoolPromoCardP
   if (removed) return null;
 
   async function handleRemove() {
-    await supabase
+    const { error } = await supabase
       .from('chat_messages')
       .update({ is_removed: true, removed_at: new Date().toISOString(), removed_by: userId } as never)
       .eq('id', messageId);
-    setRemoved(true);
+    if (!error) setRemoved(true);
   }
 
   return (

@@ -28,11 +28,11 @@ export function FeedArticleCard({ article, communitySlug, userId, canModerate }:
   // Hide the promo from the chat feed only — the article stays published in
   // the press gallery (gallery queries don't filter hidden_from_feed).
   async function handleRemoveFromFeed() {
-    await supabase
+    const { error } = await supabase
       .from('articles')
       .update({ hidden_from_feed: true } as never)
       .eq('id', article.id);
-    setRemoved(true);
+    if (!error) setRemoved(true);
   }
 
   if (removed) return null;
