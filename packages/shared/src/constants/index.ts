@@ -37,6 +37,10 @@ export const FEED_AD_INTERVAL = 25;
 export const ARTICLE_AD_WORD_THRESHOLD = 300;
 export const ADSENSE_CLIENT_ID = 'ca-pub-6197042745925907';
 
+// Google Analytics 4 Measurement ID. GA4 shares the same gtag/dataLayer and
+// Consent Mode v2 defaults set by AdSenseLoader, so no consent is duplicated.
+export const GA_MEASUREMENT_ID = 'G-R1BWXR3RGW';
+
 // Content-age gate for the press gallery, RSS, sitemap and related-article
 // surfaces. On Fan Tribune this date excluded the legacy Zone Nordiques
 // archive (already canonical at zonenordiques.com) to avoid duplicate-scraper

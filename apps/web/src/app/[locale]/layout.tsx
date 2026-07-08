@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { TribuneProvider } from '@/contexts/TribuneContext';
 import { AdSenseLoader } from '@/components/ads/AdSenseLoader';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
@@ -96,7 +97,9 @@ export default async function LocaleLayout({
         <link rel="dns-prefetch" href="https://fjcgfjgqzkswdmazkvlx.supabase.co" />
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <AdSenseLoader nonce={nonce} />
+        <GoogleAnalytics nonce={nonce} />
         <script
           type="application/ld+json"
           nonce={nonce}
