@@ -4,12 +4,14 @@ import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { BRAND } from '@/lib/brand';
+import { NewsletterSignup } from '@/components/newsletter/NewsletterSignup';
 
 export function Footer() {
   const t = useTranslations();
 
   return (
     <footer className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e1e] dark:border-gray-800 dark:bg-[#1e1e1e]">
+      <NewsletterSignup />
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:gap-4 sm:px-4 sm:py-2">
         <div className="flex items-center gap-1.5 sm:gap-2">
           <Image

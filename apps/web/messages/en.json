@@ -12,6 +12,31 @@
     "resultsCount": "{count, plural, =1 {# result} other {# results}} for “{query}”",
     "noResults": "No results for “{query}”."
   },
+  "newsletter": {
+    "title": "The Zone newsletter",
+    "subtitle": "The week's hockey recap, straight to your inbox.",
+    "placeholder": "you@email.com",
+    "cta": "Subscribe",
+    "sending": "Sending…",
+    "success": "Almost done! Check your inbox to confirm your subscription.",
+    "error": "Something went wrong. Please try again in a moment.",
+    "pageTitle": "Newsletter",
+    "result": {
+      "backHome": "Back to home",
+      "confirmed": {
+        "title": "Subscription confirmed!",
+        "body": "Thanks! You'll get our hockey recap every week. See you on the Zone."
+      },
+      "unsubscribed": {
+        "title": "You've been unsubscribed",
+        "body": "You'll no longer receive the newsletter. You can re-subscribe anytime from the site footer."
+      },
+      "error": {
+        "title": "Invalid link",
+        "body": "This link is invalid or has expired. Try subscribing again from the site footer."
+      }
+    }
+  },
   "a11y": {
     "toggleDarkMode": "Toggle dark mode",
     "enableDarkMode": "Enable dark mode",

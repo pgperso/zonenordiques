@@ -12,6 +12,31 @@
     "resultsCount": "{count, plural, =1 {# résultat} other {# résultats}} pour « {query} »",
     "noResults": "Aucun résultat pour « {query} »."
   },
+  "newsletter": {
+    "title": "L'infolettre de la Zone",
+    "subtitle": "Le récap hockey de la semaine, directement dans ta boîte courriel.",
+    "placeholder": "ton@courriel.com",
+    "cta": "S'abonner",
+    "sending": "Envoi…",
+    "success": "Presque fini ! Vérifie tes courriels pour confirmer ton inscription.",
+    "error": "Une erreur est survenue. Réessaie dans un moment.",
+    "pageTitle": "Infolettre",
+    "result": {
+      "backHome": "Retour à l'accueil",
+      "confirmed": {
+        "title": "Inscription confirmée !",
+        "body": "Merci ! Tu recevras notre récap hockey chaque semaine. À bientôt sur la Zone."
+      },
+      "unsubscribed": {
+        "title": "Désabonnement effectué",
+        "body": "Tu ne recevras plus l'infolettre. Tu peux te réabonner en tout temps depuis le bas de page du site."
+      },
+      "error": {
+        "title": "Lien invalide",
+        "body": "Ce lien est invalide ou a expiré. Réessaie de t'inscrire depuis le bas de page du site."
+      }
+    }
+  },
   "a11y": {
     "toggleDarkMode": "Basculer le mode sombre",
     "enableDarkMode": "Activer le mode sombre",
