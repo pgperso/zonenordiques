@@ -176,7 +176,7 @@ export default async function HomePage({
       inLanguage: locale === 'fr' ? 'fr-CA' : 'en-CA',
       potentialAction: {
         '@type': 'SearchAction',
-        target: `${BRAND.url}/${locale}?q={search_term_string}`,
+        target: `${BRAND.url}/${locale}/recherche?q={search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },

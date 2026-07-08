@@ -5,6 +5,13 @@
     "taglineLead": "L'antichambre",
     "taglineRest": " du hockey"
   },
+  "search": {
+    "title": "Recherche",
+    "placeholder": "Rechercher un article…",
+    "hint": "Tape au moins 2 caractères pour lancer une recherche.",
+    "resultsCount": "{count, plural, =1 {# résultat} other {# résultats}} pour « {query} »",
+    "noResults": "Aucun résultat pour « {query} »."
+  },
   "a11y": {
     "toggleDarkMode": "Basculer le mode sombre",
     "enableDarkMode": "Activer le mode sombre",

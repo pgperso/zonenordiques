@@ -13,7 +13,7 @@ import { MobileNav } from './MobileNav';
 import { NotificationBell } from './NotificationBell';
 import { fetchUserCommunities, type UserCommunitySummary } from '@/services/communityService';
 import { BRAND } from '@/lib/brand';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, Search } from 'lucide-react';
 
 export function Header() {
   const router = useRouter();
@@ -157,6 +157,13 @@ export function Header() {
           >
             {otherLocale.toUpperCase()}
           </a>
+          <Link
+            href="/recherche"
+            aria-label={t('search.title')}
+            className="rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </Link>
           <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
           {loading ? (
             <div className="h-8 w-24 animate-pulse rounded-lg bg-gray-200" />
@@ -263,6 +270,13 @@ export function Header() {
             desktop CTA — buried in the burger menu, the navigation was
             functionally invisible to readers on phones. */}
         <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/recherche"
+            aria-label={t('search.title')}
+            className="rounded-md p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+          >
+            <Search className="h-5 w-5" aria-hidden="true" />
+          </Link>
           {user && <NotificationBell userId={user.id} />}
           {user && tribune ? (
             <button

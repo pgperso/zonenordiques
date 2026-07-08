@@ -5,6 +5,13 @@
     "taglineLead": "The antechamber",
     "taglineRest": " of hockey"
   },
+  "search": {
+    "title": "Search",
+    "placeholder": "Search for an article…",
+    "hint": "Type at least 2 characters to search.",
+    "resultsCount": "{count, plural, =1 {# result} other {# results}} for “{query}”",
+    "noResults": "No results for “{query}”."
+  },
   "a11y": {
     "toggleDarkMode": "Toggle dark mode",
     "enableDarkMode": "Enable dark mode",
