@@ -39,16 +39,16 @@ export function NordiquometrePromoCard({ messageId, userId, canModerate }: Nordi
         href="/nordiquometre"
         className="block max-w-md overflow-hidden rounded-xl bg-gray-950 shadow-sm transition hover:opacity-95"
       >
-        {/* Banner — the gauge artwork sits centred on the dark card. */}
+        {/* Banner — crowd photo, darkened toward the bottom for text/pill. */}
         <div className="relative h-40 w-full">
           <Image
-            src="/images/nordiquometre.png"
+            src="/images/meter-promo.webp"
             alt={t('pill')}
             fill
-            className="object-contain p-2"
+            className="object-cover"
             sizes="(max-width: 768px) 100vw, 448px"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/50 to-transparent" />
           <span className="absolute left-3 top-3 rounded-full bg-brand-blue/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-blue-light">
             {t('pill')}
           </span>

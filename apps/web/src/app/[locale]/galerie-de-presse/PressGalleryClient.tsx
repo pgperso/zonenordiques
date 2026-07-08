@@ -182,7 +182,7 @@ export function PressGalleryClient({
           {/* Decorative background — subtle, behind the content */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/images/bg_pool.png"
+            src="/images/bg_pool.webp"
             alt=""
             aria-hidden
             className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20"

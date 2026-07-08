@@ -69,7 +69,7 @@ export function PoolPromoCard({ messageId, userId, canModerate }: PoolPromoCardP
         {/* Banner */}
         <div className="relative h-40 w-full">
           <Image
-            src="/images/bg_pool.png"
+            src="/images/bg_pool.webp"
             alt={t('navTitle')}
             fill
             className="object-cover"
