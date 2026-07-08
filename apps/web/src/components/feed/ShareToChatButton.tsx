@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useLocale } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
+import { useSupabase } from '@/hooks/useSupabase';
 import type { LinkPreview } from '@arena/shared';
 
 interface ShareToChatButtonProps {
@@ -38,6 +38,7 @@ export function ShareToChatButton({
 }: ShareToChatButtonProps) {
   const locale = useLocale();
   const fr = locale === 'fr';
+  const supabase = useSupabase();
   const [state, setState] = useState<ShareState>('idle');
   const revertTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -51,7 +52,6 @@ export function ShareToChatButton({
     // Allow repeat shares — only block while a share is in flight.
     if (state === 'sharing') return;
     setState('sharing');
-    const supabase = createClient();
 
     // Resolve the tribune's numeric id from its slug (chat_messages keys on it).
     const { data: community } = await supabase

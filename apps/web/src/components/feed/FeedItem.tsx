@@ -49,8 +49,15 @@ export const FeedItem = memo(function FeedItem({
   switch (item.feedType) {
     case 'message':
       // Staff /pool promo: a sentinel message rendered as a standalone card.
+      // Only render it when the POSTER is staff — otherwise a member could
+      // craft the sentinel directly and fake a promo card. staffRoles is
+      // computed server-side, so this gate can't be bypassed client-side.
       if (item.content === POOL_PROMO_SENTINEL) {
-        return <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />;
+        const posterRole = staffRoles?.[item.memberId ?? ''];
+        if (posterRole === 'owner' || posterRole === 'admin' || posterRole === 'moderator') {
+          return <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />;
+        }
+        return null; // faked sentinel from a non-staff member — ignore it
       }
       return (
         <FeedMessage
