@@ -58,7 +58,12 @@ export function AdAnchor() {
           </svg>
           <span className="relative text-[10px] font-bold">{countdown}</span>
         </button>
-        <AdSlot slotId="mobile-anchor" format="large-mobile-banner" className="w-full max-w-md" />
+        <AdSlot
+          slotId="mobile-anchor"
+          format="large-mobile-banner"
+          className="w-full max-w-md"
+          onStatusChange={(s) => { if (s === 'unfilled') setDismissed(true); }}
+        />
       </div>
     </div>
   );

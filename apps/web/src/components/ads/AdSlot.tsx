@@ -19,6 +19,10 @@ interface AdSlotProps {
   format?: AdFormat;
   className?: string;
   layoutKey?: string;
+  /** Notified once AdSense resolves whether this slot got an ad ('filled')
+   *  or had none to serve ('unfilled'). Lets a host (e.g. the mobile anchor)
+   *  hide its own chrome when the slot collapses. */
+  onStatusChange?: (status: 'filled' | 'unfilled') => void;
 }
 
 const FORMAT_SIZES: Record<string, { width: string; height: string }> = {
@@ -70,20 +74,27 @@ const isDev = process.env.NODE_ENV === 'development';
  * AdSense ad slot with IntersectionObserver lazy loading.
  * In development, automatically renders a placeholder.
  */
-export function AdSlot({ slotId, format = 'rectangle', className = '', layoutKey }: AdSlotProps) {
+export function AdSlot({ slotId, format = 'rectangle', className = '', layoutKey, onStatusChange }: AdSlotProps) {
   if (isDev) {
     return <AdSlotPlaceholder format={format} label={`${format} (${slotId})`} className={className} />;
   }
 
-  return <AdSlotLive slotId={slotId} format={format} className={className} layoutKey={layoutKey} />;
+  return <AdSlotLive slotId={slotId} format={format} className={className} layoutKey={layoutKey} onStatusChange={onStatusChange} />;
 }
 
-function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey }: AdSlotProps) {
+function AdSlotLive({ slotId, format = 'rectangle', className = '', layoutKey, onStatusChange }: AdSlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const insRef = useRef<HTMLModElement>(null);
   const pushed = useRef(false);
   const [visible, setVisible] = useState(false);
   const [status, setStatus] = useState<'pending' | 'filled' | 'unfilled'>('pending');
+
+  // Report the resolved fill status to the host, once, without re-firing.
+  const onStatusChangeRef = useRef(onStatusChange);
+  onStatusChangeRef.current = onStatusChange;
+  useEffect(() => {
+    if (status !== 'pending') onStatusChangeRef.current?.(status);
+  }, [status]);
   const size = FORMAT_SIZES[format];
   const isFluid = format === 'in-feed' || format === 'in-article';
   const isInArticle = format === 'in-article';
