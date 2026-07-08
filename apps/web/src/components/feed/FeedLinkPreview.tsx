@@ -46,7 +46,7 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
       href={preview.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group block overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#272525] transition hover:border-gray-300 dark:hover:border-gray-600"
+      className="group block overflow-hidden rounded-xl bg-gray-950 shadow-sm transition hover:opacity-95"
     >
       {/* X/Twitter: branded header with author */}
       {isX && (
@@ -72,15 +72,16 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
 
       {/* Image (non-X, non-YT header links) */}
       {!isX && preview.image && !imgError && (
-        <div className="relative overflow-hidden bg-gray-100 dark:bg-gray-800">
+        <div className="relative overflow-hidden bg-gray-900">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={preview.image}
             alt={preview.title || ''}
-            className="h-36 w-full object-cover transition group-hover:scale-105"
+            className="h-40 w-full object-cover transition group-hover:scale-105"
             loading="lazy"
             onError={() => setImgError(true)}
           />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/30 to-transparent" />
           {/* YouTube play button overlay */}
           {isYT && (
             <div className="absolute inset-0 flex items-center justify-center">
@@ -94,19 +95,19 @@ function PreviewCard({ preview }: { preview: LinkPreview }) {
         </div>
       )}
 
-      <div className="p-3">
+      <div className="p-4">
         {!isX && (
-          <p className="mb-0.5 text-[11px] font-medium text-gray-400 dark:text-gray-500">
+          <p className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-gray-500">
             {preview.domain}
           </p>
         )}
         {preview.title && !isX && (
-          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-brand-blue">
+          <p className="text-sm font-semibold text-white line-clamp-2 group-hover:text-brand-blue-light">
             {preview.title}
           </p>
         )}
         {preview.description && (
-          <p className={isX ? 'text-base leading-relaxed text-gray-800 dark:text-gray-200 line-clamp-4' : 'mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2'}>
+          <p className={isX ? 'text-base leading-relaxed text-gray-200 line-clamp-4' : 'mt-1 text-xs text-gray-400 line-clamp-2'}>
             {preview.description}
           </p>
         )}
