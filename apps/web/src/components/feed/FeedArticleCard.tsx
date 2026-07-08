@@ -41,49 +41,50 @@ export function FeedArticleCard({ article, communitySlug, userId, canModerate }:
     <div className="px-4 py-3">
       <Link
         href={`/tribunes/${communitySlug}/articles/${article.slug}`}
-        className="block max-w-md overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700 transition hover:border-gray-300 dark:border-gray-600 hover:shadow-sm"
+        className="block max-w-md overflow-hidden rounded-xl bg-gray-950 shadow-sm transition hover:opacity-95"
       >
-        {/* Cover image */}
+        {/* Cover banner */}
         {article.coverImageUrl && (
-          <div className="h-40 w-full bg-gray-100 dark:bg-[#1e1e1e]">
+          <div className="relative h-40 w-full">
             <Image
               src={article.coverImageUrl}
               alt={article.title}
-              width={600}
-              height={160}
-              className="h-40 w-full object-cover"
-              sizes="(max-width: 768px) 100vw, 600px"
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 448px"
             />
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-950 via-gray-950/40 to-transparent" />
+            <span className="absolute left-3 top-3 rounded-full bg-brand-blue/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-blue-light">
+              {t('article')}
+            </span>
           </div>
         )}
 
         <div className="p-4">
-          {/* Article badge */}
-          <div className="mb-2 flex items-center gap-2">
-            <span className="rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">
+          {/* Badge shown inline when there's no cover to overlay it on */}
+          {!article.coverImageUrl && (
+            <span className="mb-2 inline-block rounded-full bg-brand-blue/20 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-brand-blue-light">
               {t('article')}
             </span>
-            <span className="text-xs text-gray-400">{formatDate(article.publishedAt)}</span>
-          </div>
+          )}
 
           {/* Title */}
-          <h3 className="mb-1 text-base font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
-            {article.title}
-          </h3>
+          <h3 className="text-base font-bold text-white line-clamp-2">{article.title}</h3>
 
           {/* Excerpt */}
           {article.excerpt && (
-            <p className="mb-3 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{article.excerpt}</p>
+            <p className="mt-1 text-sm text-gray-400 line-clamp-2">{article.excerpt}</p>
           )}
 
           {/* Author + stats */}
-          <div className="flex items-center justify-between">
+          <div className="mt-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Avatar url={article.author.avatarUrl} name={article.author.username} size="xs" />
-              <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{article.author.username}</span>
+              <span className="text-xs font-medium text-gray-300">{article.author.username}</span>
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-gray-400">
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span>{formatDate(article.publishedAt)}</span>
               {article.viewCount > 0 && (
                 <span className="flex items-center gap-1">
                   <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
