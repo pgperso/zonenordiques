@@ -214,7 +214,7 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
       {/* BLOC 1 : Cadran + badge — centré verticalement */}
       <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-2">
         <div className="relative w-full max-w-[600px]">
-          <img src="/images/nordiquometre.png" alt="Nordiquomètre" className="w-full" draggable={false} />
+          <img src="/images/nordiquometre.png" alt="Nordiquomètre" width={1024} height={1024} className="w-full" draggable={false} />
 
           <svg
             className="pointer-events-none absolute"
