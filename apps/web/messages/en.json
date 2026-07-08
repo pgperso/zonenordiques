@@ -388,12 +388,16 @@
   },
   "footer": {
     "rights": "All rights reserved.",
+    "home": "Home",
     "about": "About",
     "contact": "Contact",
     "terms": "Terms of use",
     "privacy": "Privacy",
     "legal": "Legal notice",
-    "editorialStandards": "Editorial standards"
+    "editorialStandards": "Editorial standards",
+    "exploreTitle": "Explore",
+    "infoTitle": "Information",
+    "followUs": "Follow us"
   },
   "errors": {
     "notFound": "Page not found",

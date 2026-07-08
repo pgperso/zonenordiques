@@ -394,12 +394,16 @@
   },
   "footer": {
     "rights": "Tous droits réservés.",
+    "home": "Accueil",
     "about": "À propos",
     "contact": "Contact",
     "terms": "Conditions d'utilisation",
     "privacy": "Confidentialité",
     "legal": "Mentions légales",
-    "editorialStandards": "Normes éditoriales"
+    "editorialStandards": "Normes éditoriales",
+    "exploreTitle": "Explorer",
+    "infoTitle": "Informations",
+    "followUs": "Suivez-nous"
   },
   "errors": {
     "notFound": "Page introuvable",
