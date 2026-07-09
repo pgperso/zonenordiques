@@ -5,14 +5,16 @@ import { X } from 'lucide-react';
 import { AdSlot } from './AdSlot';
 
 /**
- * Mobile bottom anchor ad. The ad loads inside a collapsed (max-h-0) wrapper
- * and only slides into view — with its close button — once AdSense confirms a
- * fill, so there's no empty container and no premature/disappearing ✕. If the
- * slot is unfilled, nothing ever appears.
+ * Mobile bottom anchor ad.
  *
- * Dismissal is intentionally NOT persisted: closing hides it only while the
- * page stays mounted, so the anchor reappears every time the member re-enters
- * (reconnects to) the chat.
+ * The AdSlot is rendered in a normal (non-collapsed) container so AdSense
+ * reliably fills it — a zero-height wrapper stops Google from serving. We only
+ * add the visible chrome (top border + close ✕) once the slot reports a fill,
+ * so an unfilled slot just collapses (AdSlot returns null) instead of leaving a
+ * framed empty box with a dangling ✕.
+ *
+ * Dismissal is NOT persisted: closing hides it only while the page stays
+ * mounted, so the anchor reappears every time the member re-enters the chat.
  */
 export function AdAnchor() {
   const [dismissed, setDismissed] = useState(false);
@@ -22,10 +24,8 @@ export function AdAnchor() {
 
   return (
     <div
-      className={`overflow-hidden transition-[max-height] duration-300 ease-out lg:hidden ${
-        filled
-          ? 'max-h-40 border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]'
-          : 'max-h-0'
+      className={`shrink-0 lg:hidden ${
+        filled ? 'border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e]' : ''
       }`}
     >
       <div className="relative flex justify-center py-1">
