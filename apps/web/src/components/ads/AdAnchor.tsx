@@ -7,15 +7,15 @@ import { AdSlot } from './AdSlot';
 /**
  * Mobile bottom anchor ad.
  *
- * The AdSlot is rendered in a normal (non-collapsed) container so AdSense
- * reliably fills it. The close ✕ is always shown while the anchor is on screen
- * (gating it on a 'filled' signal proved unreliable — the ad renders but the
- * status isn't always reported, leaving the member with no way to close it).
- * When the slot is unfilled, AdSlot returns null AND we collapse the whole
- * anchor, so there's no framed empty box left behind.
+ * The close control lives in its OWN row ABOVE the ad — never overlapping the
+ * ad iframe. A cross-origin ad iframe can paint above sibling elements on some
+ * mobile browsers regardless of z-index, so an absolutely-positioned ✕ over the
+ * ad gets swallowed. Giving the ✕ its own space is the robust, professional
+ * pattern (it's how Google's own anchor ads place their close affordance).
  *
- * Dismissal is NOT persisted: closing hides it only while the page stays
- * mounted, so the anchor reappears every time the member re-enters the chat.
+ * The AdSlot renders in a normal container so AdSense fills it reliably; an
+ * unfilled slot collapses the whole anchor. Dismissal is not persisted, so the
+ * anchor reappears every time the member re-enters the chat.
  */
 export function AdAnchor() {
   const [dismissed, setDismissed] = useState(false);
@@ -24,14 +24,19 @@ export function AdAnchor() {
 
   return (
     <div className="shrink-0 border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e] lg:hidden">
-      <div className="relative flex justify-center py-1">
+      {/* Control row above the ad — the ✕ can never be hidden by the iframe. */}
+      <div className="flex items-center justify-between px-2 py-0.5">
+        <span className="text-[10px] uppercase tracking-wider text-gray-400">Publicité</span>
         <button
           onClick={() => setDismissed(true)}
-          className="absolute right-1 top-1 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg ring-2 ring-white transition hover:bg-gray-700 dark:ring-[#1e1e1e]"
+          className="flex h-6 items-center gap-1 rounded-full px-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-gray-100"
           aria-label="Fermer la publicité"
         >
-          <X className="h-4 w-4" strokeWidth={2.5} />
+          <span className="text-[11px] font-semibold">Fermer</span>
+          <X className="h-3.5 w-3.5" strokeWidth={2.5} />
         </button>
+      </div>
+      <div className="flex justify-center pb-1">
         <AdSlot
           slotId="mobile-anchor"
           format="large-mobile-banner"
