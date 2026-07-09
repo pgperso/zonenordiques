@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer';
 import { TribuneProvider } from '@/contexts/TribuneContext';
 import { AdSenseLoader } from '@/components/ads/AdSenseLoader';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { NhlScoreboard } from '@/components/layout/NhlScoreboard';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
@@ -117,6 +118,7 @@ export default async function LocaleLayout({
           <TribuneProvider>
             <div className="flex flex-1 min-h-dvh flex-col">
               <Header />
+              <NhlScoreboard />
               <main id="main-content" className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
               <Footer />
               <CookieConsent />

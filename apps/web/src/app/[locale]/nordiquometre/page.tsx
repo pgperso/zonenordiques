@@ -74,7 +74,7 @@ export default async function NordiquometrePage({
   return (
     <div
       className="mx-auto flex w-full max-w-3xl flex-col bg-white dark:bg-[#1e1e1e]"
-      style={{ height: 'calc(100dvh - 4rem)' }}
+      style={{ height: 'calc(100dvh - var(--chrome-h, 4rem))' }}
     >
       <header className="shrink-0 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
         <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">

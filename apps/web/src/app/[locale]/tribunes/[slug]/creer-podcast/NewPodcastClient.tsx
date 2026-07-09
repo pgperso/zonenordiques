@@ -14,7 +14,7 @@ export function NewPodcastClient({ communityId, communitySlug, userId }: Props) 
   return (
     <div
       className="mx-auto w-full max-w-4xl overflow-y-auto px-4 py-6"
-      style={{ height: 'calc(100dvh - 4rem)' }}
+      style={{ height: 'calc(100dvh - var(--chrome-h, 4rem))' }}
     >
       <PodcastEditor
         communityId={communityId}
