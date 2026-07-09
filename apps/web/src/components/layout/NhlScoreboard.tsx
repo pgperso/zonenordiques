@@ -146,7 +146,7 @@ export function NhlScoreboard() {
             type="button"
             onClick={openDatePicker}
             aria-label={isFr ? 'Choisir une date' : 'Pick a date'}
-            className="w-16 rounded text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 transition hover:text-brand-blue dark:text-gray-400"
+            className="w-24 whitespace-nowrap rounded px-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 transition hover:text-brand-blue dark:text-gray-400"
           >
             {dateLabel}
           </button>
