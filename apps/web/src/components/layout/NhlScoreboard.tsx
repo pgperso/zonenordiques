@@ -52,6 +52,9 @@ export function NhlScoreboard() {
   const [games, setGames] = useState<Game[] | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [seasonStart, setSeasonStart] = useState<string | null>(null);
+  const [seasonChecked, setSeasonChecked] = useState(false);
+  // Set once the user browses dates, so we fetch scores even off-season.
+  const navigatedRef = useRef(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   // Open the native calendar when the date label is clicked.
@@ -74,12 +77,14 @@ export function NhlScoreboard() {
     setDate(todayET());
   }, []);
 
-  // Season start/end — used to show a "season starts on…" message off-season.
+  // Season start/end (cached 6h) — used for the off-season message AND to
+  // decide whether to hit the scores API at all.
   useEffect(() => {
     fetch('/api/nhl/season')
       .then((r) => r.json())
       .then((d: { start?: string | null }) => setSeasonStart(d.start ?? null))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setSeasonChecked(true));
   }, []);
 
   const fetchScores = useCallback(async (d: string) => {
@@ -94,9 +99,20 @@ export function NhlScoreboard() {
     }
   }, []);
 
+  // Cost saver: don't call the scores API in the off-season (there are no
+  // games), which spares an edge request + function invocation on every page
+  // load for ~3 months. Still fetch in-season, or as soon as the user browses
+  // to another date.
   useEffect(() => {
-    if (date) fetchScores(date);
-  }, [date, fetchScores]);
+    if (!date || !seasonChecked) return;
+    const inSeason = seasonStart ? todayET() >= seasonStart : true;
+    if (inSeason || navigatedRef.current) {
+      fetchScores(date);
+    } else {
+      setGames([]);
+      setLoaded(true);
+    }
+  }, [date, seasonChecked, seasonStart, fetchScores]);
 
   // Live polling: refresh every 45s while a game is in progress and the tab
   // is visible.
@@ -168,7 +184,10 @@ export function NhlScoreboard() {
             {/* Date navigation */}
             <div className="relative flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
               <button
-                onClick={() => setDate((d) => (d ? shiftDate(d, -1) : d))}
+                onClick={() => {
+                  navigatedRef.current = true;
+                  setDate((d) => (d ? shiftDate(d, -1) : d));
+                }}
                 aria-label={isFr ? 'Jour précédent' : 'Previous day'}
                 className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
               >
@@ -187,13 +206,21 @@ export function NhlScoreboard() {
                 ref={dateInputRef}
                 type="date"
                 value={date ?? ''}
-                onChange={(e) => e.target.value && setDate(e.target.value)}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    navigatedRef.current = true;
+                    setDate(e.target.value);
+                  }
+                }}
                 tabIndex={-1}
                 aria-hidden="true"
                 className="pointer-events-none absolute bottom-0 left-1/2 h-0 w-0 -translate-x-1/2 opacity-0"
               />
               <button
-                onClick={() => setDate((d) => (d ? shiftDate(d, 1) : d))}
+                onClick={() => {
+                  navigatedRef.current = true;
+                  setDate((d) => (d ? shiftDate(d, 1) : d));
+                }}
                 aria-label={isFr ? 'Jour suivant' : 'Next day'}
                 className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
               >
