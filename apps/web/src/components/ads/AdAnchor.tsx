@@ -1,22 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { AdSlot } from './AdSlot';
 
 const AUTO_DISMISS_SECONDS = 30;
+// Session-scoped: once a member actively closes the anchor, keep it closed on
+// every page for the rest of the visit (fixes "I close it and it comes back").
+const STORAGE_KEY = 'zn_anchor_closed';
 
 export function AdAnchor() {
   const [visible, setVisible] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [countdown, setCountdown] = useState(AUTO_DISMISS_SECONDS);
 
-  // Show after 5 seconds delay
   useEffect(() => {
+    let closed = false;
+    try {
+      closed = sessionStorage.getItem(STORAGE_KEY) === '1';
+    } catch {
+      /* storage unavailable — fall through and show */
+    }
+    if (closed) {
+      setDismissed(true);
+      return;
+    }
     const timer = setTimeout(() => setVisible(true), 5000);
     return () => clearTimeout(timer);
   }, []);
 
-  // Countdown timer
+  // Auto-dismiss after the countdown. This is passive (not persisted), so it
+  // can reappear on a later page — only an explicit close sticks.
   useEffect(() => {
     if (!visible || dismissed) return;
     const interval = setInterval(() => {
@@ -31,32 +45,42 @@ export function AdAnchor() {
     return () => clearInterval(interval);
   }, [visible, dismissed]);
 
+  function closeManually() {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    setDismissed(true);
+  }
+
   if (!visible || dismissed) return null;
 
-  // SVG circle progress (28px button, 2px stroke)
-  const radius = 11;
+  // Countdown ring around the close button.
+  const radius = 13;
   const circumference = 2 * Math.PI * radius;
   const progress = (countdown / AUTO_DISMISS_SECONDS) * circumference;
 
   return (
-    <div className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1e1e1e] lg:hidden">
+    <div className="shrink-0 border-t border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1e1e1e] lg:hidden">
       <div className="relative flex justify-center py-1">
+        {/* Clear close button — a visible ✕ with the countdown as a ring, a
+            white halo + high z-index so it always reads on top of the ad. */}
         <button
-          onClick={() => setDismissed(true)}
-          className="absolute right-1 top-1 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-gray-700 text-white shadow transition hover:bg-gray-600"
+          onClick={closeManually}
+          className="absolute right-1 top-1 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg ring-2 ring-white transition hover:bg-gray-700 dark:ring-[#1e1e1e]"
           aria-label="Fermer la publicité"
         >
-          {/* Circular countdown */}
-          <svg className="absolute inset-0 -rotate-90" viewBox="0 0 28 28">
-            <circle cx="14" cy="14" r={radius} fill="none" stroke="white" strokeOpacity="0.2" strokeWidth="2" />
+          <svg className="absolute inset-0 -rotate-90" viewBox="0 0 36 36" aria-hidden="true">
+            <circle cx="18" cy="18" r={radius} fill="none" stroke="white" strokeOpacity="0.25" strokeWidth="2.5" />
             <circle
-              cx="14" cy="14" r={radius} fill="none" stroke="white" strokeWidth="2"
+              cx="18" cy="18" r={radius} fill="none" stroke="white" strokeWidth="2.5"
               strokeDasharray={circumference} strokeDashoffset={circumference - progress}
               strokeLinecap="round"
               className="transition-[stroke-dashoffset] duration-1000 ease-linear"
             />
           </svg>
-          <span className="relative text-[10px] font-bold">{countdown}</span>
+          <X className="relative h-4 w-4" strokeWidth={2.5} />
         </button>
         <AdSlot
           slotId="mobile-anchor"
