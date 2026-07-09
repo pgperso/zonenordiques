@@ -156,6 +156,20 @@ export function NhlScoreboard() {
       <div className="mx-auto flex h-full max-w-7xl items-stretch">
         {/* Date navigation */}
         <div className="relative flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
+          {/* NHL logo — light glyph on dark bg, dark glyph on light bg. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://assets.nhle.com/logos/nhl/svg/NHL_light.svg"
+            alt="LNH"
+            className="mr-1 h-6 w-6 shrink-0 object-contain dark:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg"
+            alt=""
+            aria-hidden="true"
+            className="mr-1 hidden h-6 w-6 shrink-0 object-contain dark:block"
+          />
           <button
             onClick={() => setDate((d) => (d ? shiftDate(d, -1) : d))}
             aria-label={isFr ? 'Jour précédent' : 'Previous day'}
