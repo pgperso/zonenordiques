@@ -3,12 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Share2, Link2, Mail, Check } from 'lucide-react';
+import { BRAND } from '@/lib/brand';
 
 interface ShareButtonProps {
   /** Absolute URL to share. */
   url: string;
   /** Title / text that accompanies the link. */
   title: string;
+  /** Hashtags (no leading '#') appended to shares. Defaults to the brand set. */
+  hashtags?: string[];
   /** Show a "Partager" text label next to the icon (default: icon only). */
   label?: boolean;
   className?: string;
@@ -40,9 +43,14 @@ function BrandIcon({ path, className }: { path: string; className?: string }) {
  * email, and copy-link. The popover is fixed-positioned so it is never
  * clipped by an `overflow-hidden` card.
  */
-export function ShareButton({ url, title, label = false, className }: ShareButtonProps) {
+export function ShareButton({ url, title, hashtags, label = false, className }: ShareButtonProps) {
   const locale = useLocale();
   const isFr = locale === 'fr';
+  const tags = hashtags ?? BRAND.hashtags;
+  const hashtagText = tags.map((h) => `#${h}`).join(' ');
+  // Title + hashtags, for networks that share free text (not the ones that
+  // scrape Open Graph from the URL, like Facebook/LinkedIn).
+  const titleWithTags = hashtagText ? `${title}\n\n${hashtagText}` : title;
   const [open, setOpen] = useState(false);
   const [coords, setCoords] = useState<{ top: number; left: number; above: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -110,13 +118,16 @@ export function ShareButton({ url, title, label = false, className }: ShareButto
     {
       key: 'x',
       label: 'X',
-      href: `https://x.com/intent/tweet?url=${enc(url)}&text=${enc(title)}`,
+      // X renders the `hashtags` param as clickable tags after the text.
+      href: `https://x.com/intent/tweet?url=${enc(url)}&text=${enc(title)}${
+        tags.length ? `&hashtags=${enc(tags.join(','))}` : ''
+      }`,
       path: X_PATH,
     },
     {
       key: 'whatsapp',
       label: 'WhatsApp',
-      href: `https://wa.me/?text=${enc(`${title} ${url}`)}`,
+      href: `https://wa.me/?text=${enc(`${titleWithTags}\n${url}`)}`,
       path: WHATSAPP_PATH,
     },
     {
@@ -136,7 +147,7 @@ export function ShareButton({ url, title, label = false, className }: ShareButto
   async function nativeShare() {
     close();
     try {
-      await navigator.share({ title, url });
+      await navigator.share({ title, text: titleWithTags, url });
     } catch {
       /* the visitor cancelled the share sheet — nothing to do */
     }

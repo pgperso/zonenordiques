@@ -46,6 +46,9 @@ export const BRAND = {
   twitterHandle: '@zonenordiques',
   twitterUrl: 'https://x.com/zonenordiques',
 
+  // Default hashtags appended to social shares (no leading '#').
+  hashtags: ['Nordiques', 'LNH', 'Hockey'],
+
   colors: {
     blue: '#003E7E',
     blueDark: '#002B57',
