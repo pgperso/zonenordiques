@@ -91,7 +91,9 @@ export function NhlScoreboard() {
     const root = document.documentElement;
     if (show) root.style.setProperty('--chrome-h', `calc(4rem + ${STRIP_H}px)`);
     else root.style.removeProperty('--chrome-h');
-    return () => root.style.removeProperty('--chrome-h');
+    return () => {
+      root.style.removeProperty('--chrome-h');
+    };
   }, [show]);
 
   // Hold layout until the first load resolves (avoids a flash before we know
