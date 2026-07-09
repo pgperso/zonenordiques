@@ -1,44 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import { AdSlot } from './AdSlot';
-
-// Session-scoped: once a member actively closes the anchor, keep it closed on
-// every page for the rest of the visit (fixes "I close it and it comes back").
-const STORAGE_KEY = 'zn_anchor_closed';
 
 /**
  * Mobile bottom anchor ad. The ad loads inside a collapsed (max-h-0) wrapper
  * and only slides into view — with its close button — once AdSense confirms a
- * fill. That means no empty container and no premature/disappearing ✕: if the
- * slot is unfilled, nothing ever appears. Matches Google's own anchor
- * behaviour (stays until the user dismisses it; dismissal persists).
+ * fill, so there's no empty container and no premature/disappearing ✕. If the
+ * slot is unfilled, nothing ever appears.
+ *
+ * Dismissal is intentionally NOT persisted: closing hides it only while the
+ * page stays mounted, so the anchor reappears every time the member re-enters
+ * (reconnects to) the chat.
  */
 export function AdAnchor() {
-  // Start dismissed so SSR + first client render match (nothing shown); the
-  // effect then reveals it unless it was closed earlier this session.
-  const [dismissed, setDismissed] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
   const [filled, setFilled] = useState(false);
-
-  useEffect(() => {
-    let closed = false;
-    try {
-      closed = sessionStorage.getItem(STORAGE_KEY) === '1';
-    } catch {
-      /* storage unavailable — show */
-    }
-    setDismissed(closed);
-  }, []);
-
-  function closeManually() {
-    try {
-      sessionStorage.setItem(STORAGE_KEY, '1');
-    } catch {
-      /* ignore */
-    }
-    setDismissed(true);
-  }
 
   if (dismissed) return null;
 
@@ -53,7 +31,7 @@ export function AdAnchor() {
       <div className="relative flex justify-center py-1">
         {filled && (
           <button
-            onClick={closeManually}
+            onClick={() => setDismissed(true)}
             className="absolute right-1 top-1 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-gray-800 text-white shadow-lg ring-2 ring-white transition hover:bg-gray-700 dark:ring-[#1e1e1e]"
             aria-label="Fermer la publicité"
           >
