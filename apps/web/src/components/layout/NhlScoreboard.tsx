@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
@@ -51,6 +51,22 @@ export function NhlScoreboard() {
   const [date, setDate] = useState<string | null>(null);
   const [games, setGames] = useState<Game[] | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // Open the native calendar when the date label is clicked.
+  const openDatePicker = useCallback(() => {
+    const el = dateInputRef.current;
+    if (!el) return;
+    if (typeof el.showPicker === 'function') {
+      try {
+        el.showPicker();
+        return;
+      } catch {
+        /* fall through to focus */
+      }
+    }
+    el.focus();
+  }, []);
 
   // Resolve "today" on the client only, to avoid an SSR/CSR date mismatch.
   useEffect(() => {
@@ -118,7 +134,7 @@ export function NhlScoreboard() {
     >
       <div className="mx-auto flex h-full max-w-7xl items-stretch">
         {/* Date navigation */}
-        <div className="flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
+        <div className="relative flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
           <button
             onClick={() => setDate((d) => (d ? shiftDate(d, -1) : d))}
             aria-label={isFr ? 'Jour précédent' : 'Previous day'}
@@ -126,9 +142,24 @@ export function NhlScoreboard() {
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <span className="w-14 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <button
+            type="button"
+            onClick={openDatePicker}
+            aria-label={isFr ? 'Choisir une date' : 'Pick a date'}
+            className="w-16 rounded text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 transition hover:text-brand-blue dark:text-gray-400"
+          >
             {dateLabel}
-          </span>
+          </button>
+          {/* Native date picker, visually hidden behind the label button. */}
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={date ?? ''}
+            onChange={(e) => e.target.value && setDate(e.target.value)}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-0 left-1/2 h-0 w-0 -translate-x-1/2 opacity-0"
+          />
           <button
             onClick={() => setDate((d) => (d ? shiftDate(d, 1) : d))}
             aria-label={isFr ? 'Jour suivant' : 'Next day'}
