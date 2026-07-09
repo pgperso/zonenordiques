@@ -51,6 +51,7 @@ export function NhlScoreboard() {
   const [date, setDate] = useState<string | null>(null);
   const [games, setGames] = useState<Game[] | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [seasonStart, setSeasonStart] = useState<string | null>(null);
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   // Open the native calendar when the date label is clicked.
@@ -71,6 +72,14 @@ export function NhlScoreboard() {
   // Resolve "today" on the client only, to avoid an SSR/CSR date mismatch.
   useEffect(() => {
     setDate(todayET());
+  }, []);
+
+  // Season start/end — used to show a "season starts on…" message off-season.
+  useEffect(() => {
+    fetch('/api/nhl/season')
+      .then((r) => r.json())
+      .then((d: { start?: string | null }) => setSeasonStart(d.start ?? null))
+      .catch(() => {});
   }, []);
 
   const fetchScores = useCallback(async (d: string) => {
@@ -127,6 +136,18 @@ export function NhlScoreboard() {
           ? isFr ? 'Demain' : 'Tomorrow'
           : new Date(`${date}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 
+  // Empty-state copy: before the season opens, announce the start date;
+  // otherwise it's simply a day with no games.
+  const seasonStarted = seasonStart ? today >= seasonStart : true;
+  const emptyMessage =
+    !seasonStarted && seasonStart
+      ? isFr
+        ? `La nouvelle saison de la LNH débute le ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+        : `The new NHL season starts ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
+      : date === today
+        ? isFr ? "Aucun match dans la LNH aujourd'hui" : 'No NHL games today'
+        : isFr ? 'Aucun match ce jour' : 'No games this day';
+
   return (
     <div
       className="shrink-0 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1e1e1e]"
@@ -174,8 +195,8 @@ export function NhlScoreboard() {
           {hasGames ? (
             games!.map((g) => <GameChip key={g.id} game={g} locale={locale} isFr={isFr} />)
           ) : (
-            <span className="text-xs text-gray-400">
-              {isFr ? 'Aucun match ce jour' : 'No games this day'}
+            <span className="whitespace-nowrap px-1 text-xs text-gray-400">
+              {emptyMessage}
             </span>
           )}
         </div>
