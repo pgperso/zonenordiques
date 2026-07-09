@@ -8,6 +8,14 @@
     overflow-x: hidden;
   }
 
+  /* Total top chrome = header (4rem) + the always-present NHL scoreboard
+     strip (52px, keep in sync with STRIP_H in NhlScoreboard.tsx). Fixed-
+     height pages subtract this via calc(100dvh - var(--chrome-h)). Defined
+     here (not from JS) so it's correct at SSR and never shifts after load. */
+  :root {
+    --chrome-h: calc(4rem + 52px);
+  }
+
   body {
     display: flex;
     flex-direction: column;

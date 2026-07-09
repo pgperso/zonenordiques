@@ -111,109 +111,108 @@ export function NhlScoreboard() {
   const hasGames = (games?.length ?? 0) > 0;
   const show = loaded && !!date;
 
-  // Tell the fixed-height pages how tall the top chrome is while the strip is
-  // visible; fall back to the header-only 4rem before first load.
-  useEffect(() => {
-    const root = document.documentElement;
-    if (show) root.style.setProperty('--chrome-h', `calc(4rem + ${STRIP_H}px)`);
-    else root.style.removeProperty('--chrome-h');
-    return () => {
-      root.style.removeProperty('--chrome-h');
-    };
-  }, [show]);
-
-  // Hold layout until the first load resolves (avoids a flash before we know
-  // whether there are games).
-  if (!show) return null;
-
   const today = todayET();
-  const dateLabel =
-    date === today
-      ? isFr ? "Aujourd'hui" : 'Today'
-      : date === shiftDate(today, -1)
-        ? isFr ? 'Hier' : 'Yesterday'
-        : date === shiftDate(today, 1)
-          ? isFr ? 'Demain' : 'Tomorrow'
-          : new Date(`${date}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  let dateLabel = '';
+  let emptyMessage = '';
+  if (show && date) {
+    dateLabel =
+      date === today
+        ? isFr ? "Aujourd'hui" : 'Today'
+        : date === shiftDate(today, -1)
+          ? isFr ? 'Hier' : 'Yesterday'
+          : date === shiftDate(today, 1)
+            ? isFr ? 'Demain' : 'Tomorrow'
+            : new Date(`${date}T12:00:00`).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 
-  // Empty-state copy: before the season opens, announce the start date;
-  // otherwise it's simply a day with no games.
-  const seasonStarted = seasonStart ? today >= seasonStart : true;
-  const emptyMessage =
-    !seasonStarted && seasonStart
-      ? isFr
-        ? `La nouvelle saison de la LNH débute le ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}`
-        : `The new NHL season starts ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
-      : date === today
-        ? isFr ? "Aucun match dans la LNH aujourd'hui" : 'No NHL games today'
-        : isFr ? 'Aucun match ce jour' : 'No games this day';
+    // Empty-state copy: before the season opens, announce the start date;
+    // otherwise it's simply a day with no games.
+    const seasonStarted = seasonStart ? today >= seasonStart : true;
+    emptyMessage =
+      !seasonStarted && seasonStart
+        ? isFr
+          ? `La nouvelle saison de la LNH débute le ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}`
+          : `The new NHL season starts ${new Date(`${seasonStart}T12:00:00`).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })}`
+        : date === today
+          ? isFr ? "Aucun match dans la LNH aujourd'hui" : 'No NHL games today'
+          : isFr ? 'Aucun match ce jour' : 'No games this day';
+  }
 
+  // The strip is ALWAYS rendered at a fixed height (reserved via --chrome-h in
+  // base.css) so the layout never shifts after the scores load — that shift is
+  // what made the chat's virtualized list jump on scroll.
   return (
     <div
       className="shrink-0 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1e1e1e]"
       style={{ height: STRIP_H }}
     >
       <div className="mx-auto flex h-full max-w-7xl items-stretch">
-        {/* Date navigation */}
-        <div className="relative flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
-          {/* NHL logo — light glyph on dark bg, dark glyph on light bg. */}
+        {/* NHL logo — always present; light glyph on dark bg, dark on light. */}
+        <div className="flex shrink-0 items-center border-r border-gray-200 px-2 dark:border-gray-800">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="https://assets.nhle.com/logos/nhl/svg/NHL_light.svg"
             alt="LNH"
-            className="mr-1 h-6 w-6 shrink-0 object-contain dark:hidden"
+            className="h-6 w-6 shrink-0 object-contain dark:hidden"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="https://assets.nhle.com/logos/nhl/svg/NHL_dark.svg"
             alt=""
             aria-hidden="true"
-            className="mr-1 hidden h-6 w-6 shrink-0 object-contain dark:block"
+            className="hidden h-6 w-6 shrink-0 object-contain dark:block"
           />
-          <button
-            onClick={() => setDate((d) => (d ? shiftDate(d, -1) : d))}
-            aria-label={isFr ? 'Jour précédent' : 'Previous day'}
-            className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={openDatePicker}
-            aria-label={isFr ? 'Choisir une date' : 'Pick a date'}
-            className="w-24 whitespace-nowrap rounded px-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 transition hover:text-brand-blue dark:text-gray-400"
-          >
-            {dateLabel}
-          </button>
-          {/* Native date picker, visually hidden behind the label button. */}
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={date ?? ''}
-            onChange={(e) => e.target.value && setDate(e.target.value)}
-            tabIndex={-1}
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-0 left-1/2 h-0 w-0 -translate-x-1/2 opacity-0"
-          />
-          <button
-            onClick={() => setDate((d) => (d ? shiftDate(d, 1) : d))}
-            aria-label={isFr ? 'Jour suivant' : 'Next day'}
-            className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
         </div>
 
-        {/* Games */}
-        <div className="scrollbar-none flex flex-1 items-center gap-2 overflow-x-auto px-2">
-          {hasGames ? (
-            games!.map((g) => <GameChip key={g.id} game={g} locale={locale} isFr={isFr} />)
-          ) : (
-            <span className="whitespace-nowrap px-1 text-xs text-gray-400">
-              {emptyMessage}
-            </span>
-          )}
-        </div>
+        {show ? (
+          <>
+            {/* Date navigation */}
+            <div className="relative flex shrink-0 items-center gap-0.5 border-r border-gray-200 px-1 dark:border-gray-800">
+              <button
+                onClick={() => setDate((d) => (d ? shiftDate(d, -1) : d))}
+                aria-label={isFr ? 'Jour précédent' : 'Previous day'}
+                className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={openDatePicker}
+                aria-label={isFr ? 'Choisir une date' : 'Pick a date'}
+                className="w-24 whitespace-nowrap rounded px-1 text-center text-[11px] font-semibold uppercase tracking-wide text-gray-500 transition hover:text-brand-blue dark:text-gray-400"
+              >
+                {dateLabel}
+              </button>
+              {/* Native date picker, visually hidden behind the label button. */}
+              <input
+                ref={dateInputRef}
+                type="date"
+                value={date ?? ''}
+                onChange={(e) => e.target.value && setDate(e.target.value)}
+                tabIndex={-1}
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-0 left-1/2 h-0 w-0 -translate-x-1/2 opacity-0"
+              />
+              <button
+                onClick={() => setDate((d) => (d ? shiftDate(d, 1) : d))}
+                aria-label={isFr ? 'Jour suivant' : 'Next day'}
+                className="rounded p-1 text-gray-400 transition hover:bg-gray-100 hover:text-brand-blue dark:hover:bg-gray-800"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Games */}
+            <div className="scrollbar-none flex flex-1 items-center gap-2 overflow-x-auto px-2">
+              {hasGames ? (
+                games!.map((g) => <GameChip key={g.id} game={g} locale={locale} isFr={isFr} />)
+              ) : (
+                <span className="whitespace-nowrap px-1 text-xs text-gray-400">{emptyMessage}</span>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex-1" />
+        )}
       </div>
     </div>
   );
