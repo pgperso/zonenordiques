@@ -1,5 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 import type { Metadata } from 'next';
 
 export const revalidate = 86400;
@@ -271,6 +272,10 @@ function EnglishContent() {
         <br />
         <strong>Address:</strong> Quebec, Canada
       </p>
+
+      <div className="not-prose">
+        <AdSlot slotId="terms-bottom" format="leaderboard" className="mx-auto mt-8" />
+      </div>
     </article>
   );
 }

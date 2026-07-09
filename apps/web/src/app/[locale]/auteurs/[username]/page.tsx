@@ -6,6 +6,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { translatedField } from '@/lib/contentTranslation';
 import { findContentAuthorBySlug, type ContentAuthor } from '@/lib/contentAuthors';
 
@@ -299,6 +300,8 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
             </ul>
           )}
         </section>
+
+        <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
       </div>
     </div>
   );

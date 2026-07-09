@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 
 const WEB_API = 'https://api-web.nhle.com/v1';
 
@@ -217,6 +218,8 @@ export default async function MatchPage({
           </div>
         </div>
       )}
+
+      <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
     </div>
   );
 }

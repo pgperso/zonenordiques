@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { Exposmetre } from '@/components/feed/Exposmetre';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { BRAND } from '@/lib/brand';
 
 export const revalidate = 300;
@@ -87,6 +88,10 @@ export default async function ExposmetrePage({
       </header>
       <div className="flex min-h-0 flex-1 flex-col">
         <Exposmetre canModerate={canModerate} />
+      </div>
+      {/* Bottom banner. Collapses when AdSense has no fill. */}
+      <div className="shrink-0 border-t border-gray-200 px-4 py-2 dark:border-gray-700">
+        <AdSlot slotId="meter-bottom" format="leaderboard" className="mx-auto" />
       </div>
     </div>
   );

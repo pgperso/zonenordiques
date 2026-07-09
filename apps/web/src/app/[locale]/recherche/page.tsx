@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { formatDate } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 import { SearchBox } from './SearchBox';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -94,6 +95,8 @@ export default async function SearchPage({
           </ul>
         </>
       )}
+
+      <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
     </div>
   );
 }

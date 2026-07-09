@@ -10,6 +10,7 @@ import { leaveCommunity } from '@/services/communityService';
 import { JoinTribuneModal } from '@/components/community/JoinTribuneModal';
 import { displayCommunityName, displayCommunityDescription } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 import type { Database } from '@arena/supabase-client';
 
 type CommunityRow = Database['public']['Tables']['communities']['Row'] & {
@@ -220,6 +221,8 @@ export function TribunesClient({ communities, userId, memberCommunityIds }: Trib
             </>
           );
         })()}
+
+        <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto my-8" />
       </div>
 
       {showJoinModal && (

@@ -8,6 +8,7 @@ import { displayCommunityName, displayCommunityDescription } from '@arena/shared
 import { fetchPressGalleryItems } from '@/services/pressGalleryService';
 import { PressContentCard } from '@/components/press/PressContentCard';
 import { BRAND } from '@/lib/brand';
+import { AdSlot } from '@/components/ads/AdSlot';
 
 export const revalidate = 300;
 
@@ -268,6 +269,8 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             </ul>
           </section>
         )}
+
+        <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
       </div>
     </div>
   );
