@@ -131,12 +131,12 @@ export function FeedContainer({
   }
 
   const handleSend = useCallback(
-    async (content: string, imageUrls?: string[]) => {
+    async (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
       if (replyTarget) {
-        await sendReply(replyTarget.id, content, imageUrls);
+        await sendReply(replyTarget.id, content, imageUrls, audioUrl, audioDuration);
         setReplyTarget(null);
       } else {
-        await sendMessage(content, imageUrls);
+        await sendMessage(content, imageUrls, audioUrl, audioDuration);
       }
     },
     [replyTarget, sendReply, sendMessage],

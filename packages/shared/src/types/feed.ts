@@ -28,6 +28,7 @@ export interface FeedMessage extends FeedItemBase {
   memberId: string | null;
   content: string | null;
   imageUrls: string[];
+  audioUrl: string | null;
   linkPreviews: LinkPreview[];
   parentId: number | null;
   likeCount: number;

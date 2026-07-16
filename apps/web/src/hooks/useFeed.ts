@@ -27,7 +27,7 @@ const MAX_FEED_ITEMS = 500;
 const REALTIME_DEBOUNCE_MS = 100;
 
 // Explicit column selections (avoid select('*') to exclude large columns like body)
-const CHAT_MSG_SELECT = 'id, community_id, member_id, content, image_urls, created_at, is_removed, removed_at, removed_by, like_count, dislike_count, reply_count, parent_id, link_previews, members:members!chat_messages_member_id_fkey(id, username, avatar_url, message_count)';
+const CHAT_MSG_SELECT = 'id, community_id, member_id, content, image_urls, audio_url, audio_duration_seconds, created_at, is_removed, removed_at, removed_by, like_count, dislike_count, reply_count, parent_id, link_previews, members:members!chat_messages_member_id_fkey(id, username, avatar_url, message_count)';
 const ARTICLE_SELECT = 'id, community_id, author_id, title, slug, excerpt, cover_image_url, like_count, view_count, published_at, is_published, is_removed, created_at, author_name_override, members:members!articles_author_id_fkey(id, username, avatar_url, message_count, creator_display_name, creator_avatar_url)';
 const PODCAST_SELECT = 'id, community_id, published_by, title, description, audio_url, cover_image_url, duration_seconds, youtube_video_id, is_live, like_count, is_published, is_removed, created_at, members:members!podcasts_published_by_fkey(id, username, avatar_url, message_count, creator_display_name, creator_avatar_url)';
 
@@ -55,6 +55,7 @@ function messageToFeedItem(row: ChatMessageWithJoin): FeedMessage {
     memberId: row.member_id,
     content: row.content,
     imageUrls: row.image_urls ?? [],
+    audioUrl: row.audio_url ?? null,
     parentId: row.parent_id,
     likeCount: row.like_count,
     dislikeCount: row.dislike_count,
@@ -217,6 +218,7 @@ function feedReducer(state: FeedState, action: FeedAction): FeedState {
                 ...msg,
                 content: u.content,
                 imageUrls: u.image_urls ?? [],
+                audioUrl: u.audio_url ?? msg.audioUrl,
                 likeCount: u.like_count,
                 dislikeCount: u.dislike_count,
                 replyCount: u.reply_count,
@@ -324,6 +326,8 @@ const initialState: FeedState = {
 interface SendOptions {
   content?: string;
   imageUrls?: string[];
+  audioUrl?: string | null;
+  audioDuration?: number | null;
   parentId?: number;
 }
 
@@ -337,8 +341,8 @@ export interface UseFeedReturn {
   hasMore: boolean;
   /** Virtuoso firstItemIndex for stable reverse-infinite-scroll. */
   firstItemIndex: number;
-  sendMessage: (content: string, imageUrls?: string[]) => Promise<void>;
-  sendReply: (parentId: number, content: string, imageUrls?: string[]) => Promise<void>;
+  sendMessage: (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => Promise<void>;
+  sendReply: (parentId: number, content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => Promise<void>;
   editMessage: (messageId: number, content: string) => Promise<void>;
   loadMore: () => Promise<void>;
   deleteMessage: (messageId: number) => Promise<void>;
@@ -617,8 +621,9 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
       if (!userId) return;
       const hasContent = options.content && options.content.trim();
       const hasImages = options.imageUrls && options.imageUrls.length > 0;
+      const hasAudio = Boolean(options.audioUrl);
 
-      if (!hasContent && !hasImages) return;
+      if (!hasContent && !hasImages && !hasAudio) return;
 
       if (hasContent || hasImages) {
         const result = messageSchema.safeParse({
@@ -640,6 +645,8 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
             member_id: userId,
             content: hasContent ? options.content!.trim() : null,
             image_urls: options.imageUrls ?? [],
+            audio_url: options.audioUrl ?? null,
+            audio_duration_seconds: options.audioDuration ?? null,
             parent_id: options.parentId ?? null,
           })
           .select(CHAT_MSG_SELECT)
@@ -695,13 +702,15 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
   );
 
   const sendMessage = useCallback(
-    async (content: string, imageUrls?: string[]) => { await send({ content, imageUrls }); },
+    async (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
+      await send({ content, imageUrls, audioUrl, audioDuration });
+    },
     [send],
   );
 
   const sendReply = useCallback(
-    async (parentId: number, content: string, imageUrls?: string[]) => {
-      await send({ content, imageUrls, parentId });
+    async (parentId: number, content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
+      await send({ content, imageUrls, parentId, audioUrl, audioDuration });
     },
     [send],
   );

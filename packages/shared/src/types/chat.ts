@@ -5,6 +5,7 @@ export interface ChatMessage {
   content: string | null;
   parentId: number | null;
   imageUrls: string[];
+  audioUrl?: string | null;
   likeCount: number;
   replyCount: number;
   isRemoved: boolean;

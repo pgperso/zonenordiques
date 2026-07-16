@@ -274,6 +274,9 @@ export const FeedMessage = memo(function FeedMessage({
         {!editing && message.imageUrls.length > 0 && (
           <FeedImageGallery imageUrls={message.imageUrls} />
         )}
+        {!editing && message.audioUrl && (
+          <audio controls preload="metadata" src={message.audioUrl} className="mt-1 h-10 w-full max-w-xs" />
+        )}
 
         {!editing && (
           <FeedMessageStats
@@ -350,6 +353,9 @@ export const FeedMessage = memo(function FeedMessage({
           )}
           {!editing && message.imageUrls.length > 0 && (
             <FeedImageGallery imageUrls={message.imageUrls} />
+          )}
+          {!editing && message.audioUrl && (
+            <audio controls preload="metadata" src={message.audioUrl} className="mt-1 h-10 w-full max-w-xs" />
           )}
 
           {!editing && (

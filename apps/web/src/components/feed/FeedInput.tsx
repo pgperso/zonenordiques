@@ -2,10 +2,11 @@
 
 import { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Plus, X, SendHorizontal, Mic } from 'lucide-react';
+import { Plus, X, SendHorizontal, Mic, Music } from 'lucide-react';
 import Image from 'next/image';
 import { CHAT_MAX_MESSAGE_LENGTH, MAX_IMAGES_PER_MESSAGE } from '@arena/shared';
 import { useImageUpload } from '@/hooks/useImageUpload';
+import { useChatAudioUpload } from '@/hooks/useChatAudioUpload';
 import { useMentionAutocomplete, type MentionMember } from '@/hooks/useMentionAutocomplete';
 import { useVoiceDictation } from '@/hooks/useVoiceDictation';
 import { Avatar } from '@/components/ui/Avatar';
@@ -22,7 +23,7 @@ const SLASH_COMMANDS: SlashCommand[] = [
 ];
 
 interface FeedInputProps {
-  onSend: (content: string, imageUrls?: string[]) => Promise<void>;
+  onSend: (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => Promise<void>;
   disabled: boolean;
   placeholder?: string;
   communityId: number;
@@ -40,6 +41,9 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
   const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioInputRef = useRef<HTMLInputElement>(null);
+  const audio = useChatAudioUpload();
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const { images, uploading, addImages, removeImage, clearImages, uploadAll } = useImageUpload();
 
   // Voice dictation: dictationBaseRef holds the textarea content at the
@@ -150,17 +154,30 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
       return;
     }
 
-    if ((!trimmed && images.length === 0) || disabled || uploading) return;
+    if ((!trimmed && images.length === 0 && !audioFile) || disabled || uploading || audio.uploading) return;
 
     let imageUrls: string[] = [];
     if (images.length > 0 && userId) {
       imageUrls = await uploadAll(communityId, userId);
     }
 
+    let audioUrl: string | undefined;
+    let audioDuration: number | null | undefined;
+    if (audioFile && userId) {
+      const res = await audio.upload(audioFile, communityId, userId);
+      if (!res) {
+        setError(audio.error ?? "Envoi de l'audio impossible.");
+        return;
+      }
+      audioUrl = res.url;
+      audioDuration = res.durationSeconds;
+    }
+
     const savedContent = content;
     setContent('');
     mention.reset();
     clearImages();
+    setAudioFile(null);
     // Reset the dictation session so the next utterance starts from a
     // blank slate. Without this the still-running SpeechRecognition would
     // keep emitting cumulative transcripts joined to the (now-cleared)
@@ -172,7 +189,7 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
     }
     const textarea = textareaRef.current;
     try {
-      await onSend(trimmed, imageUrls.length > 0 ? imageUrls : undefined);
+      await onSend(trimmed, imageUrls.length > 0 ? imageUrls : undefined, audioUrl, audioDuration);
       setError(null);
     } catch (err) {
       // Restore what the user typed so they can edit + retry instead of losing it.
@@ -181,7 +198,19 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
       setError(message);
     }
     textarea?.focus();
-  }, [content, disabled, uploading, images, userId, communityId, canModerate, mention, onSend, uploadAll, clearImages, dictation]);
+  }, [content, disabled, uploading, images, userId, communityId, canModerate, mention, onSend, uploadAll, clearImages, dictation, audioFile, audio]);
+
+  function handleAudioChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    const err = audio.validate(file);
+    if (err) {
+      setError(err);
+      return;
+    }
+    setAudioFile(file);
+  }
 
   function handleKeyDown(e: React.KeyboardEvent) {
     // While the mention popup is open it owns the arrow / enter / escape keys.
@@ -274,9 +303,30 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
         onChange={handleFileChange}
         className="hidden"
       />
+      <input
+        ref={audioInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleAudioChange}
+        className="hidden"
+      />
 
       {/* Single unified container */}
       <div className="overflow-hidden rounded-lg bg-gray-100 dark:bg-[#272525]">
+        {/* Attached audio chip */}
+        {audioFile && (
+          <div className="flex items-center gap-2 border-b border-gray-200 p-3 dark:border-gray-700">
+            <Music className="h-4 w-4 shrink-0 text-brand-blue" />
+            <span className="truncate text-sm text-gray-700 dark:text-gray-300">{audioFile.name}</span>
+            <button
+              onClick={() => setAudioFile(null)}
+              className="ml-auto flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+              aria-label="Retirer l'audio"
+            >
+              <X className="h-4 w-4" strokeWidth={2.5} />
+            </button>
+          </div>
+        )}
         {/* Image previews inside the bar */}
         {images.length > 0 && (
           <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700 p-3">
@@ -313,7 +363,7 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
 
         {/* Input row */}
         <div className="flex items-end">
-          {/* + button */}
+          {/* + button (images) */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled || !canAddMoreImages}
@@ -321,6 +371,17 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
             title={t('addImages')}
           >
             <Plus className="h-5 w-5" strokeWidth={2} />
+          </button>
+
+          {/* Attach audio button */}
+          <button
+            onClick={() => audioInputRef.current?.click()}
+            disabled={disabled || !!audioFile}
+            className="flex h-10 w-10 shrink-0 items-center justify-center text-gray-400 transition hover:text-gray-600 dark:hover:text-gray-300 dark:text-gray-400 disabled:opacity-50"
+            title="Joindre un audio"
+            aria-label="Joindre un audio"
+          >
+            <Music className="h-5 w-5" strokeWidth={2} />
           </button>
 
           {/* Textarea */}
@@ -360,12 +421,12 @@ export function FeedInput({ onSend, disabled, placeholder, communityId, userId, 
               the mic don't have to reach for the keyboard to press Enter. */}
           <button
             onClick={handleSend}
-            disabled={disabled || uploading || (!content.trim() && images.length === 0)}
+            disabled={disabled || uploading || audio.uploading || (!content.trim() && images.length === 0 && !audioFile)}
             className="flex h-10 w-10 shrink-0 items-center justify-center text-brand-blue transition hover:text-brand-blue-dark disabled:text-gray-300"
             title={tc('send')}
             aria-label={tc('send')}
           >
-            {uploading ? (
+            {uploading || audio.uploading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
             ) : (
               <SendHorizontal className="h-5 w-5" strokeWidth={2} />

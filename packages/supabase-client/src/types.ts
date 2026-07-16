@@ -179,6 +179,8 @@ export type Database = {
           repost_of_id: number | null;
           quote_of_id: number | null;
           image_urls: string[];
+          audio_url: string | null;
+          audio_duration_seconds: number | null;
           like_count: number;
           dislike_count: number;
           reply_count: number;
@@ -198,6 +200,8 @@ export type Database = {
           repost_of_id?: number | null;
           quote_of_id?: number | null;
           image_urls?: string[];
+          audio_url?: string | null;
+          audio_duration_seconds?: number | null;
           like_count?: number;
           dislike_count?: number;
           reply_count?: number;
@@ -217,6 +221,8 @@ export type Database = {
           repost_of_id?: number | null;
           quote_of_id?: number | null;
           image_urls?: string[];
+          audio_url?: string | null;
+          audio_duration_seconds?: number | null;
           like_count?: number;
           dislike_count?: number;
           reply_count?: number;
