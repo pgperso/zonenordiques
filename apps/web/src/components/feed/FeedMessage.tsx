@@ -16,6 +16,10 @@ import { BRAND } from '@/lib/brand';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { useTribune } from '@/contexts/TribuneContext';
 
+// Tailwind safelist — the member-rank badge classes live in @arena/shared
+// (MEMBER_RANKS), which Tailwind doesn't scan, so list them here in a scanned
+// file to force generation: bg-gray-100 text-gray-600 bg-blue-100 text-blue-700
+// bg-purple-100 text-purple-700 bg-orange-100 text-orange-700
 const STAFF_RANK_MAP: Record<string, { label: string; color: string; bg: string }> = {
   owner: { label: 'Propriétaire', color: 'text-brand-blue', bg: 'bg-brand-blue text-white' },
   admin: { label: 'Arbitre', color: 'text-red-600', bg: 'bg-red-600 text-white' },

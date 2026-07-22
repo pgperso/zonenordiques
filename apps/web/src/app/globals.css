@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* Also scan the shared package so utility classes referenced only there —
+   e.g. the member-rank badge colors in MEMBER_RANKS (bg-blue-100, …) — get
+   generated. Tailwind's default content detection doesn't reach it. */
+@source "../../../../packages/shared/src";
 @plugin "@tailwindcss/typography";
 @custom-variant dark (&:where(.dark, .dark *));
 @import "../styles/theme.css";
