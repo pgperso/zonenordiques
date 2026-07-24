@@ -144,8 +144,12 @@ export function FeedContainer({
   const handleSend = useCallback(
     async (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
       if (replyTarget) {
-        await sendReply(replyTarget.id, content, imageUrls, audioUrl, audioDuration);
+        const target = replyTarget;
+        await sendReply(target.id, content, imageUrls, audioUrl, audioDuration);
         setReplyTarget(null);
+        // Replies don't show in the flat feed — open the thread so the sender
+        // sees their reply land.
+        setThreadRoot(target);
       } else {
         await sendMessage(content, imageUrls, audioUrl, audioDuration);
       }

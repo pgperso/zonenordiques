@@ -411,6 +411,7 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
           .select(CHAT_MSG_SELECT)
           .eq('community_id', communityId)
           .eq('is_removed', false)
+          .is('parent_id', null)
           .order('created_at', { ascending: false })
           .limit(FEED_INITIAL_LIMIT),
         supabase
@@ -484,6 +485,8 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
         { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `community_id=eq.${communityId}` },
         async (payload: RealtimePostgresInsertPayload<ChatMessageRow>) => {
           const newMsg = payload.new;
+          // Replies live in the thread panel, not the flat chat feed.
+          if (newMsg.parent_id) return;
           const member = await resolveMember(newMsg.member_id);
           if (cancelled) return;
           bufferAndFlush({ type: 'ADD_MESSAGE', message: messageToFeedItem({ ...newMsg, members: member }) });
@@ -558,6 +561,7 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
       .select(CHAT_MSG_SELECT)
       .eq('community_id', communityId)
       .eq('is_removed', false)
+      .is('parent_id', null)
       .order('created_at', { ascending: false })
       .limit(FEED_INITIAL_LIMIT)
       .then(({ data }) => {
@@ -666,7 +670,8 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
         if (data) {
           const typed = data as unknown as ChatMessageWithJoin;
           if (typed.members) memberCacheRef.current.set(typed.members.id, typed.members);
-          dispatch({ type: 'ADD_MESSAGE', message: messageToFeedItem(typed) });
+          // A reply doesn't belong in the flat feed — it shows in the thread.
+          if (!options.parentId) dispatch({ type: 'ADD_MESSAGE', message: messageToFeedItem(typed) });
 
           // Fetch link previews in background (non-blocking)
           const urlRegex = /https?:\/\/[^\s<]+[^\s<.,:;"')\]!?]/g;
@@ -744,6 +749,7 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
       .select(CHAT_MSG_SELECT)
       .eq('community_id', communityId)
       .eq('is_removed', false)
+      .is('parent_id', null)
       .lt('created_at', oldestMsg.createdAt)
       .order('created_at', { ascending: false })
       .limit(FEED_LOAD_MORE_LIMIT);
