@@ -146,10 +146,10 @@ export function ThreadPanel({ root, userId, communityId, staffRoles, canReply, d
   });
 
   return (
-    <div className="fixed inset-0 z-[70] flex justify-end">
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative flex h-full w-full flex-col bg-white shadow-xl dark:bg-[#1e1e1e] sm:max-w-md">
+      <div className="relative flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-[#1e1e1e]">
         <header className="flex shrink-0 items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <h2 className="text-sm font-bold text-gray-900 dark:text-gray-100">Fil de discussion</h2>
           <button
