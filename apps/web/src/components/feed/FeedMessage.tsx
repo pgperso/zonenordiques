@@ -166,7 +166,8 @@ export const FeedMessage = memo(function FeedMessage({
   // Click anywhere on the message row opens its thread — but never hijack a
   // link/button/avatar click, an audio control, or an active text selection.
   const handleRowClick = useCallback((e: React.MouseEvent) => {
-    if (!onOpenThread || mobileToolbar) return;
+    // Only messages that already have replies open a thread on row-click.
+    if (!onOpenThread || mobileToolbar || !message.replyCount) return;
     const target = e.target as HTMLElement;
     if (target.closest('a, button, [role="button"], audio, input, textarea, img')) return;
     if (window.getSelection()?.toString()) return;
@@ -260,7 +261,7 @@ export const FeedMessage = memo(function FeedMessage({
     return (
       <div
         ref={messageRef}
-        className={`group relative py-1.5 pl-[52px] pr-3 transition-colors sm:pl-[60px] sm:pr-4 select-none [-webkit-touch-callout:none] md:select-text ${isHighlighted ? 'message-highlight' : 'hover:bg-gray-50 dark:hover:bg-[#272525] dark:bg-[#1e1e1e]'}`}
+        className={`group relative py-1.5 pl-[52px] pr-3 transition-colors sm:pl-[60px] sm:pr-4 select-none [-webkit-touch-callout:none] md:select-text ${onOpenThread && message.replyCount > 0 ? 'cursor-pointer ' : ''}${isHighlighted ? 'message-highlight' : 'hover:bg-gray-50 dark:hover:bg-[#272525] dark:bg-[#1e1e1e]'}`}
         onPointerDown={startLongPress}
         onPointerUp={cancelLongPress}
         onPointerMove={maybeCancelOnMove}
@@ -312,7 +313,7 @@ export const FeedMessage = memo(function FeedMessage({
   return (
     <div
       ref={messageRef}
-      className={`group relative px-4 pt-3 pb-1 transition-colors select-none [-webkit-touch-callout:none] md:select-text ${isHighlighted ? 'message-highlight' : 'hover:bg-gray-50 dark:hover:bg-[#272525] dark:bg-[#1e1e1e]'}`}
+      className={`group relative px-4 pt-3 pb-1 transition-colors select-none [-webkit-touch-callout:none] md:select-text ${onOpenThread && message.replyCount > 0 ? 'cursor-pointer ' : ''}${isHighlighted ? 'message-highlight' : 'hover:bg-gray-50 dark:hover:bg-[#272525] dark:bg-[#1e1e1e]'}`}
       onPointerDown={startLongPress}
       onPointerUp={cancelLongPress}
       onPointerMove={maybeCancelOnMove}

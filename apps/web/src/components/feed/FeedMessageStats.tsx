@@ -41,12 +41,12 @@ export const FeedMessageStats = memo(function FeedMessageStats({
             className="flex items-center gap-1 rounded text-orange-500 transition hover:text-orange-600"
             title="Voir le fil"
           >
-            <Flame className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+            <Flame className="h-4 w-4 group-hover:animate-[flame-flicker_0.6s_ease-in-out_infinite]" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
             <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{replyCount}</span>
           </button>
         ) : (
           <span className="flex items-center gap-1 text-orange-500">
-            <Flame className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+            <Flame className="h-4 w-4 group-hover:animate-[flame-flicker_0.6s_ease-in-out_infinite]" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
             <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{replyCount}</span>
           </span>
         ))}

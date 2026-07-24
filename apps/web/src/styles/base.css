@@ -172,6 +172,14 @@
   animation: slide-up 0.25s ease-out;
 }
 
+/* Reply-count flame — flickers on message hover to draw the eye. */
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.2) rotate(-6deg); }
+  50% { transform: scale(1.12) rotate(5deg); }
+  75% { transform: scale(1.22) rotate(-3deg); }
+}
+
 /* Safe area padding for mobile bottom sheet */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 16px);
