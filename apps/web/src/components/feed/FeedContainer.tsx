@@ -13,7 +13,6 @@ import { BatchLikeProvider } from '@/hooks/useBatchLikeStatus';
 import { FeedItem } from './FeedItem';
 import { FeedInput } from './FeedInput';
 import { FeedSkeleton } from './FeedSkeleton';
-import { FeedReplyBar } from './FeedReplyBar';
 import { ThreadPanel } from './ThreadPanel';
 import dynamic from 'next/dynamic';
 import { OnlineMembers } from '@/components/chat/OnlineMembers';
@@ -89,9 +88,6 @@ export function FeedContainer({
   const [showPodcastEditor, setShowPodcastEditor] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // Reply state
-  const [replyTarget, setReplyTarget] = useState<FeedMessageType | null>(null);
-
   // Thread panel — the root message whose conversation is being viewed.
   const [threadRoot, setThreadRoot] = useState<FeedMessageType | null>(null);
   const sendThreadReply = useCallback(
@@ -137,28 +133,19 @@ export function FeedContainer({
     if (!user) return `${t('loginToChat')} ${t('toParticipate')}`;
     if (!isMember) return t('joinToChat');
     if (isMuted) return t('muted');
-    if (replyTarget) return t('replyTo', { username: replyTarget.member?.username ?? t('deletedUser') });
     return t('writeMessage');
   }
 
   const handleSend = useCallback(
     async (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
-      if (replyTarget) {
-        const target = replyTarget;
-        await sendReply(target.id, content, imageUrls, audioUrl, audioDuration);
-        setReplyTarget(null);
-        // Replies don't show in the flat feed — open the thread so the sender
-        // sees their reply land.
-        setThreadRoot(target);
-      } else {
-        await sendMessage(content, imageUrls, audioUrl, audioDuration);
-      }
+      await sendMessage(content, imageUrls, audioUrl, audioDuration);
     },
-    [replyTarget, sendReply, sendMessage],
+    [sendMessage],
   );
 
+  // Reply icon → open the message's thread and reply from the modal composer.
   const handleReply = useCallback((message: FeedMessageType) => {
-    setReplyTarget(message);
+    setThreadRoot(message);
   }, []);
 
   const scrollToMessage = useCallback(
@@ -338,15 +325,6 @@ export function FeedContainer({
           </div>
         )}
 
-        {/* Reply bar */}
-        {replyTarget && (
-          <FeedReplyBar
-            username={replyTarget.member?.username ?? t('deletedUser')}
-            preview={replyTarget.content}
-            onCancel={() => setReplyTarget(null)}
-          />
-        )}
-
         {/* Input area */}
         {user ? (
           <FeedInput
@@ -356,7 +334,6 @@ export function FeedContainer({
             communityId={communityId}
             userId={user.id}
             canModerate={canModerate}
-            autoFocus={!!replyTarget}
           />
         ) : (
           <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e1e1e] px-4 py-3 text-center">
