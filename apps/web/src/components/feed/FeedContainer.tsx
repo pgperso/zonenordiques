@@ -422,7 +422,14 @@ export function FeedContainer({
           root={threadRoot}
           userId={user?.id ?? null}
           communityId={communityId}
+          canModerate={canModerate}
           staffRoles={liveStaffRoles}
+          editingMessageId={editingMessageId}
+          onStartEdit={setEditingMessageId}
+          onDeleteMessage={deleteMessage}
+          onEditMessage={editMessage}
+          onRoleChanged={handleRoleChanged}
+          onlineStatuses={onlineStatuses}
           canReply={!inputDisabled}
           disabledReason={!user ? t('loginToChat') : !isMember ? t('joinToChat') : isMuted ? t('muted') : ''}
           onSendReply={sendThreadReply}

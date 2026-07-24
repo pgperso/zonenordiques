@@ -1,52 +1,18 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import type { FeedMessage } from '@arena/shared';
 import { createClient } from '@/lib/supabase/client';
-
-export interface ThreadMessage {
-  id: number;
-  memberId: string | null;
-  content: string | null;
-  imageUrls: string[];
-  audioUrl: string | null;
-  createdAt: string;
-  member: { username: string; avatarUrl: string | null; messageCount: number } | null;
-}
-
-const REPLY_SELECT =
-  'id, member_id, content, image_urls, audio_url, created_at, members:members!chat_messages_member_id_fkey(id, username, avatar_url, message_count)';
-
-interface Row {
-  id: number;
-  member_id: string | null;
-  content: string | null;
-  image_urls: string[] | null;
-  audio_url: string | null;
-  created_at: string;
-  members: { username: string; avatar_url: string | null; message_count: number } | null;
-}
-
-function mapRow(row: Row): ThreadMessage {
-  return {
-    id: row.id,
-    memberId: row.member_id,
-    content: row.content,
-    imageUrls: row.image_urls ?? [],
-    audioUrl: row.audio_url ?? null,
-    createdAt: row.created_at,
-    member: row.members
-      ? { username: row.members.username, avatarUrl: row.members.avatar_url, messageCount: row.members.message_count }
-      : null,
-  };
-}
+import { CHAT_MSG_SELECT, messageToFeedItem, type ChatMessageWithJoin } from './useFeed';
 
 /**
- * Loads the direct replies to a root chat message (1-level thread) and keeps
- * them live. Any insert/update on a reply to this root refetches the small
- * reply set — cheap and always consistent (no per-row merge to get wrong).
+ * Loads the direct replies to a root chat message (1-level thread) as full
+ * FeedMessage items — so the thread can render them with the real FeedMessage
+ * component (edit / like / react / delete). Any insert/update on a reply to
+ * this root refetches the small reply set: cheap and always consistent.
  */
 export function useThread(rootId: number | null) {
-  const [replies, setReplies] = useState<ThreadMessage[]>([]);
+  const [replies, setReplies] = useState<FeedMessage[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchReplies = useCallback(async () => {
@@ -54,11 +20,11 @@ export function useThread(rootId: number | null) {
     const supabase = createClient();
     const { data } = await supabase
       .from('chat_messages')
-      .select(REPLY_SELECT)
+      .select(CHAT_MSG_SELECT)
       .eq('parent_id', rootId)
       .eq('is_removed', false)
       .order('created_at', { ascending: true });
-    setReplies(((data ?? []) as unknown as Row[]).map(mapRow));
+    setReplies(((data ?? []) as unknown as ChatMessageWithJoin[]).map(messageToFeedItem));
     setLoading(false);
   }, [rootId]);
 
