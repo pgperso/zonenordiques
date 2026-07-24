@@ -317,6 +317,7 @@ export const FeedMessage = memo(function FeedMessage({
       onPointerUp={cancelLongPress}
       onPointerMove={maybeCancelOnMove}
       onPointerCancel={cancelLongPress}
+      onClick={handleRowClick}
       onContextMenu={(e) => { if (mobileToolbar) e.preventDefault(); }}
     >
       {hasReplyContext && (
