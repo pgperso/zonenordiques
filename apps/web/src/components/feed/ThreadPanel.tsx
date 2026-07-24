@@ -61,11 +61,15 @@ interface ThreadPanelProps {
   userId: string | null;
   communityId: number;
   staffRoles: Record<string, string>;
+  /** Same gate as the main chat input: logged in + member + not muted. */
+  canReply: boolean;
+  /** Why replying is disabled (login / join / muted), shown in place of the composer. */
+  disabledReason: string;
   onSendReply: (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => Promise<void>;
   onClose: () => void;
 }
 
-export function ThreadPanel({ root, userId, communityId, staffRoles, onSendReply, onClose }: ThreadPanelProps) {
+export function ThreadPanel({ root, userId, communityId, staffRoles, canReply, disabledReason, onSendReply, onClose }: ThreadPanelProps) {
   const { replies, loading } = useThread(root.id);
 
   // Close on Escape.
@@ -132,8 +136,9 @@ export function ThreadPanel({ root, userId, communityId, staffRoles, onSendReply
           ))}
         </div>
 
-        {/* Composer — always replies to the root (keeps the thread 1-level). */}
-        {userId ? (
+        {/* Composer — always replies to the root (keeps the thread 1-level).
+            Gated exactly like the main chat: member + not muted. */}
+        {canReply && userId ? (
           <FeedInput
             onSend={onSendReply}
             disabled={false}
@@ -145,7 +150,7 @@ export function ThreadPanel({ root, userId, communityId, staffRoles, onSendReply
           />
         ) : (
           <div className="border-t border-gray-200 px-4 py-3 text-center text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">
-            Connecte-toi pour répondre.
+            {disabledReason}
           </div>
         )}
       </div>

@@ -419,6 +419,8 @@ export function FeedContainer({
           userId={user?.id ?? null}
           communityId={communityId}
           staffRoles={liveStaffRoles}
+          canReply={!inputDisabled}
+          disabledReason={!user ? t('loginToChat') : !isMember ? t('joinToChat') : isMuted ? t('muted') : ''}
           onSendReply={sendThreadReply}
           onClose={() => setThreadRoot(null)}
         />
