@@ -14,6 +14,7 @@ import { FeedItem } from './FeedItem';
 import { FeedInput } from './FeedInput';
 import { FeedSkeleton } from './FeedSkeleton';
 import { FeedReplyBar } from './FeedReplyBar';
+import { ThreadPanel } from './ThreadPanel';
 import dynamic from 'next/dynamic';
 import { OnlineMembers } from '@/components/chat/OnlineMembers';
 import { Link } from '@/i18n/navigation';
@@ -90,6 +91,16 @@ export function FeedContainer({
 
   // Reply state
   const [replyTarget, setReplyTarget] = useState<FeedMessageType | null>(null);
+
+  // Thread panel — the root message whose conversation is being viewed.
+  const [threadRoot, setThreadRoot] = useState<FeedMessageType | null>(null);
+  const sendThreadReply = useCallback(
+    (content: string, imageUrls?: string[], audioUrl?: string | null, audioDuration?: number | null) => {
+      if (!threadRoot) return Promise.resolve();
+      return sendReply(threadRoot.id, content, imageUrls, audioUrl, audioDuration);
+    },
+    [threadRoot, sendReply],
+  );
 
   // Edit state — only one message at a time (Discord behavior)
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
@@ -295,6 +306,7 @@ export function FeedContainer({
                         onScrollToMessage={scrollToMessage}
                         getMessageById={getMessageById}
                         onRoleChanged={handleRoleChanged}
+                        onOpenThread={setThreadRoot}
                         onlineStatuses={onlineStatuses}
                       />
                     );
@@ -399,6 +411,18 @@ export function FeedContainer({
           onLeave={user && onLeave ? () => { onLeave(); setShowMembers(false); } : undefined}
         />
       </aside>
+
+      {/* Thread panel — follow a message's reply conversation */}
+      {threadRoot && (
+        <ThreadPanel
+          root={threadRoot}
+          userId={user?.id ?? null}
+          communityId={communityId}
+          staffRoles={liveStaffRoles}
+          onSendReply={sendThreadReply}
+          onClose={() => setThreadRoot(null)}
+        />
+      )}
 
       {/* Article editor overlay */}
       {showArticleEditor && user && (

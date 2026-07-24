@@ -20,7 +20,7 @@ import { useTribune } from '@/contexts/TribuneContext';
 // (MEMBER_RANKS), which Tailwind doesn't scan, so list them here in a scanned
 // file to force generation: bg-gray-100 text-gray-600 bg-blue-100 text-blue-700
 // bg-purple-100 text-purple-700 bg-orange-100 text-orange-700
-const STAFF_RANK_MAP: Record<string, { label: string; color: string; bg: string }> = {
+export const STAFF_RANK_MAP: Record<string, { label: string; color: string; bg: string }> = {
   owner: { label: 'Propriétaire', color: 'text-brand-blue', bg: 'bg-brand-blue text-white' },
   admin: { label: 'Arbitre', color: 'text-red-600', bg: 'bg-red-600 text-white' },
   moderator: { label: 'Arbitre', color: 'text-red-600', bg: 'bg-red-600 text-white' },
@@ -45,6 +45,7 @@ interface FeedMessageProps {
   onScrollToMessage?: (messageId: number) => void;
   getMessageById: (id: number) => FeedMessageType | undefined;
   onRoleChanged?: (memberId: string, newRole: string | null) => void;
+  onOpenThread?: (message: FeedMessageType) => void;
   presenceStatus?: 'online' | 'idle';
 }
 
@@ -66,6 +67,7 @@ export const FeedMessage = memo(function FeedMessage({
   onScrollToMessage,
   getMessageById,
   onRoleChanged,
+  onOpenThread,
   presenceStatus,
 }: FeedMessageProps) {
   const t = useTranslations('tribune');
@@ -287,6 +289,7 @@ export const FeedMessage = memo(function FeedMessage({
             likeCount={message.likeCount}
             dislikeCount={message.dislikeCount}
             replyCount={message.replyCount}
+            onOpenThread={onOpenThread ? () => onOpenThread(message) : undefined}
           />
         )}
         {popover}
@@ -367,6 +370,7 @@ export const FeedMessage = memo(function FeedMessage({
               likeCount={message.likeCount}
               dislikeCount={message.dislikeCount}
               replyCount={message.replyCount}
+              onOpenThread={onOpenThread ? () => onOpenThread(message) : undefined}
             />
           )}
         </div>
