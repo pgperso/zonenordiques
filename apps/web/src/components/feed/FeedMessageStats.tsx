@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Heart, ThumbsDown, MessageCircle } from 'lucide-react';
+import { Heart, ThumbsDown, Flame } from 'lucide-react';
 
 interface FeedMessageStatsProps {
   likeCount: number;
@@ -38,15 +38,15 @@ export const FeedMessageStats = memo(function FeedMessageStats({
           <button
             type="button"
             onClick={onOpenThread}
-            className="flex items-center gap-1 rounded text-brand-blue transition hover:underline"
+            className="flex items-center gap-1 rounded text-orange-500 transition hover:text-orange-600"
             title="Voir le fil"
           >
-            <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+            <Flame className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
             <span className="font-semibold tabular-nums">{replyCount}</span>
           </button>
         ) : (
-          <span className="flex items-center gap-1 text-brand-blue">
-            <MessageCircle className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          <span className="flex items-center gap-1 text-orange-500">
+            <Flame className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
             <span className="font-semibold tabular-nums">{replyCount}</span>
           </span>
         ))}
