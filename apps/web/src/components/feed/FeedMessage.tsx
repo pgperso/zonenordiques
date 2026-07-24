@@ -163,6 +163,16 @@ export const FeedMessage = memo(function FeedMessage({
     setPopoverRect(e.currentTarget.getBoundingClientRect());
   }, [message.memberId, isOwn]);
 
+  // Click anywhere on the message row opens its thread — but never hijack a
+  // link/button/avatar click, an audio control, or an active text selection.
+  const handleRowClick = useCallback((e: React.MouseEvent) => {
+    if (!onOpenThread || mobileToolbar) return;
+    const target = e.target as HTMLElement;
+    if (target.closest('a, button, [role="button"], audio, input, textarea, img')) return;
+    if (window.getSelection()?.toString()) return;
+    onOpenThread(message);
+  }, [onOpenThread, message, mobileToolbar]);
+
   if (message.isRemoved) {
     return (
       <div className="px-4 py-0.5">
@@ -255,6 +265,7 @@ export const FeedMessage = memo(function FeedMessage({
         onPointerUp={cancelLongPress}
         onPointerMove={maybeCancelOnMove}
         onPointerCancel={cancelLongPress}
+        onClick={handleRowClick}
         onContextMenu={(e) => {
           if (touchInteractionRef.current || mobileToolbar) {
             e.preventDefault();
