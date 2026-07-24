@@ -2,7 +2,7 @@
 
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
-import { formatTime, getMemberRank, BOT_MEMBER_ID } from '@arena/shared';
+import { formatTime, BOT_MEMBER_ID } from '@arena/shared';
 import type { FeedMessage as FeedMessageType } from '@arena/shared';
 import { FeedMessageToolbar } from './FeedMessageToolbar';
 import { FeedMessageStats } from './FeedMessageStats';
@@ -78,8 +78,9 @@ export const FeedMessage = memo(function FeedMessage({
     message.memberId === BOT_MEMBER_ID
       ? tRoles('bot')
       : (message.member?.username ?? t('deletedUser'));
-  const rank: { label: string; color: string; bg: string } =
-    (staffRole ? STAFF_RANK_MAP[staffRole] : undefined) ?? getMemberRank(message.member?.messageCount ?? 0);
+  // Only staff badges are shown (Propriétaire / Arbitre); member ranks
+  // (Recrue…) and the Journaliste/creator badge are hidden.
+  const staffBadge = staffRole && staffRole !== 'creator' ? STAFF_RANK_MAP[staffRole] : undefined;
   const time = formatTime(message.createdAt);
   const [editContent, setEditContent] = useState(message.content ?? '');
   const editRef = useRef<HTMLTextAreaElement>(null);
@@ -363,7 +364,9 @@ export const FeedMessage = memo(function FeedMessage({
             >
               {username}
             </span>
-            <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${rank.bg}`}>{rank.label}</span>
+            {staffBadge && (
+              <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${staffBadge.bg}`}>{staffBadge.label}</span>
+            )}
             <span className="text-xs text-gray-400">{time}</span>
           </div>
 
