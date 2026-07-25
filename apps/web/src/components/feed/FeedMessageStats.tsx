@@ -22,14 +22,17 @@ export const FeedMessageStats = memo(function FeedMessageStats({
 }: FeedMessageStatsProps) {
   if (likeCount === 0 && dislikeCount === 0 && replyCount === 0) return null;
 
-  // Orange by default, red once the thread is hot. One-shot pop on hover.
-  const flameClass = `h-4 w-4 group-hover:animate-[flame-pop_0.4s_ease-out] ${
-    replyCount >= HOT_THREAD_REPLIES ? 'text-red-600' : 'text-orange-500'
-  }`;
+  // Orange by default, red once the thread is hot. One-shot flame pop on hover;
+  // the count sits in a matching pill — black on orange, white on red.
+  const hot = replyCount >= HOT_THREAD_REPLIES;
+  const flameClass = `h-4 w-4 group-hover:animate-[flame-pop_0.4s_ease-out] ${hot ? 'text-red-600' : 'text-orange-500'}`;
+  const badgeClass = hot ? 'bg-red-600 text-white' : 'bg-orange-500 text-gray-900';
   const flameStat = (
     <>
       <Flame className={flameClass} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
-      <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{replyCount}</span>
+      <span className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${badgeClass}`}>
+        {replyCount}
+      </span>
     </>
   );
 
