@@ -52,12 +52,13 @@ export const FeedMessageStats = memo(function FeedMessageStats({
       )}
       {replyCount > 0 &&
         (onOpenThread ? (
-          <button type="button" onClick={onOpenThread} className="flex items-center gap-1 rounded" title="Rejoindre la discussion">
-            {flameStat}
-            <span className="ml-0.5 text-[11px] font-medium text-orange-500 group-hover:underline">
-              Rejoins la discussion
-            </span>
-          </button>
+          <span className="flex items-center gap-1.5">
+            <button type="button" onClick={onOpenThread} className="flex items-center gap-1 rounded" title="Rejoindre la discussion">
+              {flameStat}
+            </button>
+            {/* Not its own click target — the whole message row opens the thread. */}
+            <span className="text-[11px] font-medium text-orange-500">Rejoins la discussion</span>
+          </span>
         ) : (
           <span className="flex items-center gap-1">{flameStat}</span>
         ))}
