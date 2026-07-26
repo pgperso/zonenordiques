@@ -54,7 +54,7 @@ export const FeedMessageStats = memo(function FeedMessageStats({
               {flameStat}
             </button>
             {/* Not its own click target — the whole message row opens the thread. */}
-            <span className="text-[11px] font-medium text-orange-500">— Rejoins la discussion</span>
+            <span className="text-[11px] font-medium text-orange-500">Rejoins la discussion</span>
           </span>
         ) : (
           <span className="flex items-center gap-1">{flameStat}</span>
