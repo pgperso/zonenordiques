@@ -34,6 +34,7 @@ export interface FeedMessage extends FeedItemBase {
   likeCount: number;
   dislikeCount: number;
   replyCount: number;
+  lastReplierUsername: string | null;
   editedAt: string | null;
   isRemoved: boolean;
   removedAt: string | null;

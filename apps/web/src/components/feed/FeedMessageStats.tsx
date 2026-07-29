@@ -10,6 +10,8 @@ interface FeedMessageStatsProps {
   likeCount: number;
   dislikeCount: number;
   replyCount: number;
+  /** Author of the most recent reply — shown as "X a répondu". */
+  lastReplierUsername?: string | null;
   /** When provided, the reply count becomes a button that opens the thread. */
   onOpenThread?: () => void;
 }
@@ -18,6 +20,7 @@ export const FeedMessageStats = memo(function FeedMessageStats({
   likeCount,
   dislikeCount,
   replyCount,
+  lastReplierUsername,
   onOpenThread,
 }: FeedMessageStatsProps) {
   if (likeCount === 0 && dislikeCount === 0 && replyCount === 0) return null;
@@ -54,7 +57,9 @@ export const FeedMessageStats = memo(function FeedMessageStats({
               {flameStat}
             </button>
             {/* Not its own click target — the whole message row opens the thread. */}
-            <span className="text-[11px] font-medium text-orange-500">Rejoins la discussion</span>
+            <span className="text-[11px] font-medium text-orange-500">
+              {lastReplierUsername ? `${lastReplierUsername} a répondu` : 'Rejoins la discussion'}
+            </span>
           </span>
         ) : (
           <span className="flex items-center gap-1">{flameStat}</span>
