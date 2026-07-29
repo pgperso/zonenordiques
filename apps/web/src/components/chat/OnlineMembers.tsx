@@ -152,7 +152,9 @@ export function OnlineMembers({
       {/* Members list */}
       {tab === 'members' && (
         <div className="flex-1 overflow-y-auto p-3">
-          <ul className="space-y-1">
+          {/* Presence names are read-only: not selectable / editable, so no
+              text caret (browser or extension overlay) can attach to a name. */}
+          <ul className="space-y-1 select-none">
             {/* Bot — always online */}
             <li className="flex items-center gap-2 rounded-lg px-2 py-1.5">
               <div className="relative">
