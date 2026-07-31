@@ -167,7 +167,7 @@ type FeedAction =
   | { type: 'RELOAD_MESSAGES'; messages: FeedMessage[]; hasMore: boolean }
   | { type: 'ADD_MESSAGE'; message: FeedMessage }
   | { type: 'UPDATE_MESSAGE'; updated: ChatMessageRow }
-  | { type: 'PREPEND_MESSAGES'; messages: FeedMessage[]; hasMore: boolean }
+  | { type: 'PREPEND_MESSAGES'; messages: FeedMessage[]; hasMore: boolean; firstItemDelta: number }
   | { type: 'ADD_ARTICLE'; article: FeedArticle }
   | { type: 'UPDATE_ARTICLE'; updated: ArticleRow }
   | { type: 'ADD_PODCAST'; podcast: FeedPodcast }
@@ -239,7 +239,10 @@ function feedReducer(state: FeedState, action: FeedAction): FeedState {
         ...state,
         messages: [...action.messages, ...state.messages],
         hasMoreMessages: action.hasMore,
-        firstItemIndex: state.firstItemIndex - action.messages.length,
+        // Drop the anchor by the number of items that actually land BEFORE the
+        // current merged front (see loadMore) — not the raw message count, or
+        // an interleaved older article/podcast desyncs Virtuoso's scroll.
+        firstItemIndex: state.firstItemIndex - action.firstItemDelta,
       };
 
     case 'ADD_ARTICLE':
@@ -764,13 +767,26 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
           if (typed.members) memberCacheRef.current.set(typed.members.id, typed.members);
           return messageToFeedItem(typed);
         });
+      // Virtuoso's data is the MERGED feed (messages + articles + podcasts),
+      // so the scroll anchor must drop by how many of these older messages
+      // sort BEFORE the current merged front (items[0]) — not by the raw
+      // count. When an article/podcast already sits at the front (older than
+      // the oldest loaded message), that difference is what stops the scroll
+      // from being yanked back on every page.
+      const frontTs = items.length > 0 ? new Date(items[0].feedTimestamp).getTime() : Infinity;
+      const firstItemDelta = olderMsgs.reduce(
+        (n, m) => (new Date(m.feedTimestamp).getTime() < frontTs ? n + 1 : n),
+        0,
+      );
+
       dispatch({
         type: 'PREPEND_MESSAGES',
         messages: olderMsgs,
         hasMore: data.length === FEED_LOAD_MORE_LIMIT,
+        firstItemDelta,
       });
     }
-  }, [communityId, state.hasMoreMessages, state.messages]);
+  }, [communityId, state.hasMoreMessages, state.messages, items]);
 
   // --- Delete ---
 
