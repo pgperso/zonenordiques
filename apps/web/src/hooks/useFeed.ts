@@ -396,11 +396,23 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
     return member;
   }
 
-  // Merged and sorted feed
-  const items = useMemo(
-    () => sortByTimestamp([...state.messages, ...state.articles, ...state.podcasts]),
-    [state.messages, state.articles, state.podcasts],
-  );
+  // Merged and sorted feed. The chat is a message timeline: article/podcast
+  // promos only belong INLINE when they're at least as recent as the oldest
+  // loaded message. Older imported content (the legacy migration back to 2012)
+  // is kept out of the live feed — otherwise it sorts permanently above the
+  // messages, pins the top of the list, and breaks reverse-scroll pagination
+  // (older messages then insert mid-list and never reach the top). Those
+  // articles/podcasts remain available in their own sections.
+  const items = useMemo(() => {
+    const cutoff =
+      state.messages.length > 0
+        ? new Date(state.messages[0].feedTimestamp).getTime()
+        : -Infinity;
+    const promos = [...state.articles, ...state.podcasts].filter(
+      (p) => new Date(p.feedTimestamp).getTime() >= cutoff,
+    );
+    return sortByTimestamp([...state.messages, ...promos]);
+  }, [state.messages, state.articles, state.podcasts]);
 
   // --- Initial load ---
 
@@ -767,17 +779,18 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
           if (typed.members) memberCacheRef.current.set(typed.members.id, typed.members);
           return messageToFeedItem(typed);
         });
-      // Virtuoso's data is the MERGED feed (messages + articles + podcasts),
-      // so the scroll anchor must drop by how many of these older messages
-      // sort BEFORE the current merged front (items[0]) — not by the raw
-      // count. When an article/podcast already sits at the front (older than
-      // the oldest loaded message), that difference is what stops the scroll
-      // from being yanked back on every page.
+      // Virtuoso's data is the MERGED feed, so the scroll anchor must drop by
+      // exactly how many items will land BEFORE the current front (items[0],
+      // always a message thanks to the promo cutoff in `items`): all the older
+      // messages, plus any promo the widened window now reveals below the old
+      // front. Undercounting yanks the scroll back on every page.
       const frontTs = items.length > 0 ? new Date(items[0].feedTimestamp).getTime() : Infinity;
-      const firstItemDelta = olderMsgs.reduce(
-        (n, m) => (new Date(m.feedTimestamp).getTime() < frontTs ? n + 1 : n),
-        0,
-      );
+      const newCutoff = olderMsgs.length > 0 ? new Date(olderMsgs[0].feedTimestamp).getTime() : frontTs;
+      const revealedPromos = [...state.articles, ...state.podcasts].filter((p) => {
+        const ts = new Date(p.feedTimestamp).getTime();
+        return ts >= newCutoff && ts < frontTs;
+      }).length;
+      const firstItemDelta = olderMsgs.length + revealedPromos;
 
       dispatch({
         type: 'PREPEND_MESSAGES',
@@ -786,7 +799,7 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
         firstItemDelta,
       });
     }
-  }, [communityId, state.hasMoreMessages, state.messages, items]);
+  }, [communityId, state.hasMoreMessages, state.messages, state.articles, state.podcasts, items]);
 
   // --- Delete ---
 
