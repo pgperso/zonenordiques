@@ -243,9 +243,13 @@ export function FeedContainer({
                   followOutput={(isAtBottom) => (isAtBottom ? 'smooth' : false)}
                   atBottomStateChange={setAtBottom}
                   atBottomThreshold={120}
-                  // Generous pixel-based viewport buffer for smooth iOS
-                  // inertial scroll.
-                  increaseViewportBy={{ top: 600, bottom: 600 }}
+                  // Large off-screen render buffer: rows mount and paint well
+                  // before they scroll into view, so re-entering a row while
+                  // scrolling doesn't flash an empty frame (the main cause of
+                  // flicker when re-scrolling already-seen messages on mobile).
+                  // Upward is the primary direction here (reading history), so
+                  // the top buffer is the largest.
+                  increaseViewportBy={{ top: 2000, bottom: 1200 }}
                   // Stable identity per row so likes / edits / realtime
                   // updates re-use the same DOM node. Defensive: a malformed
                   // row falls back to a positional key.
