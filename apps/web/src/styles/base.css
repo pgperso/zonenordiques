@@ -8,6 +8,13 @@
     overflow-x: hidden;
   }
 
+  /* Kill the grey/blue tap-highlight overlay that mobile browsers flash on
+     any clickable element (chat rows carry an onClick, so every row the finger
+     grazes while scrolling would otherwise flicker). */
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   /* Total top chrome = header (4rem) + the always-present NHL scoreboard
      strip (52px, keep in sync with STRIP_H in NhlScoreboard.tsx). Fixed-
      height pages subtract this via calc(100dvh - var(--chrome-h)). Defined
