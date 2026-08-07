@@ -65,7 +65,28 @@ export function usePresence(
           });
         }
       }
-      setOnlineMembers(members);
+      // Deterministic order so the identity check below is positional.
+      members.sort((a, b) => a.memberId.localeCompare(b.memberId));
+      // Skip the state update when the presence set is unchanged. 'sync' fires
+      // on every join/leave AND on each 60s heartbeat re-track, almost always
+      // reporting the same members. A fresh array each time would re-render the
+      // whole feed — every visible message row — mid-scroll, which reads as
+      // flicker (worse on slow scroll, where more ticks land during the drag).
+      setOnlineMembers((prev) => {
+        if (
+          prev.length === members.length &&
+          prev.every(
+            (p, i) =>
+              p.memberId === members[i].memberId &&
+              p.status === members[i].status &&
+              p.avatarUrl === members[i].avatarUrl &&
+              p.username === members[i].username,
+          )
+        ) {
+          return prev;
+        }
+        return members;
+      });
     }
 
     // Track returns 'ok' / 'timed out' / 'rate limited'. A silent failure
