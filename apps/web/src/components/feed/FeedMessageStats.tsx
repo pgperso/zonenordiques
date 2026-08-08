@@ -25,14 +25,14 @@ export const FeedMessageStats = memo(function FeedMessageStats({
 }: FeedMessageStatsProps) {
   if (likeCount === 0 && dislikeCount === 0 && replyCount === 0) return null;
 
-  // Orange by default, red once the thread is hot. One-shot flame pop on hover;
-  // the count is plain text in the matching colour.
+  // Only the flame carries colour — orange by default, red once the thread is
+  // hot. One-shot flame pop on hover. The count stays a neutral tone.
   const hot = replyCount >= HOT_THREAD_REPLIES;
-  const colorClass = hot ? 'text-red-600' : 'text-orange-500';
+  const flameColor = hot ? 'text-red-600' : 'text-orange-500';
   const flameStat = (
     <>
-      <Flame className={`h-4 w-4 group-hover:animate-[flame-pop_0.4s_ease-out] ${colorClass}`} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
-      <span className={`font-semibold tabular-nums ${colorClass}`}>{replyCount}</span>
+      <Flame className={`h-4 w-4 group-hover:animate-[flame-pop_0.4s_ease-out] ${flameColor}`} fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+      <span className="font-semibold tabular-nums text-gray-500 dark:text-gray-400">{replyCount}</span>
     </>
   );
 
@@ -57,7 +57,7 @@ export const FeedMessageStats = memo(function FeedMessageStats({
               {flameStat}
             </button>
             {/* Not its own click target — the whole message row opens the thread. */}
-            <span className="text-[11px] font-medium text-orange-500">
+            <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
               {lastReplierUsername ? `${lastReplierUsername} a répondu` : 'Rejoins la discussion'}
             </span>
           </span>
