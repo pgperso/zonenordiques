@@ -2,7 +2,7 @@
 
 import { memo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Heart, Laugh, ThumbsDown, MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
+import { MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { useMessageReaction } from '@/hooks/useMessageReaction';
 
 interface FeedMessageToolbarProps {
@@ -91,41 +91,53 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 disabled={!userId || loading}
                 className={`${BTN} ${
                   isLiked
-                    ? 'text-red-500 hover:bg-red-50 dark:hover:bg-red-950'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-red-500 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ? 'bg-red-100 dark:bg-red-900/40'
+                    : 'opacity-80 hover:bg-gray-100 hover:opacity-100 dark:hover:bg-gray-700'
                 }`}
                 title={isLiked ? 'Retirer le like' : "J'aime"}
               >
-                <Heart className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} strokeWidth={1.5} />
+                <span
+                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isLiked ? 'scale-110' : ''}`}
+                  aria-hidden="true"
+                >
+                  ❤️
+                </span>
               </button>
               <button
                 onClick={toggleSmiley}
                 disabled={!userId || loading}
                 className={`${BTN} ${
                   isSmiley
-                    ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-amber-500 dark:text-gray-400 dark:hover:bg-gray-700'
+                    ? 'bg-amber-100 dark:bg-amber-900/40'
+                    : 'opacity-80 hover:bg-gray-100 hover:opacity-100 dark:hover:bg-gray-700'
                 }`}
                 title={isSmiley ? 'Retirer le rire' : 'Rire'}
               >
-                {/* Active = filled amber face with white features (a plain
-                    fill would flood the whole face and hide the eyes/mouth). */}
-                <Laugh
-                  className={`h-4 w-4 ${isSmiley ? 'fill-amber-500 stroke-white' : 'fill-none'}`}
-                  strokeWidth={isSmiley ? 2 : 1.5}
-                />
+                {/* Facebook-style "Haha": the full-colour emoji, always shown;
+                    reacting is signalled by the highlighted button + a nudge up. */}
+                <span
+                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isSmiley ? 'scale-110' : ''}`}
+                  aria-hidden="true"
+                >
+                  😆
+                </span>
               </button>
               <button
                 onClick={toggleDislike}
                 disabled={!userId || loading}
                 className={`${BTN} ${
                   isDisliked
-                    ? 'text-brand-blue hover:bg-blue-50 dark:hover:bg-blue-950'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-brand-blue dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white'
+                    ? 'bg-blue-100 dark:bg-blue-900/40'
+                    : 'opacity-80 hover:bg-gray-100 hover:opacity-100 dark:hover:bg-gray-700'
                 }`}
                 title={isDisliked ? 'Retirer le dislike' : "Je n'aime pas"}
               >
-                <ThumbsDown className="h-4 w-4" fill={isDisliked ? 'currentColor' : 'none'} strokeWidth={1.5} />
+                <span
+                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isDisliked ? 'scale-110' : ''}`}
+                  aria-hidden="true"
+                >
+                  👎
+                </span>
               </button>
             </>
           )}

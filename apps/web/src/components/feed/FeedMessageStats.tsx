@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Heart, Laugh, ThumbsDown, Flame } from 'lucide-react';
+import { Flame } from 'lucide-react';
 
 // At/above this many replies, the flame turns red to flag a "hot" thread.
 const HOT_THREAD_REPLIES = 5;
@@ -36,20 +36,20 @@ export const FeedMessageStats = memo(function FeedMessageStats({
   return (
     <div className="mt-1 flex items-center gap-2.5 text-xs">
       {likeCount > 0 && (
-        <span className="flex items-center gap-1 text-red-500">
-          <Heart className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+        <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+          <span className="text-[13px] leading-none" aria-hidden="true">❤️</span>
           <span className="font-semibold tabular-nums">{likeCount}</span>
         </span>
       )}
       {smileyCount > 0 && (
-        <span className="flex items-center gap-1 text-amber-500">
-          <Laugh className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+        <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+          <span className="text-[13px] leading-none" aria-hidden="true">😆</span>
           <span className="font-semibold tabular-nums">{smileyCount}</span>
         </span>
       )}
       {dislikeCount > 0 && (
-        <span className="flex items-center gap-1 text-orange-500">
-          <ThumbsDown className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
+        <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+          <span className="text-[13px] leading-none" aria-hidden="true">👎</span>
           <span className="font-semibold tabular-nums">{dislikeCount}</span>
         </span>
       )}
