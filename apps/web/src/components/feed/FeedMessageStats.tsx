@@ -37,19 +37,19 @@ export const FeedMessageStats = memo(function FeedMessageStats({
     <div className="mt-1 flex items-center gap-2.5 text-xs">
       {likeCount > 0 && (
         <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <span className="text-[13px] leading-none" aria-hidden="true">❤️</span>
+          <span className="text-[15px] leading-none" aria-hidden="true">❤️</span>
           <span className="font-semibold tabular-nums">{likeCount}</span>
         </span>
       )}
       {smileyCount > 0 && (
         <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <span className="text-[13px] leading-none" aria-hidden="true">😆</span>
+          <span className="text-[15px] leading-none" aria-hidden="true">😆</span>
           <span className="font-semibold tabular-nums">{smileyCount}</span>
         </span>
       )}
       {dislikeCount > 0 && (
         <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <span className="text-[13px] leading-none" aria-hidden="true">😡</span>
+          <span className="text-[15px] leading-none" aria-hidden="true">😡</span>
           <span className="font-semibold tabular-nums">{dislikeCount}</span>
         </span>
       )}

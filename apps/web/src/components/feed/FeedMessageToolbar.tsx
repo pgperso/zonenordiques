@@ -97,7 +97,7 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 title={isLiked ? 'Retirer le like' : "J'aime"}
               >
                 <span
-                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isLiked ? 'scale-110' : ''}`}
+                  className={`flex h-5 w-5 items-center justify-center text-[18px] leading-none transition-transform ${isLiked ? 'scale-110' : ''}`}
                   aria-hidden="true"
                 >
                   ❤️
@@ -116,7 +116,7 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 {/* Facebook-style "Haha": the full-colour emoji, always shown;
                     reacting is signalled by the highlighted button + a nudge up. */}
                 <span
-                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isSmiley ? 'scale-110' : ''}`}
+                  className={`flex h-5 w-5 items-center justify-center text-[18px] leading-none transition-transform ${isSmiley ? 'scale-110' : ''}`}
                   aria-hidden="true"
                 >
                   😆
@@ -133,7 +133,7 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 title={isDisliked ? 'Retirer la colère' : 'Colère'}
               >
                 <span
-                  className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isDisliked ? 'scale-110' : ''}`}
+                  className={`flex h-5 w-5 items-center justify-center text-[18px] leading-none transition-transform ${isDisliked ? 'scale-110' : ''}`}
                   aria-hidden="true"
                 >
                   😡
