@@ -159,16 +159,23 @@ export function useVoiceDictation({ lang, onTranscript }: UseVoiceDictationOptio
     recognition.interimResults = true;
 
     recognition.onresult = (event) => {
-      // event.results is the cumulative, stable result list for this session:
-      // finalized segments keep their index, the in-progress interim sits at
-      // the end. Rebuild the whole transcript from index 0 every event — this
-      // is idempotent, so a browser that re-fires an already-final result
-      // (common on mobile) can't append it twice. The previous approach kept a
-      // `+=` accumulator keyed on event.resultIndex, which double-counted those
-      // re-fired finals and made dictated phrases repeat.
+      // Speech engines shape event.results differently, and getting this wrong
+      // is what broke Android:
+      //   • Desktop Chrome emits DISTINCT segments — "hello world", then
+      //     "how are you" — which must be concatenated.
+      //   • Android Chrome emits each result as a CUMULATIVE snapshot of the
+      //     whole utterance — "je", "je teste", "je teste mon micro" — so blind
+      //     concatenation cascades and duplicates the text.
+      // Rebuild from index 0 every event (idempotent against re-fired finals),
+      // but decide per segment: if it extends what we've built so far (prefix
+      // match), it's a cumulative snapshot → replace; otherwise it's a new
+      // segment → append. This works on both engines without sniffing the UA.
       let text = '';
       for (let i = 0; i < event.results.length; i++) {
-        text += event.results[i][0]?.transcript ?? '';
+        const seg = event.results[i][0]?.transcript ?? '';
+        if (!seg) continue;
+        const built = text.trim();
+        text = built && seg.trim().startsWith(built) ? seg : text + seg;
       }
       onTranscriptRef.current({ text });
     };
