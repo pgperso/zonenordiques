@@ -108,7 +108,12 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 }`}
                 title={isSmiley ? 'Retirer le rire' : 'Rire'}
               >
-                <Laugh className="h-4 w-4" fill="none" strokeWidth={isSmiley ? 2.5 : 1.5} />
+                {/* Active = filled amber face with white features (a plain
+                    fill would flood the whole face and hide the eyes/mouth). */}
+                <Laugh
+                  className={`h-4 w-4 ${isSmiley ? 'fill-amber-500 stroke-white' : 'fill-none'}`}
+                  strokeWidth={isSmiley ? 2 : 1.5}
+                />
               </button>
               <button
                 onClick={toggleDislike}
