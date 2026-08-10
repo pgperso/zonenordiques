@@ -49,7 +49,7 @@ export const FeedMessageStats = memo(function FeedMessageStats({
       )}
       {dislikeCount > 0 && (
         <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-          <span className="text-[13px] leading-none" aria-hidden="true">👎</span>
+          <span className="text-[13px] leading-none" aria-hidden="true">😡</span>
           <span className="font-semibold tabular-nums">{dislikeCount}</span>
         </span>
       )}

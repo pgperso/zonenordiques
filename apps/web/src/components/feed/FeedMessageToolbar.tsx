@@ -130,13 +130,13 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                     ? 'bg-blue-100 dark:bg-blue-900/40'
                     : 'opacity-80 hover:bg-gray-100 hover:opacity-100 dark:hover:bg-gray-700'
                 }`}
-                title={isDisliked ? 'Retirer le dislike' : "Je n'aime pas"}
+                title={isDisliked ? 'Retirer la colère' : 'Colère'}
               >
                 <span
                   className={`flex h-4 w-4 items-center justify-center text-[15px] leading-none transition-transform ${isDisliked ? 'scale-110' : ''}`}
                   aria-hidden="true"
                 >
-                  👎
+                  😡
                 </span>
               </button>
             </>
