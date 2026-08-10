@@ -2,7 +2,7 @@
 
 import { memo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Heart, Smile, ThumbsDown, MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
+import { Heart, Laugh, ThumbsDown, MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { useMessageReaction } from '@/hooks/useMessageReaction';
 
 interface FeedMessageToolbarProps {
@@ -106,9 +106,9 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                     ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950'
                     : 'text-gray-500 hover:bg-gray-100 hover:text-amber-500 dark:text-gray-400 dark:hover:bg-gray-700'
                 }`}
-                title={isSmiley ? 'Retirer le sourire' : 'Sourire'}
+                title={isSmiley ? 'Retirer le rire' : 'Rire'}
               >
-                <Smile className="h-4 w-4" fill="none" strokeWidth={isSmiley ? 2.5 : 1.5} />
+                <Laugh className="h-4 w-4" fill="none" strokeWidth={isSmiley ? 2.5 : 1.5} />
               </button>
               <button
                 onClick={toggleDislike}

@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Heart, Smile, ThumbsDown, Flame } from 'lucide-react';
+import { Heart, Laugh, ThumbsDown, Flame } from 'lucide-react';
 
 // At/above this many replies, the flame turns red to flag a "hot" thread.
 const HOT_THREAD_REPLIES = 5;
@@ -43,7 +43,7 @@ export const FeedMessageStats = memo(function FeedMessageStats({
       )}
       {smileyCount > 0 && (
         <span className="flex items-center gap-1 text-amber-500">
-          <Smile className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          <Laugh className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
           <span className="font-semibold tabular-nums">{smileyCount}</span>
         </span>
       )}
