@@ -14,6 +14,9 @@ interface ReactionStatusMap {
   dislikes: {
     messages: Set<number>;
   };
+  smileys: {
+    messages: Set<number>;
+  };
 }
 
 interface BatchLikeContextValue {
@@ -21,6 +24,8 @@ interface BatchLikeContextValue {
   setLiked: (type: LikeTargetType, id: number, liked: boolean) => void;
   isDisliked: (id: number) => boolean;
   setDisliked: (id: number, disliked: boolean) => void;
+  isSmileyed: (id: number) => boolean;
+  setSmileyed: (id: number, smileyed: boolean) => void;
 }
 
 const BatchLikeContext = createContext<BatchLikeContextValue | null>(null);
@@ -49,6 +54,7 @@ export function BatchLikeProvider({
   const [status, setStatus] = useState<ReactionStatusMap>({
     likes: { messages: new Set(), articles: new Set(), podcasts: new Set() },
     dislikes: { messages: new Set() },
+    smileys: { messages: new Set() },
   });
   const supabase = useSupabase();
   const fetchedRef = useRef(false);
@@ -89,7 +95,14 @@ export function BatchLikeProvider({
             .eq('member_id', userId)
             .in('message_id', messageIds)
         : { data: [] },
-    ]).then(([msgLikes, artLikes, podLikes, msgDislikes]) => {
+      messageIds.length > 0
+        ? supabase
+            .from('message_smileys')
+            .select('message_id')
+            .eq('member_id', userId)
+            .in('message_id', messageIds)
+        : { data: [] },
+    ]).then(([msgLikes, artLikes, podLikes, msgDislikes, msgSmileys]) => {
       if (cancelled) return;
       fetchedRef.current = true;
       setStatus({
@@ -113,6 +126,12 @@ export function BatchLikeProvider({
             (msgDislikes.data ?? []).map((r: any) => r.message_id as number),
           ),
         },
+        smileys: {
+          messages: new Set(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (msgSmileys.data ?? []).map((r: any) => r.message_id as number),
+          ),
+        },
       });
     });
 
@@ -132,14 +151,14 @@ export function BatchLikeProvider({
       const nextLikes = new Set(prev.likes[key]);
       if (liked) nextLikes.add(id);
       else nextLikes.delete(id);
-      // If liking, remove dislike (mutual exclusion)
+      // A message holds at most one reaction — liking clears dislike + smiley.
       let nextDislikes = prev.dislikes;
+      let nextSmileys = prev.smileys;
       if (liked && type === 'message') {
-        const ds = new Set(prev.dislikes.messages);
-        ds.delete(id);
-        nextDislikes = { messages: ds };
+        const ds = new Set(prev.dislikes.messages); ds.delete(id); nextDislikes = { messages: ds };
+        const ss = new Set(prev.smileys.messages); ss.delete(id); nextSmileys = { messages: ss };
       }
-      return { likes: { ...prev.likes, [key]: nextLikes }, dislikes: nextDislikes };
+      return { likes: { ...prev.likes, [key]: nextLikes }, dislikes: nextDislikes, smileys: nextSmileys };
     });
   }, []);
 
@@ -153,18 +172,42 @@ export function BatchLikeProvider({
       const nextDislikes = new Set(prev.dislikes.messages);
       if (disliked) nextDislikes.add(id);
       else nextDislikes.delete(id);
-      // If disliking, remove like (mutual exclusion)
+      // Disliking clears like + smiley (mutual exclusion).
       let nextLikes = prev.likes;
+      let nextSmileys = prev.smileys;
       if (disliked) {
-        const ls = new Set(prev.likes.messages);
-        ls.delete(id);
-        nextLikes = { ...prev.likes, messages: ls };
+        const ls = new Set(prev.likes.messages); ls.delete(id); nextLikes = { ...prev.likes, messages: ls };
+        const ss = new Set(prev.smileys.messages); ss.delete(id); nextSmileys = { messages: ss };
       }
-      return { likes: nextLikes, dislikes: { messages: nextDislikes } };
+      return { likes: nextLikes, dislikes: { messages: nextDislikes }, smileys: nextSmileys };
     });
   }, []);
 
-  const value = useMemo(() => ({ isLiked, setLiked, isDisliked, setDisliked }), [isLiked, setLiked, isDisliked, setDisliked]);
+  const isSmileyed = useCallback(
+    (id: number) => status.smileys.messages.has(id),
+    [status],
+  );
+
+  const setSmileyed = useCallback((id: number, smileyed: boolean) => {
+    setStatus((prev) => {
+      const nextSmileys = new Set(prev.smileys.messages);
+      if (smileyed) nextSmileys.add(id);
+      else nextSmileys.delete(id);
+      // Smiley-ing clears like + dislike (mutual exclusion).
+      let nextLikes = prev.likes;
+      let nextDislikes = prev.dislikes;
+      if (smileyed) {
+        const ls = new Set(prev.likes.messages); ls.delete(id); nextLikes = { ...prev.likes, messages: ls };
+        const ds = new Set(prev.dislikes.messages); ds.delete(id); nextDislikes = { messages: ds };
+      }
+      return { likes: nextLikes, dislikes: nextDislikes, smileys: { messages: nextSmileys } };
+    });
+  }, []);
+
+  const value = useMemo(
+    () => ({ isLiked, setLiked, isDisliked, setDisliked, isSmileyed, setSmileyed }),
+    [isLiked, setLiked, isDisliked, setDisliked, isSmileyed, setSmileyed],
+  );
 
   return <BatchLikeContext.Provider value={value}>{children}</BatchLikeContext.Provider>;
 }

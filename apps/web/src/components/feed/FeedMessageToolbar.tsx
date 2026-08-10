@@ -2,13 +2,14 @@
 
 import { memo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Heart, ThumbsDown, MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
+import { Heart, Smile, ThumbsDown, MessageCircle, Pencil, Trash2, Copy, Check } from 'lucide-react';
 import { useMessageReaction } from '@/hooks/useMessageReaction';
 
 interface FeedMessageToolbarProps {
   messageId: number;
   initialLikeCount: number;
   initialDislikeCount: number;
+  initialSmileyCount: number;
   userId: string | null;
   isOwn: boolean;
   canModerate: boolean;
@@ -25,6 +26,7 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
   messageId,
   initialLikeCount,
   initialDislikeCount,
+  initialSmileyCount,
   userId,
   isOwn,
   canModerate,
@@ -39,8 +41,8 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const { isLiked, isDisliked, toggleLike, toggleDislike, loading } =
-    useMessageReaction(messageId, initialLikeCount, initialDislikeCount, userId);
+  const { isLiked, isDisliked, isSmiley, toggleLike, toggleDislike, toggleSmiley, loading } =
+    useMessageReaction(messageId, initialLikeCount, initialDislikeCount, initialSmileyCount, userId);
 
   const showEdit = isOwn && !!onStartEdit;
   const showDelete = (isOwn || canModerate) && !!onDelete;
@@ -95,6 +97,18 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                 title={isLiked ? 'Retirer le like' : "J'aime"}
               >
                 <Heart className="h-4 w-4" fill={isLiked ? 'currentColor' : 'none'} strokeWidth={1.5} />
+              </button>
+              <button
+                onClick={toggleSmiley}
+                disabled={!userId || loading}
+                className={`${BTN} ${
+                  isSmiley
+                    ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-amber-500 dark:text-gray-400 dark:hover:bg-gray-700'
+                }`}
+                title={isSmiley ? 'Retirer le sourire' : 'Sourire'}
+              >
+                <Smile className="h-4 w-4" fill="none" strokeWidth={isSmiley ? 2.5 : 1.5} />
               </button>
               <button
                 onClick={toggleDislike}

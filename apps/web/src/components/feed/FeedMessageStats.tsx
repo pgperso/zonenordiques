@@ -1,7 +1,7 @@
 'use client';
 
 import { memo } from 'react';
-import { Heart, ThumbsDown, Flame } from 'lucide-react';
+import { Heart, Smile, ThumbsDown, Flame } from 'lucide-react';
 
 // At/above this many replies, the flame turns red to flag a "hot" thread.
 const HOT_THREAD_REPLIES = 5;
@@ -9,6 +9,7 @@ const HOT_THREAD_REPLIES = 5;
 interface FeedMessageStatsProps {
   likeCount: number;
   dislikeCount: number;
+  smileyCount: number;
   replyCount: number;
   /** When provided, the reply count becomes a button that opens the thread. */
   onOpenThread?: () => void;
@@ -17,10 +18,11 @@ interface FeedMessageStatsProps {
 export const FeedMessageStats = memo(function FeedMessageStats({
   likeCount,
   dislikeCount,
+  smileyCount,
   replyCount,
   onOpenThread,
 }: FeedMessageStatsProps) {
-  if (likeCount === 0 && dislikeCount === 0 && replyCount === 0) return null;
+  if (likeCount === 0 && dislikeCount === 0 && smileyCount === 0 && replyCount === 0) return null;
 
   // Only the flame carries colour — orange by default, red once the thread is
   // hot. One-shot flame pop on hover. The count label stays a neutral tone.
@@ -37,6 +39,12 @@ export const FeedMessageStats = memo(function FeedMessageStats({
         <span className="flex items-center gap-1 text-red-500">
           <Heart className="h-4 w-4" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
           <span className="font-semibold tabular-nums">{likeCount}</span>
+        </span>
+      )}
+      {smileyCount > 0 && (
+        <span className="flex items-center gap-1 text-amber-500">
+          <Smile className="h-4 w-4" strokeWidth={2} aria-hidden="true" />
+          <span className="font-semibold tabular-nums">{smileyCount}</span>
         </span>
       )}
       {dislikeCount > 0 && (

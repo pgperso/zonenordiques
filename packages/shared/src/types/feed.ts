@@ -33,6 +33,7 @@ export interface FeedMessage extends FeedItemBase {
   parentId: number | null;
   likeCount: number;
   dislikeCount: number;
+  smileyCount: number;
   replyCount: number;
   lastReplierUsername: string | null;
   editedAt: string | null;
