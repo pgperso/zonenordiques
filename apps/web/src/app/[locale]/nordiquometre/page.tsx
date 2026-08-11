@@ -18,8 +18,8 @@ export async function generateMetadata({
     ? `Nordiquomètre — l’indice de confiance du retour des Nordiques | ${BRAND.name}`
     : `Nordiquometer — the Nordiques return confidence index | ${BRAND.nameEn}`;
   const description = isFr
-    ? 'Vote au Nordiquomètre : à quel point crois-tu au retour des Nordiques de Québec ? Sur 3 horizons (0-3, 3-5, 5-10 ans). Le pouls des partisans en direct.'
-    : 'Vote on the Nordiquometer: how strongly do you believe the Quebec Nordiques will return? Across 3 horizons. The live pulse of the fans.';
+    ? 'Vote au Nordiquomètre : à quel point crois-tu au retour des Nordiques de Québec ? Le pouls des partisans en direct.'
+    : 'Vote on the Nordiquometer: how strongly do you believe the Quebec Nordiques will return? The live pulse of the fans.';
   const url = `${BRAND.url}/${locale}/nordiquometre`;
   return {
     title,
