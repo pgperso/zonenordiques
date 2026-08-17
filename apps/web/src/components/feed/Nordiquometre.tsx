@@ -35,12 +35,13 @@ const SHARE_URL = `${BRAND.url}/fr/nordiquometre`;
 
 interface MeterData {
   average: number;
-  totalVotes: number;
+  totalVotes: number; // total votes CAST (sum of vote_count), not voter count
   myVote: number | null;
+  myVoteCount: number;
   lastVoteDate: string | null;
 }
 
-const EMPTY_DATA: MeterData = { average: 0, totalVotes: 0, myVote: null, lastVoteDate: null };
+const EMPTY_DATA: MeterData = { average: 0, totalVotes: 0, myVote: null, myVoteCount: 0, lastVoteDate: null };
 
 interface NordiquometreProps {
   canModerate: boolean;
@@ -63,20 +64,23 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
   const loadData = useCallback(async () => {
     const { data: allVotes } = await supabase
       .from('nordiquometre_votes')
-      .select('vote, member_id, updated_at');
+      .select('vote, member_id, updated_at, vote_count');
 
     const next: MeterData = { ...EMPTY_DATA };
     if (allVotes) {
-      const votes = allVotes as { vote: number; member_id: string; updated_at: string }[];
+      const votes = allVotes as { vote: number; member_id: string; updated_at: string; vote_count: number }[];
       if (votes.length > 0) {
+        // Index = average of each voter's current opinion (one row per member).
         const sum = votes.reduce((acc, v) => acc + v.vote, 0);
         next.average = Math.round(sum / votes.length);
-        next.totalVotes = votes.length;
+        // Displayed count = total votes cast (re-votes included).
+        next.totalVotes = votes.reduce((acc, v) => acc + (v.vote_count ?? 1), 0);
       }
       if (user) {
         const mine = votes.find((v) => v.member_id === user.id);
         if (mine) {
           next.myVote = mine.vote;
+          next.myVoteCount = mine.vote_count ?? 1;
           next.lastVoteDate = mine.updated_at;
         }
       }
@@ -104,22 +108,24 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
     if (data.myVote !== null) {
       await supabase
         .from('nordiquometre_votes')
-        .update({ vote: sliderValue, updated_at: new Date().toISOString() } as never)
+        .update({ vote: sliderValue, vote_count: data.myVoteCount + 1, updated_at: new Date().toISOString() } as never)
         .eq('member_id', user.id);
     } else {
+      // vote_count defaults to 1 for a brand-new voter.
       await supabase
         .from('nordiquometre_votes')
         .insert({ member_id: user.id, vote: sliderValue } as never);
     }
 
-    // Fresh average for the bot announcement.
-    const { data: freshVotes } = await supabase.from('nordiquometre_votes').select('vote');
-    const list = (freshVotes as { vote: number }[] | null) ?? [];
+    // Fresh index (average per voter) + total votes cast for the announcement.
+    const { data: freshVotes } = await supabase.from('nordiquometre_votes').select('vote, vote_count');
+    const list = (freshVotes as { vote: number; vote_count: number }[] | null) ?? [];
     const avg = list.length > 0 ? Math.round(list.reduce((a, v) => a + v.vote, 0) / list.length) : sliderValue;
+    const totalVotes = list.reduce((a, v) => a + (v.vote_count ?? 1), 0);
     const verdict = getVerdict(avg);
     const voteName = username || 'Un fan';
 
-    const botMsg = `${verdict.emoji} ${voteName} a voté au Nordiquomètre : ${sliderValue}% !\nIndice de confiance : ${avg}% (${list.length} vote${list.length !== 1 ? 's' : ''})\n${verdict.text}`;
+    const botMsg = `${verdict.emoji} ${voteName} a voté au Nordiquomètre : ${sliderValue}% !\nIndice de confiance : ${avg}% (${totalVotes} vote${totalVotes !== 1 ? 's' : ''})\n${verdict.text}`;
 
     const { data: comms } = await supabase
       .from('communities')
@@ -144,8 +150,8 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
   const verdict = getVerdict(data.average);
 
   const shareText = locale === 'fr'
-    ? `Le Nordiquomètre est à ${data.average}% selon ${data.totalVotes} fans. Et toi, tu y crois ? Vote sur ${BRAND.domain}`
-    : `The Nordiquomètre is at ${data.average}% according to ${data.totalVotes} fans. Do you believe? Vote at ${BRAND.domain}`;
+    ? `Le Nordiquomètre est à ${data.average}% selon ${data.totalVotes} votes. Et toi, tu y crois ? Vote sur ${BRAND.domain}`
+    : `The Nordiquomètre is at ${data.average}% according to ${data.totalVotes} votes. Do you believe? Vote at ${BRAND.domain}`;
 
   if (!loaded) {
     return (
