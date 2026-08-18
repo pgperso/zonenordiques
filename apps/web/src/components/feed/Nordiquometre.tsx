@@ -35,13 +35,12 @@ const SHARE_URL = `${BRAND.url}/fr/nordiquometre`;
 
 interface MeterData {
   average: number;
-  totalVotes: number; // total votes CAST (sum of vote_count), not voter count
+  totalVotes: number; // every vote ever cast (append-only log), all days summed
   myVote: number | null;
-  myVoteCount: number;
   lastVoteDate: string | null;
 }
 
-const EMPTY_DATA: MeterData = { average: 0, totalVotes: 0, myVote: null, myVoteCount: 0, lastVoteDate: null };
+const EMPTY_DATA: MeterData = { average: 0, totalVotes: 0, myVote: null, lastVoteDate: null };
 
 interface NordiquometreProps {
   canModerate: boolean;
@@ -64,24 +63,24 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
   const loadData = useCallback(async () => {
     const { data: allVotes } = await supabase
       .from('nordiquometre_votes')
-      .select('vote, member_id, updated_at, vote_count');
+      .select('vote, member_id, created_at');
 
     const next: MeterData = { ...EMPTY_DATA };
     if (allVotes) {
-      const votes = allVotes as { vote: number; member_id: string; updated_at: string; vote_count: number }[];
+      const votes = allVotes as { vote: number; member_id: string; created_at: string }[];
       if (votes.length > 0) {
-        // Index = average of each voter's current opinion (one row per member).
+        // Global average over EVERY vote ever cast (append-only), all days.
         const sum = votes.reduce((acc, v) => acc + v.vote, 0);
         next.average = Math.round(sum / votes.length);
-        // Displayed count = total votes cast (re-votes included).
-        next.totalVotes = votes.reduce((acc, v) => acc + (v.vote_count ?? 1), 0);
+        next.totalVotes = votes.length;
       }
       if (user) {
-        const mine = votes.find((v) => v.member_id === user.id);
-        if (mine) {
-          next.myVote = mine.vote;
-          next.myVoteCount = mine.vote_count ?? 1;
-          next.lastVoteDate = mine.updated_at;
+        // Latest of the member's votes — drives the daily gate + slider prefill.
+        const mine = votes.filter((v) => v.member_id === user.id);
+        if (mine.length > 0) {
+          const latest = mine.reduce((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b));
+          next.myVote = latest.vote;
+          next.lastVoteDate = latest.created_at;
         }
       }
     }
@@ -105,23 +104,17 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
     if (!user || !canVote) return;
     setSaving(true);
 
-    if (data.myVote !== null) {
-      await supabase
-        .from('nordiquometre_votes')
-        .update({ vote: sliderValue, vote_count: data.myVoteCount + 1, updated_at: new Date().toISOString() } as never)
-        .eq('member_id', user.id);
-    } else {
-      // vote_count defaults to 1 for a brand-new voter.
-      await supabase
-        .from('nordiquometre_votes')
-        .insert({ member_id: user.id, vote: sliderValue } as never);
-    }
+    // Append-only: every vote is a new row that stays in the global average.
+    // The once-per-day gate (canVote) keeps a member to one row per day.
+    await supabase
+      .from('nordiquometre_votes')
+      .insert({ member_id: user.id, vote: sliderValue } as never);
 
-    // Fresh index (average per voter) + total votes cast for the announcement.
-    const { data: freshVotes } = await supabase.from('nordiquometre_votes').select('vote, vote_count');
-    const list = (freshVotes as { vote: number; vote_count: number }[] | null) ?? [];
+    // Fresh global average + total votes for the announcement.
+    const { data: freshVotes } = await supabase.from('nordiquometre_votes').select('vote');
+    const list = (freshVotes as { vote: number }[] | null) ?? [];
     const avg = list.length > 0 ? Math.round(list.reduce((a, v) => a + v.vote, 0) / list.length) : sliderValue;
-    const totalVotes = list.reduce((a, v) => a + (v.vote_count ?? 1), 0);
+    const totalVotes = list.length;
     const verdict = getVerdict(avg);
     const voteName = username || 'Un fan';
 
@@ -279,10 +272,10 @@ export function Nordiquometre({ canModerate }: NordiquometreProps) {
                   disabled={saving}
                   className="w-full rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-blue-dark disabled:opacity-50"
                 >
-                  {saving ? 'Envoi...' : data.myVote !== null ? 'Mettre à jour' : 'Voter'}
+                  {saving ? 'Envoi...' : 'Voter'}
                 </button>
                 {data.myVote !== null && (
-                  <p className="mt-2 text-center text-[10px] text-gray-400">Ton vote : {data.myVote}%</p>
+                  <p className="mt-2 text-center text-[10px] text-gray-400">Ton dernier vote : {data.myVote}%</p>
                 )}
               </>
             )}
