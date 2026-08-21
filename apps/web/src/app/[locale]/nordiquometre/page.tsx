@@ -22,7 +22,8 @@ export async function generateMetadata({
     : 'Vote on the Nordiquometer: how strongly do you believe the Quebec Nordiques will return? The live pulse of the fans.';
   const url = `${BRAND.url}/${locale}/nordiquometre`;
   return {
-    title,
+    // Absolute: title already carries the brand, so skip the root template.
+    title: { absolute: title },
     description,
     openGraph: {
       title,

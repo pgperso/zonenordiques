@@ -44,7 +44,8 @@ export async function generateMetadata({ params }: CommunityPageProps): Promise<
   const url = `${BRAND.url}/${locale}/tribunes/${slug}`;
 
   return {
-    title,
+    // Absolute: title already carries the brand, so skip the root template.
+    title: { absolute: title },
     description: desc,
     openGraph: {
       title,

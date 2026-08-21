@@ -24,7 +24,8 @@ export async function generateMetadata({
     ? "Le pool de hockey de Zone Nordiques. Compose ton alignement à plafond salarial et grimpe au classement."
     : 'The hockey pool from Zone Nordiques. Build a salary-cap roster and climb the standings.';
   return {
-    title,
+    // Absolute: title already carries the brand, so skip the root template.
+    title: { absolute: title },
     description,
     openGraph: { title, description, url: `${BRAND.url}/${locale}/lnh/pool`, siteName: BRAND.name },
     alternates: { canonical: `${BRAND.url}/${locale}/lnh/pool` },

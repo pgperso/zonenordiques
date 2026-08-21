@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { BRAND } from '@/lib/brand';
 
 export async function generateMetadata({
   params,
@@ -10,7 +9,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'newsletter' });
-  return { title: `${t('pageTitle')} | ${BRAND.name}`, robots: { index: false, follow: true } };
+  return { title: t('pageTitle'), robots: { index: false, follow: true } };
 }
 
 export default async function NewsletterResultPage({

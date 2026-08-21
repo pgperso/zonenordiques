@@ -6,7 +6,8 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: `Conditions d'utilisation | ${BRAND.name}`,
+  // Bare — the root title template appends "| Zone Nordiques" once.
+  title: "Conditions d'utilisation",
   description:
     `Consultez les conditions d'utilisation de ${BRAND.name} (${BRAND.nameEn}). Règles de la communauté, responsabilités des utilisateurs et politique de contenu.`,
   openGraph: {

@@ -13,7 +13,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const title = locale === 'fr' ? `Admin du pool | ${BRAND.name}` : `Pool admin | ${BRAND.nameEn}`;
-  return { title, robots: { index: false, follow: false } };
+  return { title: { absolute: title }, robots: { index: false, follow: false } };
 }
 
 export default async function PoolAdminPage({ params }: { params: Promise<{ locale: string }> }) {

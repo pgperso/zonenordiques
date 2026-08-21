@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { formatDate } from '@arena/shared';
-import { BRAND } from '@/lib/brand';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { SearchBox } from './SearchBox';
 
@@ -13,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const t = await getTranslations({ locale, namespace: 'search' });
   // Internal search-result pages are kept out of the index (thin/duplicate),
   // but the sitelinks search box (WebSite SearchAction) still points here.
-  return { title: `${t('title')} | ${BRAND.name}`, robots: { index: false, follow: true } };
+  return { title: t('title'), robots: { index: false, follow: true } };
 }
 
 interface ArticleResult {

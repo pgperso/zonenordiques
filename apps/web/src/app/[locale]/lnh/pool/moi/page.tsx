@@ -16,7 +16,7 @@ import { BRAND } from '@/lib/brand';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   const title = locale === 'fr' ? `Mon équipe | ${BRAND.name}` : `My team | ${BRAND.nameEn}`;
-  return { title, robots: { index: false, follow: false } };
+  return { title: { absolute: title }, robots: { index: false, follow: false } };
 }
 
 export default async function MyTeamPage({ params }: { params: Promise<{ locale: string }> }) {

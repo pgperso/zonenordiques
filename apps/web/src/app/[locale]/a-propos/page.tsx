@@ -7,7 +7,8 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: `À propos | ${BRAND.name}`,
+  // Bare — the root title template appends "| Zone Nordiques" once.
+  title: 'À propos',
   description:
     `Découvrez ${BRAND.name} (${BRAND.nameEn}), la plateforme communautaire bilingue pour les fans de sport. Chat tribunes, articles, podcasts, jauges de confiance et plus encore.`,
   openGraph: {

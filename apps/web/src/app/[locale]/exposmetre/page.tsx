@@ -22,7 +22,8 @@ export async function generateMetadata({
     : 'Vote on the Exposmeter: how strongly do you believe the Montreal Expos will return? Across 3 horizons. The live pulse of the fans.';
   const url = `${BRAND.url}/${locale}/exposmetre`;
   return {
-    title,
+    // Absolute: title already carries the brand, so skip the root template.
+    title: { absolute: title },
     description,
     openGraph: {
       title,

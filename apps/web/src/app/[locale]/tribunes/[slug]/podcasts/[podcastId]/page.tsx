@@ -40,7 +40,8 @@ export async function generateMetadata({ params }: PodcastPageProps) {
   const url = `${BRAND.url}/${locale}/tribunes/${slug}/podcasts/${podcastId}`;
 
   return {
-    title: `${title} | ${BRAND.name}`,
+    // Absolute: brand is already appended here, so skip the root template.
+    title: { absolute: `${title} | ${BRAND.name}` },
     description: desc,
     keywords: [title, 'podcast sportif', BRAND.name, 'hockey', 'sports', 'audio'],
     openGraph: {

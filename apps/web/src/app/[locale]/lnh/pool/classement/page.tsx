@@ -17,7 +17,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const title = locale === 'fr' ? `Classement du pool LNH | ${BRAND.name}` : `NHL pool standings | ${BRAND.nameEn}`;
-  return { title, alternates: { canonical: `${BRAND.url}/${locale}/lnh/pool/classement` } };
+  return { title: { absolute: title }, alternates: { canonical: `${BRAND.url}/${locale}/lnh/pool/classement` } };
 }
 
 export default async function StandingsPage({ params }: { params: Promise<{ locale: string }> }) {

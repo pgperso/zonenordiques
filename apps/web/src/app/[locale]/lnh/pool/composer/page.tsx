@@ -16,7 +16,7 @@ export async function generateMetadata({
   const { locale } = await params;
   const title = locale === 'fr' ? `Composer mon équipe | ${BRAND.name}` : `Build my team | ${BRAND.nameEn}`;
   // The tool itself isn't an SEO/ad surface; keep it out of the index.
-  return { title, robots: { index: false, follow: false } };
+  return { title: { absolute: title }, robots: { index: false, follow: false } };
 }
 
 export default async function ComposerPage({ params }: { params: Promise<{ locale: string }> }) {

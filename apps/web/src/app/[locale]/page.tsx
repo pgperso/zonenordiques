@@ -21,24 +21,28 @@ export async function generateMetadata({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'pressGallery' });
 
-  const title = `${t('title')} | ${BRAND.name}`;
+  // Bare page title — the root layout's title template ("%s | Zone Nordiques")
+  // appends the brand once. OG/Twitter don't run the template, so they carry
+  // the full title themselves.
+  const pageTitle = t('title');
+  const fullTitle = `${pageTitle} | ${BRAND.name}`;
   const description = t('description');
 
   return {
-    title,
+    title: pageTitle,
     description,
     openGraph: {
-      title,
+      title: fullTitle,
       description,
       type: 'website',
       url: `${BRAND.url}/${locale}`,
       siteName: BRAND.name,
       locale: locale === 'fr' ? 'fr_CA' : 'en_CA',
-      images: [{ url: BRAND.logoUrl, alt: title, width: BRAND.logoWidth, height: BRAND.logoHeight }],
+      images: [{ url: BRAND.logoUrl, alt: fullTitle, width: BRAND.logoWidth, height: BRAND.logoHeight }],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: fullTitle,
       description,
       images: [BRAND.logoUrl],
     },

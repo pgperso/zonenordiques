@@ -7,7 +7,8 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  title: `Contact | ${BRAND.name}`,
+  // Bare — the root title template appends "| Zone Nordiques" once.
+  title: 'Contact',
   description:
     `Contactez l'équipe de ${BRAND.name} (${BRAND.nameEn}). Envoyez-nous un courriel ou suivez-nous sur les réseaux sociaux.`,
   openGraph: {
