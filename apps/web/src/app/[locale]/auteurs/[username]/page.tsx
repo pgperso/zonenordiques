@@ -8,6 +8,7 @@ import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@aren
 import { BRAND } from '@/lib/brand';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { translatedField } from '@/lib/contentTranslation';
+import { plainText } from '@/lib/articleText';
 import { findContentAuthorBySlug, type ContentAuthor } from '@/lib/contentAuthors';
 
 export const revalidate = 300;
@@ -253,7 +254,7 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
                   locale,
                 );
                 const title = translatedField(a.source_lang, locale, a.title, a.title_translated);
-                const excerpt = translatedField(a.source_lang, locale, a.excerpt, a.excerpt_translated);
+                const excerpt = plainText(translatedField(a.source_lang, locale, a.excerpt, a.excerpt_translated));
                 return (
                   <li key={a.id}>
                     <Link

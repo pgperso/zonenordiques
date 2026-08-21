@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@arena/supabase-client';
 import { ORIGINAL_CONTENT_CUTOFF } from '@arena/shared';
 import { translatedField } from '@/lib/contentTranslation';
-import { cleanArticleTitle, decodeEntities } from '@/lib/articleText';
+import { cleanArticleTitle, plainText } from '@/lib/articleText';
 
 export interface PressGalleryItem {
   type: 'article' | 'podcast';
@@ -425,7 +425,7 @@ function articleToItem(r: ArticleRow, locale: string): PressGalleryItem {
     id: r.id,
     title: cleanArticleTitle(translatedField(r.source_lang, locale, r.title, r.title_translated), null, 'Article'),
     slug: r.slug,
-    excerpt: decodeEntities(translatedField(r.source_lang, locale, r.excerpt, r.excerpt_translated)) || null,
+    excerpt: plainText(translatedField(r.source_lang, locale, r.excerpt, r.excerpt_translated)) || null,
     description: null,
     coverImageUrl: r.cover_image_url,
     coverPositionY: r.cover_position_y ?? 50,

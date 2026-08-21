@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { ORIGINAL_CONTENT_CUTOFF } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { plainText } from '@/lib/articleText';
 
 export const revalidate = 3600;
 
@@ -36,7 +37,7 @@ export async function GET() {
     items.push(`    <item>
       <title><![CDATA[${a.title}]]></title>
       <link>${BASE_URL}/fr/tribunes/${a.communities.slug}/articles/${a.slug}</link>
-      <description><![CDATA[${a.excerpt ?? a.title}]]></description>
+      <description><![CDATA[${plainText(a.excerpt) || a.title}]]></description>
       <pubDate>${new Date(a.published_at ?? Date.now()).toUTCString()}</pubDate>
       <category>${a.communities.name}</category>
       <guid isPermaLink="true">${BASE_URL}/fr/tribunes/${a.communities.slug}/articles/${a.slug}</guid>

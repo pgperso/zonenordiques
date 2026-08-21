@@ -2,7 +2,7 @@
 
 import { useEffect, useReducer, useCallback, useRef, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { cleanArticleTitle, decodeEntities } from '@/lib/articleText';
+import { cleanArticleTitle, plainText } from '@/lib/articleText';
 import { FEED_INITIAL_LIMIT, FEED_LOAD_MORE_LIMIT, messageSchema } from '@arena/shared';
 import type {
   FeedItem,
@@ -94,7 +94,7 @@ function articleToFeedItem(row: ArticleWithJoin & { author_name_override?: strin
     id: row.id,
     title: cleanArticleTitle(row.title, null, 'Article'),
     slug: row.slug,
-    excerpt: decodeEntities(row.excerpt) || null,
+    excerpt: plainText(row.excerpt) || null,
     coverImageUrl: row.cover_image_url,
     likeCount: row.like_count,
     viewCount: row.view_count,

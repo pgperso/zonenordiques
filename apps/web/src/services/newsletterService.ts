@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { BRAND } from '@/lib/brand';
+import { plainText } from '@/lib/articleText';
 
 // Verified Resend sending domain (see DNS cutover). Display name + address.
 export const NEWSLETTER_FROM = `${BRAND.name} <${BRAND.email}>`;
@@ -60,7 +61,7 @@ export async function fetchDigestArticles(
     id: r.id,
     title: r.title,
     slug: r.slug,
-    excerpt: r.excerpt,
+    excerpt: plainText(r.excerpt) || null,
     cover_image_url: r.cover_image_url,
     published_at: r.published_at,
     communitySlug: r.communities?.slug ?? 'zone-nordiques',

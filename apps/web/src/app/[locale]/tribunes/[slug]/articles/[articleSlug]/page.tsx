@@ -6,7 +6,7 @@ import { sanitizeArticleBody } from '@/lib/sanitizeBodyServer';
 import { splitHtmlAtParagraph } from '@/lib/articleBody';
 import { BRAND } from '@/lib/brand';
 import { translatedField } from '@/lib/contentTranslation';
-import { cleanArticleTitle, decodeEntities } from '@/lib/articleText';
+import { cleanArticleTitle, cleanExcerpt, plainText } from '@/lib/articleText';
 import { ArticleView } from '@/components/article/ArticleView';
 import { RelatedArticles } from '@/components/article/RelatedArticles';
 import { getContentAuthor } from '@/lib/contentAuthors';
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   };
   const body = translatedField(raw.source_lang, loc, raw.body, raw.body_translated);
   const title = cleanArticleTitle(translatedField(raw.source_lang, loc, raw.title, raw.title_translated), body, 'Article');
-  const excerpt = decodeEntities(translatedField(raw.source_lang, loc, raw.excerpt, raw.excerpt_translated)) || null;
+  const excerpt = cleanExcerpt(translatedField(raw.source_lang, loc, raw.excerpt, raw.excerpt_translated), body) || null;
   const cover_image_url = raw.cover_image_url;
   const published_at = raw.published_at;
   const desc = excerpt ?? `${title} — Article sportif sur ${BRAND.name}. Opinions, analyses et débats.`;
@@ -203,7 +203,7 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
   // language the article was written in (see /api/translate-pending).
   const displayBody = translatedField(article.source_lang, locale, article.body, article.body_translated);
   const displayTitle = cleanArticleTitle(translatedField(article.source_lang, locale, article.title, article.title_translated), displayBody, 'Article');
-  const displayExcerpt = decodeEntities(translatedField(article.source_lang, locale, article.excerpt, article.excerpt_translated)) || null;
+  const displayExcerpt = plainText(translatedField(article.source_lang, locale, article.excerpt, article.excerpt_translated)) || null;
 
   // Sanitize + split the body HERE (server component) so the prose is part of
   // the SSR HTML. This used to happen inside the client ArticleView via

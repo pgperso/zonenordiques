@@ -37,6 +37,40 @@ function safeCodePoint(cp: number): string {
 }
 
 /**
+ * Plain-text version of rich/imported content: decode entities, strip HTML
+ * tags (a lot of imported excerpts carry a literal "<br />") and pasted URLs,
+ * then collapse whitespace. Use anywhere an excerpt is shown as text — cards,
+ * search results, RSS, meta descriptions — so Google never sees raw markup.
+ */
+export function plainText(input: string | null | undefined): string {
+  return decodeEntities(input)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/https?:\/\/\S+/gi, ' ')
+    .replace(/www\.\S+/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * A clean excerpt / meta description. Uses the stored excerpt when it holds
+ * real text (not empty or the literal "NULL"), otherwise derives one from the
+ * body. Clips to `maxLen` on a word boundary. Returns '' when nothing usable
+ * exists (callers can fall back to their own default).
+ */
+export function cleanExcerpt(
+  excerpt: string | null | undefined,
+  body?: string | null | undefined,
+  maxLen = 160,
+): string {
+  const fromExcerpt = plainText(excerpt);
+  const text = fromExcerpt && fromExcerpt.toUpperCase() !== 'NULL' ? fromExcerpt : plainText(body);
+  if (text.length <= maxLen) return text;
+  const clipped = text.slice(0, maxLen);
+  const cut = clipped.lastIndexOf(' ');
+  return `${(cut > maxLen * 0.6 ? clipped.slice(0, cut) : clipped).trimEnd()}…`;
+}
+
+/**
  * A clean, displayable title. Decodes entities; when the stored title is empty
  * or the literal string "NULL" (a bad import), derives one from the body.
  */

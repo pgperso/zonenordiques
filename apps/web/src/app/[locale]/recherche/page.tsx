@@ -5,6 +5,7 @@ import { Link } from '@/i18n/navigation';
 import Image from 'next/image';
 import { formatDate } from '@arena/shared';
 import { AdSlot } from '@/components/ads/AdSlot';
+import { plainText } from '@/lib/articleText';
 import { SearchBox } from './SearchBox';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -84,7 +85,7 @@ export default async function SearchPage({
                       {a.title}
                     </h2>
                     {a.excerpt && (
-                      <p className="mt-0.5 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">{a.excerpt}</p>
+                      <p className="mt-0.5 line-clamp-2 text-xs text-gray-500 dark:text-gray-400">{plainText(a.excerpt)}</p>
                     )}
                     <p className="mt-0.5 text-[11px] text-gray-400">{formatDate(a.published_at ?? '')}</p>
                   </div>
