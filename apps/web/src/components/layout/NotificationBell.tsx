@@ -5,7 +5,6 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useSupabase } from '@/hooks/useSupabase';
-import { useTribune } from '@/contexts/TribuneContext';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
 import { Avatar } from '@/components/ui/Avatar';
 import { formatTime, displayCommunityName } from '@arena/shared';
@@ -32,7 +31,6 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const locale = useLocale();
   const router = useRouter();
   const supabase = useSupabase();
-  const { tribune } = useTribune();
   const { enabled: soundEnabled, setEnabled: setSoundEnabled, play: playSound } = useNotificationSound();
 
   const [open, setOpen] = useState(false);
@@ -40,13 +38,6 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // The realtime callback below needs the *current* tribune without
-  // re-subscribing every time the user navigates — keep it in a ref.
-  const tribuneRef = useRef(tribune);
-  useEffect(() => {
-    tribuneRef.current = tribune;
-  }, [tribune]);
 
   const refreshUnread = useCallback(async () => {
     const count = await fetchUnreadNotificationCount(supabase);
@@ -95,20 +86,9 @@ export function NotificationBell({ userId }: NotificationBellProps) {
             playSound(row?.type);
           }
 
-          // Presence suppression: a chat reply in the tribune you are
-          // currently viewing is something you can already see scroll by —
-          // silently mark it read instead of lighting up the bell.
-          if (
-            row?.type === 'chat_reply' &&
-            row.is_read === false &&
-            row.id != null &&
-            tribuneRef.current?.id != null &&
-            row.community_id === tribuneRef.current.id
-          ) {
-            void markNotificationRead(supabase, row.id);
-            return;
-          }
-
+          // Chat replies used to be suppressed while you had the tribune open
+          // (you'd see them scroll by). They now live in the thread panel, not
+          // the flat feed, so they must light the bell like any other reply.
           refreshUnread();
           if (open) loadList();
         },
@@ -157,7 +137,13 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         n.commentId ? `?commentId=${n.commentId}` : ''
       }`;
     }
-    // chat_reply and chat mentions live in the tribune feed.
+    // A chat reply opens the thread of the message that was answered — replies
+    // live in the thread panel, not the flat feed, so the tribune alone isn't
+    // enough to actually see them.
+    if (n.type === 'chat_reply' && n.rootMessageId) {
+      return `/tribunes/${n.communitySlug}?thread=${n.rootMessageId}`;
+    }
+    // Chat mentions live in the tribune feed.
     return `/tribunes/${n.communitySlug}`;
   }
 

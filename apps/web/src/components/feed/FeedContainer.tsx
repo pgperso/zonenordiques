@@ -1,11 +1,13 @@
 'use client';
 
-import { useRef, useState, useCallback, useMemo } from 'react';
+import { useRef, useState, useCallback, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
-import { useRouter } from '@/i18n/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useRouter, usePathname } from '@/i18n/navigation';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 import { isGroupedMessage } from '@/lib/feedUtils';
-import { useFeed } from '@/hooks/useFeed';
+import { useFeed, CHAT_MSG_SELECT, messageToFeedItem, type ChatMessageWithJoin } from '@/hooks/useFeed';
+import { createClient } from '@/lib/supabase/client';
 import type { FeedItem as FeedItemType, FeedMessage as FeedMessageType } from '@arena/shared';
 import { usePresence } from '@/hooks/usePresence';
 import { useAuth } from '@/hooks/useAuth';
@@ -98,6 +100,37 @@ export function FeedContainer({
     },
     [threadRoot, sendReply],
   );
+
+  // Deep-link from a reply notification: /tribunes/slug?thread=<rootMessageId>
+  // opens that message's thread. The root may be older than the loaded window,
+  // so fall back to fetching it directly. The param is then cleared so a
+  // refresh or back-navigation doesn't reopen the panel.
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const openedThreadParamRef = useRef<string | null>(null);
+  const threadParam = searchParams.get('thread');
+  useEffect(() => {
+    if (!threadParam) { openedThreadParamRef.current = null; return; }
+    if (openedThreadParamRef.current === threadParam) return;
+    const id = Number(threadParam);
+    openedThreadParamRef.current = threadParam;
+    router.replace(pathname);
+    if (!Number.isFinite(id)) return;
+
+    const loaded = items.find((it) => it.feedType === 'message' && it.id === id) as FeedMessageType | undefined;
+    if (loaded) {
+      setThreadRoot(loaded);
+      return;
+    }
+    createClient()
+      .from('chat_messages')
+      .select(CHAT_MSG_SELECT)
+      .eq('id', id)
+      .single()
+      .then(({ data }) => {
+        if (data) setThreadRoot(messageToFeedItem(data as unknown as ChatMessageWithJoin));
+      });
+  }, [threadParam, items, router, pathname]);
 
   // Edit state — only one message at a time (Discord behavior)
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);

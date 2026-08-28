@@ -23,6 +23,8 @@ export interface NotificationItem {
   communityName: string | null;
   communityNameEn: string | null;
   commentId: number | null;
+  /** For chat_reply: the parent (root) chat message id, to open its thread. */
+  rootMessageId: number | null;
   isRead: boolean;
   /** Creation or last-coalesce time — the bell sorts and labels by this. */
   updatedAt: string;
@@ -33,6 +35,7 @@ type RawNotificationRow = {
   type: NotificationType;
   article_id: number | null;
   comment_id: number | null;
+  group_key: string | null;
   actor_count: number;
   is_read: boolean;
   updated_at: string;
@@ -44,6 +47,15 @@ type RawNotificationRow = {
   } | null;
   community: { slug: string; name: string; name_en: string | null } | null;
 };
+
+// chat_reply notifications encode the parent message id in the group_key
+// ("chat_message:<id>") rather than comment_id, so the bell can deep-link to
+// that message's thread.
+function rootMessageIdFrom(r: RawNotificationRow): number | null {
+  if (r.type !== 'chat_reply' || !r.group_key?.startsWith('chat_message:')) return null;
+  const id = Number(r.group_key.slice('chat_message:'.length));
+  return Number.isFinite(id) ? id : null;
+}
 
 function rowToNotification(r: RawNotificationRow): NotificationItem {
   return {
@@ -59,6 +71,7 @@ function rowToNotification(r: RawNotificationRow): NotificationItem {
     communityName: r.community?.name ?? null,
     communityNameEn: r.community?.name_en ?? null,
     commentId: r.comment_id,
+    rootMessageId: rootMessageIdFrom(r),
     isRead: r.is_read,
     updatedAt: r.updated_at,
   };
@@ -71,7 +84,7 @@ export async function fetchNotifications(
   const { data } = await supabase
     .from('notifications')
     .select(
-      'id, type, article_id, comment_id, actor_count, is_read, updated_at, ' +
+      'id, type, article_id, comment_id, group_key, actor_count, is_read, updated_at, ' +
       'actor:members!notifications_actor_id_fkey(username, avatar_url), ' +
       'article:articles(title, slug, communities!inner(slug)), ' +
       'community:communities!notifications_community_id_fkey(slug, name, name_en)',
