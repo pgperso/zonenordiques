@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
+import { createHash } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
 import { setRequestLocale } from 'next-intl/server';
 import { isIndexableArticle, displayCommunityName, ARTICLE_AD_WORD_THRESHOLD } from '@arena/shared';
@@ -192,8 +194,16 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
     }
   }
 
-  // Increment view count (fire and forget)
-  void (async () => { try { await supabase.rpc('increment_article_views' as never, { p_article_id: article.id } as never); } catch { /* ignore */ } })();
+  // Count a view per UNIQUE visitor (distinct IP), anonymous included. Only a
+  // salted hash of the IP is sent — never the raw address — and the DB counts
+  // it once per article. Fire and forget so it never blocks the render.
+  const hdrs = await headers();
+  const forwarded = (hdrs.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
+  const visitorIp = forwarded || hdrs.get('x-real-ip') || '';
+  const ipHash = visitorIp
+    ? createHash('sha256').update(`${visitorIp}:${process.env.VIEW_HASH_SALT ?? 'zn'}`).digest('hex')
+    : '';
+  void (async () => { try { await supabase.rpc('record_article_view' as never, { p_article_id: article.id, p_ip_hash: ipHash } as never); } catch { /* ignore */ } })();
 
   const m = article.members;
   const authorDisplayName = article.author_name_override || (m?.first_name && m?.last_name ? `${m.first_name} ${m.last_name}` : null) || m?.username || 'Inconnu';
