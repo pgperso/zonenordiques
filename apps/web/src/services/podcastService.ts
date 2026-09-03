@@ -42,7 +42,7 @@ export async function createPodcast(
     is_published: data.isPublished ?? true,
     youtube_video_id: validated.youtubeVideoId ?? null,
     is_live: validated.isLive ?? false,
-  });
+  }).select('id').single(); // need the new id for the announcement link
 
   // Bot announcements when published (fire-and-forget)
   if (!result.error && data.isPublished !== false) {

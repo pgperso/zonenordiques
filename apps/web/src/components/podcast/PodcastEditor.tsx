@@ -116,12 +116,17 @@ export function PodcastEditor({
         isPublished: publish,
       };
 
-      const { error: err } = isEditMode
-        ? await updatePodcast(supabase, existingPodcast.id, data)
-        : await createPodcast(supabase, data);
-
-      if (err) {
-        setError(err.message);
+      try {
+        const { error: err } = isEditMode
+          ? await updatePodcast(supabase, existingPodcast.id, data)
+          : await createPodcast(supabase, data);
+        if (err) {
+          setError(err.message);
+          setSaving(false);
+          return;
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Échec de l'enregistrement. Réessayez.");
         setSaving(false);
         return;
       }
@@ -167,12 +172,17 @@ export function PodcastEditor({
       isPublished: publish,
     };
 
-    const { error: err } = isEditMode
-      ? await updatePodcast(supabase, existingPodcast.id, data)
-      : await createPodcast(supabase, data);
-
-    if (err) {
-      setError(err.message);
+    try {
+      const { error: err } = isEditMode
+        ? await updatePodcast(supabase, existingPodcast.id, data)
+        : await createPodcast(supabase, data);
+      if (err) {
+        setError(err.message);
+        setSaving(false);
+        return;
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('saveFailed'));
       setSaving(false);
       return;
     }
@@ -184,33 +194,11 @@ export function PodcastEditor({
   const isBusy = saving || uploading;
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="mx-auto max-w-2xl pb-20">
+      <div className="mb-4">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           {isEditMode ? t('editPodcast') : t('newPodcast')}
         </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={onCancel}
-            className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#1e1e1e]"
-          >
-            {tc('cancel')}
-          </button>
-          <button
-            onClick={() => handleSave(false)}
-            disabled={isBusy}
-            className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800 dark:bg-[#1e1e1e] disabled:opacity-50"
-          >
-            {tc('draft')}
-          </button>
-          <button
-            onClick={() => handleSave(true)}
-            disabled={isBusy}
-            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-blue-dark disabled:opacity-50"
-          >
-            {isBusy ? tc('saving') : isEditMode ? t('update') : tc('publish')}
-          </button>
-        </div>
       </div>
 
       {(error || uploadError) && (
@@ -420,6 +408,32 @@ export function PodcastEditor({
             <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleCoverChange} />
           </label>
         )}
+      </div>
+
+      {/* Sticky action bar — the primary action sits at the bottom, where users
+          look for it, and stays visible however long the form scrolls (the old
+          top header could scroll out of view / hide behind the page chrome). */}
+      <div className="sticky bottom-0 mt-2 flex items-center justify-end gap-2 border-t border-gray-200 bg-white/95 py-3 backdrop-blur dark:border-gray-700 dark:bg-[#1e1e1e]/95">
+        <button
+          onClick={onCancel}
+          className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800"
+        >
+          {tc('cancel')}
+        </button>
+        <button
+          onClick={() => handleSave(false)}
+          disabled={isBusy}
+          className="rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 transition hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+        >
+          {tc('draft')}
+        </button>
+        <button
+          onClick={() => handleSave(true)}
+          disabled={isBusy}
+          className="rounded-lg bg-brand-blue px-6 py-2 text-sm font-semibold text-white transition hover:bg-brand-blue-dark disabled:opacity-50"
+        >
+          {isBusy ? tc('saving') : isEditMode ? t('update') : tc('publish')}
+        </button>
       </div>
     </div>
   );

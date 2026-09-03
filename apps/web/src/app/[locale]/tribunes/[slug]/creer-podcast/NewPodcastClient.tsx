@@ -12,10 +12,7 @@ interface Props {
 export function NewPodcastClient({ communityId, communitySlug, userId }: Props) {
   const router = useRouter();
   return (
-    <div
-      className="mx-auto w-full max-w-4xl overflow-y-auto px-4 py-6"
-      style={{ height: 'calc(100dvh - var(--chrome-h, 4rem))' }}
-    >
+    <div className="mx-auto h-full w-full max-w-4xl overflow-y-auto px-4 py-6">
       <PodcastEditor
         communityId={communityId}
         userId={userId}
