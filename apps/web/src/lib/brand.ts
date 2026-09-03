@@ -33,9 +33,11 @@ export const BRAND = {
   domain: 'zonenordiques.com',
   url: 'https://zonenordiques.com',
 
-  // Logo — site-relative path, absolute URL, and intrinsic size.
+  // Logo — site-relative path for in-app <img> (WebP, lightest for browsers)
+  // and an absolute PNG URL for social cards + JSON-LD (X/Twitter does not
+  // reliably render WebP og:images, so the shared/social logo must be PNG).
   logo: '/images/zonenordiques.webp',
-  logoUrl: 'https://zonenordiques.com/images/zonenordiques.webp',
+  logoUrl: 'https://zonenordiques.com/images/zonenordiques.png',
   logoWidth: 512,
   logoHeight: 512,
 

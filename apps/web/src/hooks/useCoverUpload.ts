@@ -47,18 +47,22 @@ export function useCoverUpload(
   const uploadCover = useCallback(async (): Promise<string | null> => {
     if (!coverFile) return coverPreview;
 
+    // JPEG (not WebP): the cover doubles as the article's social-card image
+    // (og:image / twitter:image), and X/Twitter does not reliably render WebP
+    // cards. next/image still re-optimizes it to WebP for on-site display, so
+    // there's no page-weight cost.
     const compressed = await imageCompression(coverFile, {
       maxSizeMB: 1.0,
       maxWidthOrHeight: 1200,
       useWebWorker: true,
-      fileType: 'image/webp',
+      fileType: 'image/jpeg',
     });
 
-    const path = `article-covers/${communityId}/${Date.now()}${suffix}.webp`;
+    const path = `article-covers/${communityId}/${Date.now()}${suffix}.jpg`;
 
     const { error } = await supabase.storage
       .from('article-covers')
-      .upload(path, compressed, { contentType: 'image/webp', cacheControl: '31536000' });
+      .upload(path, compressed, { contentType: 'image/jpeg', cacheControl: '31536000' });
 
     if (error) return coverPreview;
 
