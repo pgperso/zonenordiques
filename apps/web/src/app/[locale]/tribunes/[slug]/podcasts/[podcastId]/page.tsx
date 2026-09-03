@@ -35,7 +35,6 @@ export async function generateMetadata({ params }: PodcastPageProps) {
   const title = translatedField(praw.source_lang, locale, praw.title, praw.title_translated);
   const description = translatedField(praw.source_lang, locale, praw.description, praw.description_translated);
   const audio_url = praw.audio_url;
-  const cover_image_url = praw.cover_image_url;
   const desc = description ?? `${title} — Podcast sportif sur ${BRAND.name}. Écoutez maintenant !`;
   const url = `${BRAND.url}/${locale}/tribunes/${slug}/podcasts/${podcastId}`;
 
@@ -44,6 +43,9 @@ export async function generateMetadata({ params }: PodcastPageProps) {
     title: { absolute: `${title} | ${BRAND.name}` },
     description: desc,
     keywords: [title, 'podcast sportif', BRAND.name, 'hockey', 'sports', 'audio'],
+    // og:image / twitter:image come from the generated branded card in
+    // opengraph-image.tsx (a PNG that X renders reliably) — don't set raw
+    // cover images here or they'd override it.
     openGraph: {
       title: `${title} | ${BRAND.name}`,
       description: desc,
@@ -52,15 +54,11 @@ export async function generateMetadata({ params }: PodcastPageProps) {
       url,
       siteName: BRAND.name,
       locale: locale === 'fr' ? 'fr_CA' : 'en_CA',
-      images: cover_image_url
-        ? [{ url: cover_image_url, alt: title, width: 1200, height: 630 }]
-        : [{ url: BRAND.logoUrl, alt: BRAND.name, width: BRAND.logoWidth, height: BRAND.logoHeight }],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | ${BRAND.name}`,
       description: desc,
-      images: cover_image_url ? [cover_image_url] : [BRAND.logoUrl],
       site: BRAND.twitterHandle,
     },
     alternates: {

@@ -258,7 +258,7 @@ export function PodcastPlayer({ podcast, communitySlug, userId }: PodcastPlayerP
             </svg>
           </a>
           <a
-            href={`https://x.com/intent/tweet?url=${encodeURIComponent(`${BRAND.url}/${locale}/tribunes/${communitySlug}/podcasts/${podcast.id}`)}&text=${encodeURIComponent(podcast.title)}`}
+            href={`https://x.com/intent/tweet?url=${encodeURIComponent(`${BRAND.url}/${locale}/tribunes/${communitySlug}/podcasts/${podcast.id}`)}&text=${encodeURIComponent(podcast.title)}&hashtags=${encodeURIComponent('LaZone,Puckcast,Nordiques')}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center rounded-lg p-2 text-gray-400 transition hover:bg-gray-100 dark:hover:bg-gray-700 dark:bg-[#1e1e1e] hover:text-gray-900 dark:text-gray-100"
