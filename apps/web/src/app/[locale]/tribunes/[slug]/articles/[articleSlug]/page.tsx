@@ -51,7 +51,6 @@ export async function generateMetadata({ params }: ArticlePageProps) {
   const body = translatedField(raw.source_lang, loc, raw.body, raw.body_translated);
   const title = cleanArticleTitle(translatedField(raw.source_lang, loc, raw.title, raw.title_translated), body, 'Article');
   const excerpt = cleanExcerpt(translatedField(raw.source_lang, loc, raw.excerpt, raw.excerpt_translated), body) || null;
-  const cover_image_url = raw.cover_image_url;
   const published_at = raw.published_at;
   const desc = excerpt ?? `${title} — Article sportif sur ${BRAND.name}. Opinions, analyses et débats.`;
   const url = `${BRAND.url}/${loc}/tribunes/${slug}/articles/${articleSlug}`;
@@ -79,15 +78,14 @@ export async function generateMetadata({ params }: ArticlePageProps) {
       url,
       siteName: BRAND.name,
       locale: loc === 'fr' ? 'fr_CA' : 'en_CA',
-      images: cover_image_url
-        ? [{ url: cover_image_url, alt: title, width: 1200, height: 630 }]
-        : [{ url: BRAND.logoUrl, alt: BRAND.name, width: BRAND.logoWidth, height: BRAND.logoHeight }],
+      // og:image / twitter:image come from the generated branded card in
+      // opengraph-image.tsx (a PNG X renders reliably, with a proper fallback
+      // for cover-less articles) — setting raw images here would override it.
     },
     twitter: {
       card: 'summary_large_image',
       title: `${title} | ${BRAND.name}`,
       description: desc,
-      images: cover_image_url ? [cover_image_url] : [BRAND.logoUrl],
       site: BRAND.twitterHandle,
     },
     alternates: {
