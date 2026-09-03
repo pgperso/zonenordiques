@@ -109,7 +109,27 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
     .some((c) => c.name.startsWith('sb-') && c.name.includes('-auth-token'));
 }
 
+// The address users ever see or share must be the real domain — never the
+// underlying Vercel deployment URL. In production, bounce any *.vercel.app host
+// to the canonical domain. Scoped to *.vercel.app only, so real domains and
+// preview deployments (VERCEL_ENV !== 'production') are untouched — no loops.
+const CANONICAL_HOST = 'www.zonenordiques.com';
+
+function canonicalHostRedirect(request: NextRequest): NextResponse | null {
+  if (process.env.VERCEL_ENV !== 'production') return null;
+  const host = request.headers.get('host') ?? '';
+  if (!host.endsWith('.vercel.app')) return null;
+  const url = request.nextUrl.clone();
+  url.protocol = 'https:';
+  url.host = CANONICAL_HOST;
+  return NextResponse.redirect(url, 308);
+}
+
 export async function middleware(request: NextRequest) {
+  // Force the canonical domain before anything else.
+  const canonical = canonicalHostRedirect(request);
+  if (canonical) return canonical;
+
   // Legacy PHP URL redirects run first — they need no locale/auth handling.
   const legacy = legacyPhpRedirect(request);
   if (legacy) return legacy;
