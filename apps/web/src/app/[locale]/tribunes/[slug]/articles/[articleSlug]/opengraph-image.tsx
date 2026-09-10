@@ -24,7 +24,7 @@ export default async function ArticleOgImage({
   const logoData = readFileSync(join(process.cwd(), 'public/images/zonenordiques.png'));
   const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
-  let title = BRAND.name;
+  let title: string = BRAND.name;
   let cover: string | null = null;
   const db = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
