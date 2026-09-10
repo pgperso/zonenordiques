@@ -206,6 +206,7 @@ export const FeedMessage = memo(function FeedMessage({
       initialLikeCount={message.likeCount}
       initialDislikeCount={message.dislikeCount}
       initialSmileyCount={message.smileyCount}
+      initialSurpriseCount={message.surpriseCount}
       userId={userId}
       isOwn={isOwn}
       canModerate={canModerate}
@@ -303,6 +304,7 @@ export const FeedMessage = memo(function FeedMessage({
             likeCount={message.likeCount}
             dislikeCount={message.dislikeCount}
             smileyCount={message.smileyCount}
+            surpriseCount={message.surpriseCount}
             replyCount={message.replyCount}
             onOpenThread={onOpenThread ? () => onOpenThread(message) : undefined}
           />
@@ -388,6 +390,7 @@ export const FeedMessage = memo(function FeedMessage({
               likeCount={message.likeCount}
               dislikeCount={message.dislikeCount}
               smileyCount={message.smileyCount}
+              surpriseCount={message.surpriseCount}
               replyCount={message.replyCount}
               onOpenThread={onOpenThread ? () => onOpenThread(message) : undefined}
             />

@@ -10,6 +10,7 @@ interface FeedMessageToolbarProps {
   initialLikeCount: number;
   initialDislikeCount: number;
   initialSmileyCount: number;
+  initialSurpriseCount: number;
   userId: string | null;
   isOwn: boolean;
   canModerate: boolean;
@@ -27,6 +28,7 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
   initialLikeCount,
   initialDislikeCount,
   initialSmileyCount,
+  initialSurpriseCount,
   userId,
   isOwn,
   canModerate,
@@ -41,8 +43,8 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const { isLiked, isDisliked, isSmiley, toggleLike, toggleDislike, toggleSmiley, loading } =
-    useMessageReaction(messageId, initialLikeCount, initialDislikeCount, initialSmileyCount, userId);
+  const { isLiked, isDisliked, isSmiley, isSurprised, toggleLike, toggleDislike, toggleSmiley, toggleSurprise, loading } =
+    useMessageReaction(messageId, initialLikeCount, initialDislikeCount, initialSmileyCount, initialSurpriseCount, userId);
 
   const showEdit = isOwn && !!onStartEdit;
   const showDelete = (isOwn || canModerate) && !!onDelete;
@@ -120,6 +122,23 @@ export const FeedMessageToolbar = memo(function FeedMessageToolbar({
                   aria-hidden="true"
                 >
                   😆
+                </span>
+              </button>
+              <button
+                onClick={toggleSurprise}
+                disabled={!userId || loading}
+                className={`${BTN} ${
+                  isSurprised
+                    ? 'bg-purple-100 dark:bg-purple-900/40'
+                    : 'opacity-80 hover:bg-gray-100 hover:opacity-100 dark:hover:bg-gray-700'
+                }`}
+                title={isSurprised ? 'Retirer la surprise' : 'Surpris'}
+              >
+                <span
+                  className={`flex h-5 w-5 items-center justify-center text-[18px] leading-none transition-transform ${isSurprised ? 'scale-110' : ''}`}
+                  aria-hidden="true"
+                >
+                  😮
                 </span>
               </button>
               <button

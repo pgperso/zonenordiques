@@ -4,24 +4,28 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSupabase } from './useSupabase';
 import { useBatchLikeStatus } from './useBatchLikeStatus';
 
-type Reaction = 'like' | 'dislike' | 'smiley';
+type Reaction = 'like' | 'dislike' | 'smiley' | 'surprise';
 
-const TABLE: Record<Reaction, 'message_likes' | 'message_dislikes' | 'message_smileys'> = {
+const TABLE: Record<Reaction, 'message_likes' | 'message_dislikes' | 'message_smileys' | 'message_surprises'> = {
   like: 'message_likes',
   dislike: 'message_dislikes',
   smiley: 'message_smileys',
+  surprise: 'message_surprises',
 };
 
 export interface UseMessageReactionReturn {
   isLiked: boolean;
   isDisliked: boolean;
   isSmiley: boolean;
+  isSurprised: boolean;
   likeCount: number;
   dislikeCount: number;
   smileyCount: number;
+  surpriseCount: number;
   toggleLike: () => Promise<void>;
   toggleDislike: () => Promise<void>;
   toggleSmiley: () => Promise<void>;
+  toggleSurprise: () => Promise<void>;
   loading: boolean;
 }
 
@@ -30,6 +34,7 @@ export function useMessageReaction(
   initialLikeCount: number,
   initialDislikeCount: number,
   initialSmileyCount: number,
+  initialSurpriseCount: number,
   userId: string | null,
 ): UseMessageReactionReturn {
   const supabase = useSupabase();
@@ -37,13 +42,16 @@ export function useMessageReaction(
   const batchLiked = batchCtx?.isLiked('message', messageId);
   const batchDisliked = batchCtx?.isDisliked(messageId);
   const batchSmiley = batchCtx?.isSmileyed(messageId);
+  const batchSurprised = batchCtx?.isSurprised(messageId);
 
   const [isLiked, setIsLiked] = useState(batchLiked ?? false);
   const [isDisliked, setIsDisliked] = useState(batchDisliked ?? false);
   const [isSmiley, setIsSmiley] = useState(batchSmiley ?? false);
+  const [isSurprised, setIsSurprised] = useState(batchSurprised ?? false);
   const [likeCount, setLikeCount] = useState(initialLikeCount);
   const [dislikeCount, setDislikeCount] = useState(initialDislikeCount);
   const [smileyCount, setSmileyCount] = useState(initialSmileyCount);
+  const [surpriseCount, setSurpriseCount] = useState(initialSurpriseCount);
   const [loading, setLoading] = useState(false);
 
   // Sync per-user reaction state from the batch context.
@@ -56,11 +64,15 @@ export function useMessageReaction(
   useEffect(() => {
     if (batchSmiley !== undefined) setIsSmiley(batchSmiley);
   }, [batchSmiley]);
+  useEffect(() => {
+    if (batchSurprised !== undefined) setIsSurprised(batchSurprised);
+  }, [batchSurprised]);
 
   // Sync counts from parent (Realtime updates).
   useEffect(() => setLikeCount(initialLikeCount), [initialLikeCount]);
   useEffect(() => setDislikeCount(initialDislikeCount), [initialDislikeCount]);
   useEffect(() => setSmileyCount(initialSmileyCount), [initialSmileyCount]);
+  useEffect(() => setSurpriseCount(initialSurpriseCount), [initialSurpriseCount]);
 
   // A message holds at most one reaction. `apply` toggles the target reaction:
   // clicking the active one clears it, clicking another switches to it (removing
@@ -71,18 +83,21 @@ export function useMessageReaction(
       if (!userId || loading) return;
       setLoading(true);
 
-      const prev: Reaction | null = isLiked ? 'like' : isDisliked ? 'dislike' : isSmiley ? 'smiley' : null;
+      const prev: Reaction | null =
+        isLiked ? 'like' : isDisliked ? 'dislike' : isSmiley ? 'smiley' : isSurprised ? 'surprise' : null;
       const removing = prev === next;
 
       const setFlag: Record<Reaction, (v: boolean) => void> = {
         like: setIsLiked,
         dislike: setIsDisliked,
         smiley: setIsSmiley,
+        surprise: setIsSurprised,
       };
       const bumpCount: Record<Reaction, (d: number) => void> = {
         like: (d) => setLikeCount((c) => Math.max(0, c + d)),
         dislike: (d) => setDislikeCount((c) => Math.max(0, c + d)),
         smiley: (d) => setSmileyCount((c) => Math.max(0, c + d)),
+        surprise: (d) => setSurpriseCount((c) => Math.max(0, c + d)),
       };
 
       // Optimistic: clear the previous reaction, then set the new one (unless
@@ -101,32 +116,36 @@ export function useMessageReaction(
         batchCtx?.setLiked('message', messageId, !removing && next === 'like');
         batchCtx?.setDisliked(messageId, !removing && next === 'dislike');
         batchCtx?.setSmileyed(messageId, !removing && next === 'smiley');
+        batchCtx?.setSurprised(messageId, !removing && next === 'surprise');
       } catch {
         // Roll back to the server-provided baseline on failure.
         setIsLiked(batchLiked ?? false);
         setIsDisliked(batchDisliked ?? false);
         setIsSmiley(batchSmiley ?? false);
+        setIsSurprised(batchSurprised ?? false);
         setLikeCount(initialLikeCount);
         setDislikeCount(initialDislikeCount);
         setSmileyCount(initialSmileyCount);
+        setSurpriseCount(initialSurpriseCount);
       }
       setLoading(false);
     },
     [
-      userId, loading, isLiked, isDisliked, isSmiley, messageId,
-      initialLikeCount, initialDislikeCount, initialSmileyCount,
-      batchLiked, batchDisliked, batchSmiley, batchCtx, supabase,
+      userId, loading, isLiked, isDisliked, isSmiley, isSurprised, messageId,
+      initialLikeCount, initialDislikeCount, initialSmileyCount, initialSurpriseCount,
+      batchLiked, batchDisliked, batchSmiley, batchSurprised, batchCtx, supabase,
     ],
   );
 
   const toggleLike = useCallback(() => apply('like'), [apply]);
   const toggleDislike = useCallback(() => apply('dislike'), [apply]);
   const toggleSmiley = useCallback(() => apply('smiley'), [apply]);
+  const toggleSurprise = useCallback(() => apply('surprise'), [apply]);
 
   return {
-    isLiked, isDisliked, isSmiley,
-    likeCount, dislikeCount, smileyCount,
-    toggleLike, toggleDislike, toggleSmiley,
+    isLiked, isDisliked, isSmiley, isSurprised,
+    likeCount, dislikeCount, smileyCount, surpriseCount,
+    toggleLike, toggleDislike, toggleSmiley, toggleSurprise,
     loading,
   };
 }

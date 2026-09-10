@@ -10,6 +10,7 @@ interface FeedMessageStatsProps {
   likeCount: number;
   dislikeCount: number;
   smileyCount: number;
+  surpriseCount: number;
   replyCount: number;
   /** When provided, the reply count becomes a button that opens the thread. */
   onOpenThread?: () => void;
@@ -19,10 +20,11 @@ export const FeedMessageStats = memo(function FeedMessageStats({
   likeCount,
   dislikeCount,
   smileyCount,
+  surpriseCount,
   replyCount,
   onOpenThread,
 }: FeedMessageStatsProps) {
-  if (likeCount === 0 && dislikeCount === 0 && smileyCount === 0 && replyCount === 0) return null;
+  if (likeCount === 0 && dislikeCount === 0 && smileyCount === 0 && surpriseCount === 0 && replyCount === 0) return null;
 
   // Only the flame carries colour — orange by default, red once the thread is
   // hot. One-shot flame pop on hover. The count label stays a neutral tone.
@@ -45,6 +47,12 @@ export const FeedMessageStats = memo(function FeedMessageStats({
         <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
           <span className="text-[15px] leading-none" aria-hidden="true">😆</span>
           <span className="font-semibold tabular-nums">{smileyCount}</span>
+        </span>
+      )}
+      {surpriseCount > 0 && (
+        <span className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
+          <span className="text-[15px] leading-none" aria-hidden="true">😮</span>
+          <span className="font-semibold tabular-nums">{surpriseCount}</span>
         </span>
       )}
       {dislikeCount > 0 && (

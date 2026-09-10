@@ -184,6 +184,7 @@ export type Database = {
           like_count: number;
           dislike_count: number;
           smiley_count: number;
+          surprise_count: number;
           reply_count: number;
           last_reply_username: string | null;
           repost_count: number;
@@ -207,6 +208,7 @@ export type Database = {
           like_count?: number;
           dislike_count?: number;
           smiley_count?: number;
+          surprise_count?: number;
           reply_count?: number;
           last_reply_username?: string | null;
           repost_count?: number;
@@ -230,6 +232,7 @@ export type Database = {
           like_count?: number;
           dislike_count?: number;
           smiley_count?: number;
+          surprise_count?: number;
           reply_count?: number;
           last_reply_username?: string | null;
           repost_count?: number;
@@ -385,6 +388,42 @@ export type Database = {
           },
           {
             foreignKeyName: 'message_smileys_member_id_fkey';
+            columns: ['member_id'];
+            isOneToOne: false;
+            referencedRelation: 'members';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      message_surprises: {
+        Row: {
+          id: number;
+          message_id: number;
+          member_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: number;
+          message_id: number;
+          member_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: number;
+          message_id?: number;
+          member_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'message_surprises_message_id_fkey';
+            columns: ['message_id'];
+            isOneToOne: false;
+            referencedRelation: 'chat_messages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'message_surprises_member_id_fkey';
             columns: ['member_id'];
             isOneToOne: false;
             referencedRelation: 'members';
