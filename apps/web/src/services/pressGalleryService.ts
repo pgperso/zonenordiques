@@ -110,22 +110,27 @@ const PODCAST_SELECT = 'id, title, description, source_lang, title_translated, d
 export async function fetchFeaturedItems(
   supabase: SupabaseClient<Database>,
   locale: string,
+  // Restrict to the brand's communities (see brandScope). Omitted => no scope.
+  communityIds?: number[],
 ): Promise<PressGalleryItem[]> {
   const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const scope = communityIds && communityIds.length > 0 ? communityIds : null;
 
   // Strict chronological order: the three featured slots are simply the
   // three most recently published articles from the last 48h that have a
   // cover image. Hero = newest, secondaries = next two by date. Engagement
   // doesn't factor in — readers on a news site expect the front page to
   // reflect when stories were published, not how popular they later become.
-  const { data } = await supabase
+  let recent = supabase
     .from('articles')
     .select(ARTICLE_SELECT)
     .eq('is_published', true)
     .eq('is_removed', false)
     .not('cover_image_url', 'is', null)
     .gte('published_at', twoDaysAgo)
-    .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
+    .gte('published_at', ORIGINAL_CONTENT_CUTOFF);
+  if (scope) recent = recent.in('community_id', scope);
+  const { data } = await recent
     .order('published_at', { ascending: false })
     .limit(3);
 
@@ -136,13 +141,15 @@ export async function fetchFeaturedItems(
   // Fallback when nothing was published in the last 48h: surface the
   // most recent 3 original articles with cover images regardless of age,
   // so the hero slot is never empty on a quiet day.
-  const { data: fallback } = await supabase
+  let old = supabase
     .from('articles')
     .select(ARTICLE_SELECT)
     .eq('is_published', true)
     .eq('is_removed', false)
     .not('cover_image_url', 'is', null)
-    .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
+    .gte('published_at', ORIGINAL_CONTENT_CUTOFF);
+  if (scope) old = old.in('community_id', scope);
+  const { data: fallback } = await old
     .order('published_at', { ascending: false })
     .limit(3);
 

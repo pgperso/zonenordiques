@@ -130,7 +130,7 @@ export function Header() {
             </Link>
           ) : (
             <Link
-              href="/tribunes/zone-nordiques"
+              href={`/tribunes/${SITE.mainTribune}`}
               className="rounded-lg bg-brand-red px-3 py-1.5 text-sm font-bold text-white transition hover:bg-brand-red-dark"
             >
               {t('home.theZone')}
@@ -213,7 +213,7 @@ export function Header() {
                   {canCreate && (
                     <>
                       <Link
-                        href="/tribunes/zone-nordiques/creer-article"
+                        href={`/tribunes/${SITE.mainTribune}/creer-article`}
                         onClick={() => setDropdownOpen(false)}
                         className="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
@@ -223,7 +223,7 @@ export function Header() {
                         {locale === 'fr' ? 'Créer un article' : 'New article'}
                       </Link>
                       <Link
-                        href="/tribunes/zone-nordiques/creer-podcast"
+                        href={`/tribunes/${SITE.mainTribune}/creer-podcast`}
                         onClick={() => setDropdownOpen(false)}
                         className="flex w-full items-center gap-2 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 transition hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
@@ -291,7 +291,7 @@ export function Header() {
             </button>
           ) : (
             <Link
-              href={tribune ? '/' : '/tribunes/zone-nordiques'}
+              href={tribune ? '/' : `/tribunes/${SITE.mainTribune}`}
               className="rounded-lg bg-brand-red px-2.5 py-1.5 text-xs font-bold text-white transition hover:bg-brand-red-dark"
             >
               {tribune ? t('pressGallery.title') : t('home.theZoneShort')}

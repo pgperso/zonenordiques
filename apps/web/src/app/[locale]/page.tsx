@@ -10,6 +10,7 @@ import { PressGalleryClient } from './galerie-de-presse/PressGalleryClient';
 import { TopOfWeek } from '@/components/press/TopOfWeek';
 import { fetchActivePoll, type Poll } from '@/services/pollService';
 import { BRAND } from '@/lib/brand';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 
 export const revalidate = 300;
 
@@ -78,16 +79,23 @@ export default async function HomePage({
   let initialResult: Awaited<ReturnType<typeof fetchPressGalleryItems>> = { items: [], hasMore: false };
   let taverneItems: Awaited<ReturnType<typeof fetchPressGalleryItems>>['items'] = [];
   let communities: { id: number; name: string; name_en: string | null; slug: string; logo_url: string | null }[] = [];
+  let brandCommunityIds: number[] = [];
   let activePoll: Poll | null = null;
   let userId: string | null = null;
 
   try {
+    // Every content surface below is scoped to the brand's own sport
+    // (hockey for Zone Nordiques, baseball for Zone Expos) so the shared
+    // database never leaks the other brand's content.
+    brandCommunityIds = await getBrandCommunityIds(supabase);
+
     const [featured, communitiesRes, userRes] = await Promise.all([
-      fetchFeaturedItems(supabase, locale),
+      fetchFeaturedItems(supabase, locale, brandCommunityIds),
       supabase
         .from('communities')
         .select('id, name, name_en, slug, logo_url')
         .eq('is_active', true)
+        .in('id', brandCommunityIds)
         .order('name'),
       supabase.auth.getUser(),
     ]);
@@ -116,10 +124,13 @@ export default async function HomePage({
       fetchPressGalleryItems(supabase, {
         filter: 'all',
         sort: 'latest',
+        communityIds: brandCommunityIds,
         limit: 12,
         excludeArticleIds,
         locale,
       }),
+      // La Taverne block stays cross-brand (section-keyed): the off-topic
+      // tribune is intentionally shared between Zone Nordiques and Zone Expos.
       fetchPressGalleryItems(supabase, {
         filter: 'articles',
         sort: 'latest',
@@ -199,6 +210,7 @@ export default async function HomePage({
         featuredItems={featuredItems}
         taverneItems={taverneItems}
         communities={communities}
+        brandCommunityIds={brandCommunityIds}
         userId={userId}
         poll={activePoll}
         sidebarSlot={<TopOfWeek locale={locale} />}

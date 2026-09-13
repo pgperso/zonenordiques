@@ -20,6 +20,11 @@ function flag(value: string | undefined, fallback: boolean): boolean {
 export const SITE = {
   // User-facing sport word, e.g. 'hockey' | 'baseball'.
   sport: s(process.env.NEXT_PUBLIC_SITE_SPORT, 'hockey'),
+  // The sport CATEGORY this brand owns (matches a row in `categories.slug`,
+  // e.g. 'hockey' | 'baseball'). Every public content surface is scoped to the
+  // communities in this category (plus La Taverne and the flagship tribune),
+  // so a baseball brand never surfaces hockey content and vice-versa.
+  category: s(process.env.NEXT_PUBLIC_SITE_CATEGORY, 'hockey'),
   // League label used in copy, e.g. 'LNH' | 'MLB'.
   league: s(process.env.NEXT_PUBLIC_SITE_LEAGUE, 'LNH'),
   // Which "return-confidence" meter is featured: 'nordiquometre' | 'exposmetre'.

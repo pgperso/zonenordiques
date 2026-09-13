@@ -35,6 +35,10 @@ interface PressGalleryClientProps {
   featuredItems: PressGalleryItem[];
   taverneItems: PressGalleryItem[];
   communities: Community[];
+  // The brand's own communities (its sport + La Taverne + flagship). "Load
+  // more" and the unfiltered feed are scoped to these so the shared database
+  // never surfaces the other brand's sport.
+  brandCommunityIds: number[];
   userId: string | null;
   // Active reader poll, rendered at the top of the sidebar above the
   // "Top of the week" widget. Null when no poll is active.
@@ -58,6 +62,7 @@ export function PressGalleryClient({
   featuredItems,
   taverneItems,
   communities,
+  brandCommunityIds,
   poll,
   sidebarSlot,
 }: PressGalleryClientProps) {
@@ -114,7 +119,11 @@ export function PressGalleryClient({
         const data = await fetchPressGalleryItems(supabase, {
           filter: f,
           sort: s,
+          // A specific community pick (from the brand-scoped dropdown) narrows
+          // further; "all" falls back to the brand's whole community set so the
+          // feed never spills into the other brand's sport.
           communityId: cId,
+          communityIds: cId ? undefined : brandCommunityIds,
           offset: off,
           limit: PAGE_SIZE,
           excludeArticleIds: heroArticleIds,
@@ -138,7 +147,7 @@ export function PressGalleryClient({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [supabase, heroArticleIds, t, locale],
+    [supabase, heroArticleIds, t, locale, brandCommunityIds],
   );
 
   const handleFilterChange = (f: FilterType) => {

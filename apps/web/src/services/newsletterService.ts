@@ -1,6 +1,9 @@
 import { Resend } from 'resend';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@arena/supabase-client';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { plainText } from '@/lib/articleText';
 
 // Verified Resend sending domain (see DNS cutover). Display name + address.
@@ -44,11 +47,16 @@ export async function fetchDigestArticles(
   limit = 8,
 ): Promise<DigestArticle[]> {
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  // Scope the digest to the brand's own sport (shared DB).
+  const brandCommunityIds = await getBrandCommunityIds(
+    admin as SupabaseClient<Database>,
+  );
   const { data, error } = await admin
     .from('articles')
     .select('id, title, slug, excerpt, cover_image_url, published_at, communities!inner(slug)')
     .eq('is_published', true)
     .eq('is_removed', false)
+    .in('community_id', brandCommunityIds)
     .gte('published_at', since)
     .order('published_at', { ascending: false })
     .limit(limit);
@@ -64,7 +72,7 @@ export async function fetchDigestArticles(
     excerpt: plainText(r.excerpt) || null,
     cover_image_url: r.cover_image_url,
     published_at: r.published_at,
-    communitySlug: r.communities?.slug ?? 'zone-nordiques',
+    communitySlug: r.communities?.slug ?? SITE.mainTribune,
   }));
 }
 
@@ -81,10 +89,10 @@ const T = {
   fr: {
     confirmSubject: `Confirmez votre inscription à l'infolettre ${BRAND.name}`,
     confirmHeading: 'Une dernière étape',
-    confirmBody: `Merci de votre intérêt pour l'infolettre de ${BRAND.name}. Cliquez sur le bouton ci-dessous pour confirmer votre inscription et recevoir notre récap hebdomadaire du hockey.`,
+    confirmBody: `Merci de votre intérêt pour l'infolettre de ${BRAND.name}. Cliquez sur le bouton ci-dessous pour confirmer votre inscription et recevoir notre récap hebdomadaire du ${SITE.sport}.`,
     confirmCta: 'Confirmer mon inscription',
     confirmIgnore: "Vous n'avez pas demandé cette inscription ? Ignorez simplement ce courriel.",
-    digestSubject: `Votre récap hockey de la semaine — ${BRAND.name}`,
+    digestSubject: `Votre récap ${SITE.sport} de la semaine — ${BRAND.name}`,
     digestHeading: 'Le meilleur de la semaine',
     digestIntro: 'Voici les articles à ne pas manquer sur la Zone cette semaine.',
     readMore: 'Lire',
@@ -95,10 +103,10 @@ const T = {
   en: {
     confirmSubject: `Confirm your subscription to the ${BRAND.name} newsletter`,
     confirmHeading: 'One last step',
-    confirmBody: `Thanks for your interest in the ${BRAND.name} newsletter. Click the button below to confirm your subscription and get our weekly hockey recap.`,
+    confirmBody: `Thanks for your interest in the ${BRAND.name} newsletter. Click the button below to confirm your subscription and get our weekly ${SITE.sport} recap.`,
     confirmCta: 'Confirm my subscription',
     confirmIgnore: "Didn't request this? Just ignore this email.",
-    digestSubject: `Your weekly hockey recap — ${BRAND.name}`,
+    digestSubject: `Your weekly ${SITE.sport} recap — ${BRAND.name}`,
     digestHeading: 'The best of the week',
     digestIntro: "Here are this week's must-read stories on the Zone.",
     readMore: 'Read',

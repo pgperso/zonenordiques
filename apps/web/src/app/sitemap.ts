@@ -2,6 +2,8 @@ import type { MetadataRoute } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import { ORIGINAL_CONTENT_CUTOFF, MIN_QUALITY_WORD_COUNT, countWords } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { CONTENT_AUTHORS } from '@/lib/contentAuthors';
 
 export const revalidate = 3600;
@@ -32,27 +34,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { ...withAlternates('/politique-confidentialite'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
     { ...withAlternates('/mentions-legales'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { ...withAlternates('/normes-editoriales'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    { ...withAlternates('/nordiquometre'), lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-    { ...withAlternates('/exposmetre'), lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    // Only the brand's own return-confidence meter (Nordiquomètre / Exposmètre).
+    { ...withAlternates(`/${SITE.meter}`), lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
   ];
 
-  // Sport category hubs (/sport/hockey, /sport/baseball, ...). These are
-  // crawl-relevant topic pages that link out to all tribunes + recent
-  // articles in the category — strong internal-linking surface.
-  const { data: cats } = await supabase
-    .from('categories')
-    .select('slug')
-    .order('sort_order');
-  if (cats) {
-    for (const c of cats as { slug: string }[]) {
-      entries.push({
-        ...withAlternates(`/sport/${c.slug}`),
-        lastModified: new Date(),
-        changeFrequency: 'daily',
-        priority: 0.7,
-      });
-    }
-  }
+  // Every listing below is scoped to the brand's own sport (shared DB).
+  const brandCommunityIds = await getBrandCommunityIds(supabase);
+
+  // Sport category hub for this brand only (/sport/hockey OR /sport/baseball).
+  // Crawl-relevant topic page linking out to the brand's tribunes + articles.
+  entries.push({
+    ...withAlternates(`/sport/${SITE.category}`),
+    lastModified: new Date(),
+    changeFrequency: 'daily',
+    priority: 0.7,
+  });
 
   // Public community hubs: one entry per active community that has at least
   // one published article or podcast. The page lists those items + join CTA,
@@ -61,6 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from('communities')
     .select('slug, updated_at')
     .eq('is_active', true)
+    .in('id', brandCommunityIds)
     .limit(500);
 
   if (communities) {
@@ -70,11 +67,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         .from('articles')
         .select('community_id, communities!inner(slug)')
         .eq('is_published', true)
-        .eq('is_removed', false),
+        .eq('is_removed', false)
+        .in('community_id', brandCommunityIds),
       supabase
         .from('podcasts')
         .select('community_id, communities!inner(slug)')
-        .eq('is_published', true),
+        .eq('is_published', true)
+        .in('community_id', brandCommunityIds),
     ]);
 
     const slugsWithContent = new Set<string>();
@@ -107,6 +106,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select('slug, community_id, updated_at, body, communities!inner(slug)')
     .eq('is_published', true)
     .eq('is_removed', false)
+    .in('community_id', brandCommunityIds)
     .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
     .limit(5000);
 
@@ -133,6 +133,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select('author_id, author_name_override, members!articles_author_id_fkey(username)')
     .eq('is_published', true)
     .eq('is_removed', false)
+    .in('community_id', brandCommunityIds)
     .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
     .limit(5000);
 
@@ -173,6 +174,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .from('podcasts')
     .select('id, updated_at, communities!inner(slug)')
     .eq('is_published', true)
+    .in('community_id', brandCommunityIds)
     .limit(5000);
 
   if (podcasts) {

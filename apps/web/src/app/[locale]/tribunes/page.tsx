@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { setRequestLocale } from 'next-intl/server';
 import { TribunesClient } from './TribunesClient';
 import { BRAND } from '@/lib/brand';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import type { Database } from '@arena/supabase-client';
 
 type CommunityRow = Database['public']['Tables']['communities']['Row'];
@@ -70,12 +71,18 @@ export default async function TribunesPage({ params }: { params: Promise<{ local
 
   const joinedIds = (memberships ?? []).map((m) => m.community_id);
 
+  // Content is separated by sport: on Zone Expos this list shows only the
+  // baseball tribunes the member joined, never their hockey ones (shared DB).
+  const brandCommunityIds = await getBrandCommunityIds(supabase);
+  const brandSet = new Set(brandCommunityIds);
+  const visibleJoinedIds = joinedIds.filter((id) => brandSet.has(id));
+
   let communities: CommunityRow[] = [];
-  if (joinedIds.length > 0) {
+  if (visibleJoinedIds.length > 0) {
     const { data } = await supabase
       .from('communities')
       .select('id, name, name_en, slug, description, description_en, member_count, primary_color, logo_url')
-      .in('id', joinedIds)
+      .in('id', visibleJoinedIds)
       .eq('is_active', true)
       .order('name');
     // name_en / description_en come from migration 00053. Cast through unknown

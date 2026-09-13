@@ -9,6 +9,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { displayCommunityName, displayCommunityDescription } from '@arena/shared';
 import Image from 'next/image';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
 import type { Database } from '@arena/supabase-client';
 
 type CategoryRow = Database['public']['Tables']['categories']['Row'];
@@ -36,11 +37,21 @@ export function JoinTribuneModal({ userId, memberCommunityIds, onClose }: JoinTr
 
   useEffect(() => {
     async function load() {
-      const [{ data: cats }, { data: coms }] = await Promise.all([
-        supabase.from('categories').select('*').order('sort_order'),
-        supabase.from('communities').select('id, name, name_en, slug, description, description_en, logo_url, primary_color, member_count, category_id, is_active').eq('is_active', true),
-      ]);
-      setCategories((cats ?? []) as CategoryRow[]);
+      // Scope the tribune browser to the brand's own sport: a Zone Expos user
+      // only ever sees/joins baseball tribunes, never hockey ones (shared DB).
+      const { data: cats } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('slug', SITE.category)
+        .order('sort_order');
+      const brandCats = (cats ?? []) as CategoryRow[];
+      const brandCatIds = brandCats.map((c) => c.id);
+      const { data: coms } = await supabase
+        .from('communities')
+        .select('id, name, name_en, slug, description, description_en, logo_url, primary_color, member_count, category_id, is_active')
+        .eq('is_active', true)
+        .in('category_id', brandCatIds);
+      setCategories(brandCats);
       // name_en / description_en come from migration 00053. Cast through unknown
       // until generated Supabase types are regenerated post-deploy.
       setCommunities((coms ?? []) as unknown as CommunityRow[]);

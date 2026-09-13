@@ -60,3 +60,4 @@ fix-authors.log
 /zonenordiques_old/
 # Generated full-schema dumps (redundant with supabase/migrations/).
 /supabase/scripts/full_schema*.sql
+zoneexpos_schema_bundle.sql

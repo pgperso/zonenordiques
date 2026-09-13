@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { formatDate } from '@arena/shared';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { plainText } from '@/lib/articleText';
+import { SITE } from '@/lib/siteConfig';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { SearchBox } from './SearchBox';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -43,11 +45,14 @@ export default async function SearchPage({
   let results: ArticleResult[] = [];
   if (q.length >= 2) {
     const supabase = await createClient();
+    // Scope search to the brand's own sport (shared DB).
+    const brandCommunityIds = await getBrandCommunityIds(supabase);
     const { data } = await supabase
       .from('articles')
       .select('id, title, slug, excerpt, cover_image_url, published_at, communities!inner(slug)')
       .eq('is_published', true)
       .eq('is_removed', false)
+      .in('community_id', brandCommunityIds)
       .textSearch('fts', q, { type: 'websearch', config: 'french' })
       .order('published_at', { ascending: false })
       .limit(30);
@@ -72,7 +77,7 @@ export default async function SearchPage({
             {results.map((a) => (
               <li key={a.id}>
                 <Link
-                  href={`/tribunes/${a.communities?.slug ?? 'zone-nordiques'}/articles/${a.slug}`}
+                  href={`/tribunes/${a.communities?.slug ?? SITE.mainTribune}/articles/${a.slug}`}
                   className="group flex gap-3 py-3"
                 >
                   {a.cover_image_url && (

@@ -8,6 +8,7 @@ import { displayCommunityName, displayCommunityDescription } from '@arena/shared
 import { fetchPressGalleryItems } from '@/services/pressGalleryService';
 import { PressContentCard } from '@/components/press/PressContentCard';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
 import { AdSlot } from '@/components/ads/AdSlot';
 
 export const revalidate = 300;
@@ -42,6 +43,13 @@ function displayCategoryName(category: CategoryRow, locale: string): string {
 
 export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { locale, category: categorySlug } = await params;
+
+  // Each brand only owns its own sport category; the other brand's category is
+  // not a real page here (shared DB, separate content).
+  if (categorySlug !== SITE.category) {
+    return { title: 'Catégorie introuvable', robots: { index: false, follow: false } };
+  }
+
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -91,6 +99,10 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { locale, category: categorySlug } = await params;
   setRequestLocale(locale);
+
+  // A brand only exposes its own sport category (shared DB, content separated).
+  if (categorySlug !== SITE.category) notFound();
+
   const supabase = await createClient();
 
   // Load the category

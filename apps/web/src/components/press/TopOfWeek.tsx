@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Link } from '@/i18n/navigation';
 import { cleanArticleTitle } from '@/lib/articleText';
 import { ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 
 interface TopOfWeekProps {
   locale: string;
@@ -32,6 +33,9 @@ type TopArticleRow = {
 export async function TopOfWeek({ locale }: TopOfWeekProps) {
   const supabase = await createClient();
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  // Scope to the brand's own sport so the shared DB never surfaces the other
+  // brand's most-read articles in this sidebar.
+  const brandCommunityIds = await getBrandCommunityIds(supabase);
 
   // Primary: articles published in the last 7 days, ordered by views.
   const select =
@@ -42,6 +46,7 @@ export async function TopOfWeek({ locale }: TopOfWeekProps) {
     .select(select)
     .eq('is_published', true)
     .eq('is_removed', false)
+    .in('community_id', brandCommunityIds)
     .gte('published_at', sevenDaysAgo)
     .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
     .order('view_count', { ascending: false })
@@ -58,6 +63,7 @@ export async function TopOfWeek({ locale }: TopOfWeekProps) {
       .select(select)
       .eq('is_published', true)
       .eq('is_removed', false)
+      .in('community_id', brandCommunityIds)
       .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
       .order('view_count', { ascending: false })
       .limit(5);

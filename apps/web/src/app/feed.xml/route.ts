@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { ORIGINAL_CONTENT_CUTOFF } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { plainText } from '@/lib/articleText';
 
 export const revalidate = 3600;
@@ -8,6 +9,8 @@ export const revalidate = 3600;
 export async function GET() {
   const supabase = await createClient();
   const BASE_URL = BRAND.url;
+  // Scope the feed to the brand's own sport (shared DB).
+  const brandCommunityIds = await getBrandCommunityIds(supabase);
 
   // Imported legacy articles are noindex and excluded from the public RSS
   // feed so crawlers / aggregators don't surface duplicates of content
@@ -17,6 +20,7 @@ export async function GET() {
     .select('title, slug, excerpt, published_at, cover_image_url, communities!inner(slug, name)')
     .eq('is_published', true)
     .eq('is_removed', false)
+    .in('community_id', brandCommunityIds)
     .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
     .order('published_at', { ascending: false })
     .limit(50);
@@ -25,6 +29,7 @@ export async function GET() {
     .from('podcasts')
     .select('id, title, description, created_at, audio_url, cover_image_url, communities!inner(slug, name)')
     .eq('is_published', true)
+    .in('community_id', brandCommunityIds)
     .order('created_at', { ascending: false })
     .limit(50);
 
