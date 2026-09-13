@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
-import { Exposmetre } from '@/components/feed/Exposmetre';
+import { ReturnMeter } from '@/components/feed/ReturnMeter';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { BRAND } from '@/lib/brand';
 
@@ -18,8 +18,8 @@ export async function generateMetadata({
     ? `Exposmètre — l’indice de confiance du retour des Expos | ${BRAND.name}`
     : `Exposmeter — the Expos return confidence index | ${BRAND.nameEn}`;
   const description = isFr
-    ? 'Vote à l’Exposmètre : à quel point crois-tu au retour des Expos de Montréal ? Sur 3 horizons (0-3, 3-5, 5-10 ans). Le pouls des partisans en direct.'
-    : 'Vote on the Exposmeter: how strongly do you believe the Montreal Expos will return? Across 3 horizons. The live pulse of the fans.';
+    ? 'Vote à l’Exposmètre : à quel point crois-tu au retour des Expos de Montréal ? Le pouls des partisans en direct.'
+    : 'Vote on the Exposmeter: how strongly do you believe the Montreal Expos will return? The live pulse of the fans.';
   const url = `${BRAND.url}/${locale}/exposmetre`;
   return {
     // Absolute: title already carries the brand, so skip the root template.
@@ -88,7 +88,7 @@ export default async function ExposmetrePage({
         </p>
       </header>
       <div className="flex min-h-0 flex-1 flex-col">
-        <Exposmetre canModerate={canModerate} />
+        <ReturnMeter meter="exposmetre" canModerate={canModerate} />
       </div>
       {/* Bottom banner. Collapses when AdSense has no fill. */}
       <div className="shrink-0 border-t border-gray-200 px-4 py-2 dark:border-gray-700">
