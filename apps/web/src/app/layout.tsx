@@ -58,6 +58,14 @@ export const metadata: Metadata = {
     },
   },
   manifest: '/manifest.json',
+  // Per-brand favicon: the brand's own static PNG (Zone Nordiques → ZN,
+  // Zone Expos → ZE). A static file rather than a dynamic /icon route, which
+  // the i18n middleware would otherwise rewrite to a locale path.
+  icons: {
+    icon: [{ url: BRAND.logoPngPath, type: 'image/png' }],
+    shortcut: [{ url: BRAND.logoPngPath, type: 'image/png' }],
+    apple: [{ url: BRAND.logoPngPath, type: 'image/png' }],
+  },
   alternates: {
     canonical: BRAND.url,
     languages: {

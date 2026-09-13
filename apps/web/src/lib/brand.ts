@@ -45,6 +45,10 @@ export const BRAND = {
   // (X/Twitter doesn't reliably render WebP og:images).
   logo: s(process.env.NEXT_PUBLIC_BRAND_LOGO, '/images/zonenordiques.webp'),
   logoUrl: s(process.env.NEXT_PUBLIC_BRAND_LOGO_URL, `${url}${logoPng}`),
+  // Relative path to the brand PNG — used as the favicon / apple-touch-icon
+  // (a static file, so it isn't intercepted by the i18n middleware the way a
+  // dynamic /icon route is).
+  logoPngPath: logoPng,
   logoWidth: Number(s(process.env.NEXT_PUBLIC_BRAND_LOGO_WIDTH, '512')),
   logoHeight: Number(s(process.env.NEXT_PUBLIC_BRAND_LOGO_HEIGHT, '512')),
 
