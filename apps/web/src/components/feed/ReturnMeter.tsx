@@ -236,9 +236,12 @@ export function ReturnMeter({ meter, canModerate }: ReturnMeterProps) {
   const needleAngle = cfg.geometry.angleMin + (data.average / 100) * (cfg.geometry.angleMax - cfg.geometry.angleMin);
   const verdict = cfg.verdict(data.average);
   const SHARE_URL = `${BRAND.url}/fr/${meter}`;
+  // No URL in the text: ShareButton attaches the link itself, so a domain here
+  // would just create a second, competing link (and no em-dash — a colon keeps
+  // the grammar clean whatever the meter's name).
   const shareText = isFr
-    ? `Le ${cfg.name} est à ${data.average}% selon ${data.totalVotes} votes. Et toi, tu y crois ? Vote sur ${BRAND.domain}`
-    : `The ${cfg.name} is at ${data.average}% according to ${data.totalVotes} votes. Do you believe? Vote at ${BRAND.domain}`;
+    ? `${cfg.name} : ${data.average}% de confiance selon ${data.totalVotes} vote${data.totalVotes !== 1 ? 's' : ''}. Et toi, tu y crois ?`
+    : `${cfg.name}: ${data.average}% confidence from ${data.totalVotes} vote${data.totalVotes !== 1 ? 's' : ''}. Do you believe?`;
 
   if (!loaded) {
     return (

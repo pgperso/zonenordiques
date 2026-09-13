@@ -15,8 +15,8 @@ export async function generateMetadata({
   const { locale } = await params;
   const isFr = locale === 'fr';
   const title = isFr
-    ? `Nordiquomètre — l’indice de confiance du retour des Nordiques | ${BRAND.name}`
-    : `Nordiquometer — the Nordiques return confidence index | ${BRAND.nameEn}`;
+    ? `Nordiquomètre : l’indice de confiance du retour des Nordiques | ${BRAND.name}`
+    : `Nordiquometer: the Nordiques return confidence index | ${BRAND.nameEn}`;
   const description = isFr
     ? 'Vote au Nordiquomètre : à quel point crois-tu au retour des Nordiques de Québec ? Le pouls des partisans en direct.'
     : 'Vote on the Nordiquometer: how strongly do you believe the Quebec Nordiques will return? The live pulse of the fans.';

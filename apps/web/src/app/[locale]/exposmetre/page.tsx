@@ -15,8 +15,8 @@ export async function generateMetadata({
   const { locale } = await params;
   const isFr = locale === 'fr';
   const title = isFr
-    ? `Exposmètre — l’indice de confiance du retour des Expos | ${BRAND.name}`
-    : `Exposmeter — the Expos return confidence index | ${BRAND.nameEn}`;
+    ? `Exposmètre : l’indice de confiance du retour des Expos | ${BRAND.name}`
+    : `Exposmeter: the Expos return confidence index | ${BRAND.nameEn}`;
   const description = isFr
     ? 'Vote à l’Exposmètre : à quel point crois-tu au retour des Expos de Montréal ? Le pouls des partisans en direct.'
     : 'Vote on the Exposmeter: how strongly do you believe the Montreal Expos will return? The live pulse of the fans.';

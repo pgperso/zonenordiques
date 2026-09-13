@@ -64,8 +64,8 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const name = displayCategoryName(cat, locale);
   const isFr = locale === 'fr';
   const title = isFr
-    ? `${name} — Actualités, analyses et tribunes | ${BRAND.name}`
-    : `${name} — News, analysis and tribunes | ${BRAND.nameEn}`;
+    ? `${name} : actualités, analyses et tribunes | ${BRAND.name}`
+    : `${name}: news, analysis and tribunes | ${BRAND.nameEn}`;
   const description = isFr
     ? `Tout sur le ${name.toLowerCase()} au Québec et au Canada : actualités, chroniques, podcasts, débats et tribunes communautaires.`
     : `Everything ${name}: news, columns, podcasts, debates and community tribunes from Quebec and Canada.`;
