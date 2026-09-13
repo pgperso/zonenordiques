@@ -39,7 +39,10 @@ export function Header() {
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    // scope: 'local' — only sign out of THIS site. Zone Nordiques and Zone
+    // Expos share one Supabase (shared members), so a default 'global' signOut
+    // would revoke every session and log the user out of the sibling site too.
+    await supabase.auth.signOut({ scope: 'local' });
     setDropdownOpen(false);
     router.push('/');
     router.refresh();

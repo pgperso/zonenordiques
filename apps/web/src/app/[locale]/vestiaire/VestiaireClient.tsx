@@ -123,7 +123,9 @@ export function VestiaireClient({
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
+    // Local scope: only this site (Zone Nordiques / Zone Expos share one
+    // Supabase, so a global signOut would log the user out of the other site).
+    await supabase.auth.signOut({ scope: 'local' });
     router.push('/');
     router.refresh();
   }
