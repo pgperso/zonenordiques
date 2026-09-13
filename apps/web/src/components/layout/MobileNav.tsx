@@ -6,6 +6,7 @@ import { Link } from '@/i18n/navigation';
 import type { User } from '@supabase/supabase-js';
 import { useTranslations, useLocale } from 'next-intl';
 import { Avatar } from '@/components/ui/Avatar';
+import { BRAND } from '@/lib/brand';
 import type { UserCommunitySummary } from '@/services/communityService';
 import type { ThemePref } from '@/hooks/useDarkMode';
 
@@ -118,7 +119,7 @@ export function MobileNav({
             </div>
           ) : (
             <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {t('brand.name')}
+              {BRAND.name}
             </span>
           )}
           <button

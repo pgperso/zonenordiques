@@ -31,7 +31,7 @@ export function Footer() {
       <footer className="border-t border-gray-200 bg-white px-4 py-2 dark:border-gray-800 dark:bg-[#1e1e1e]">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-gray-400">
           <span>
-            &copy; {year} {t('brand.name')}
+            &copy; {year} {BRAND.name}
           </span>
           {legal.map((l) => (
             <Link
@@ -63,8 +63,8 @@ export function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col items-center gap-2.5 px-4 py-3 sm:flex-row sm:justify-between sm:gap-4">
         {/* Brand */}
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <Image src={BRAND.logo} alt={t('brand.name')} width={22} height={22} className="h-[22px] w-[22px]" />
-          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{t('brand.name')}</span>
+          <Image src={BRAND.logo} alt={BRAND.name} width={22} height={22} className="h-[22px] w-[22px]" />
+          <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">{BRAND.name}</span>
         </Link>
 
         {/* Essential links */}

@@ -99,6 +99,9 @@ export default async function LocaleLayout({
     '--brand-orange-light': BRAND.colors.orangeLight,
   } as React.CSSProperties;
 
+  // Preconnect to the actual Supabase project (env-driven, per deployment).
+  const supabaseOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+
   return (
     // suppressHydrationWarning: the bootstrap script in <head> may set the
     // `dark` class on <html> before React hydrates, so React's diff of the
@@ -107,8 +110,8 @@ export default async function LocaleLayout({
     <html lang={locale} suppressHydrationWarning style={brandVars}>
       <head>
         <link rel="alternate" type="application/rss+xml" title={BRAND.name} href="/feed.xml" />
-        <link rel="preconnect" href="https://fjcgfjgqzkswdmazkvlx.supabase.co" />
-        <link rel="dns-prefetch" href="https://fjcgfjgqzkswdmazkvlx.supabase.co" />
+        {supabaseOrigin && <link rel="preconnect" href={supabaseOrigin} />}
+        {supabaseOrigin && <link rel="dns-prefetch" href={supabaseOrigin} />}
         <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
