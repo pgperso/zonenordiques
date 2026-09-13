@@ -1,8 +1,8 @@
 @theme inline {
   /* Brand colours — the hexes are the Zone Nordiques defaults; each resolves
-     from a runtime --brand-* variable injected at the document root (BrandStyle)
+     from a runtime brand variable injected at the document root (BrandStyle)
      from BRAND.colors, so a per-deployment brand override reaches every
-     bg-brand-*/text-brand-* utility without rebuilding this file. */
+     brand colour utility (bg-brand, text-brand, …) without rebuilding this file. */
   --color-brand-blue: var(--brand-blue, #003E7E);
   --color-brand-blue-dark: var(--brand-blue-dark, #002B57);
   --color-brand-blue-light: var(--brand-blue-light, #6CACE4);
