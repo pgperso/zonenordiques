@@ -113,7 +113,8 @@ function hasSupabaseAuthCookie(request: NextRequest): boolean {
 // underlying Vercel deployment URL. In production, bounce any *.vercel.app host
 // to the canonical domain. Scoped to *.vercel.app only, so real domains and
 // preview deployments (VERCEL_ENV !== 'production') are untouched — no loops.
-const CANONICAL_HOST = 'www.zonenordiques.com';
+// Per-deployment via env so each brand redirects to its own domain.
+const CANONICAL_HOST = process.env.NEXT_PUBLIC_CANONICAL_HOST ?? 'www.zonenordiques.com';
 
 function canonicalHostRedirect(request: NextRequest): NextResponse | null {
   if (process.env.VERCEL_ENV !== 'production') return null;
