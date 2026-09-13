@@ -8,7 +8,7 @@ import { PressFilterBar } from '@/components/press/PressFilterBar';
 import { PressContentCard } from '@/components/press/PressContentCard';
 import { PollBlock } from '@/components/press/PollBlock';
 import { MetreCards } from '@/components/press/MetreCards';
-import { SITE } from '@/lib/siteConfig';
+import { HomePromoBanner } from '@/components/press/HomePromoBanner';
 import { AdBanner } from '@/components/ads/AdBanner';
 import { AdSlot } from '@/components/ads/AdSlot';
 import {
@@ -16,7 +16,6 @@ import {
   type PressGalleryItem,
 } from '@/services/pressGalleryService';
 import type { Poll } from '@/services/pollService';
-import { Link } from '@/i18n/navigation';
 
 type FilterType = 'all' | 'articles' | 'podcasts';
 type SortType = 'latest' | 'trending';
@@ -67,7 +66,6 @@ export function PressGalleryClient({
   sidebarSlot,
 }: PressGalleryClientProps) {
   const t = useTranslations('pressGallery');
-  const tPool = useTranslations('pool');
   const supabase = useSupabase();
   const locale = useLocale();
 
@@ -184,34 +182,9 @@ export function PressGalleryClient({
           </div>
         )}
 
-        {/* Full-width pool banner, above the headline — brands without a pool hide it */}
-        {SITE.showPool && (
-        <Link
-          href="/lnh/pool"
-          className="group relative mb-6 block overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-r from-brand-blue to-brand-blue-dark p-5 text-white transition hover:opacity-95 dark:border-gray-700 sm:p-6"
-        >
-          {/* Decorative background — subtle, behind the content */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/images/bg_pool.webp"
-            alt=""
-            aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-20"
-          />
-          <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/80">{tPool('menuLink')}</p>
-              <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-white drop-shadow sm:text-2xl">
-                {tPool.rich('bannerTitle', { b: (chunks) => <span className="text-red-500">{chunks}</span> })}
-              </p>
-              <p className="mt-1 max-w-2xl text-sm text-white/90">{tPool('tagline')}</p>
-            </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-brand-blue-dark transition group-hover:gap-2.5">
-              {tPool('cta')} →
-            </span>
-          </div>
-        </Link>
-        )}
+        {/* Rotating promo banner: NHL pool + cross-promo to the sister brand
+            (Zone Nordiques ↔ Zone Expos). Handles its own per-brand slides. */}
+        <HomePromoBanner />
 
         {/* Hero section */}
         {heroMode !== 'hidden' && (
