@@ -11,6 +11,7 @@ import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
 
 const jsonLd = [
   {
@@ -97,6 +98,10 @@ export default async function LocaleLayout({
     '--brand-red-dark': BRAND.colors.orangeDark,
     '--brand-orange': BRAND.colors.orange,
     '--brand-orange-light': BRAND.colors.orangeLight,
+    // Top chrome height = header (4rem) + the scoreboard strip (52px) when it's
+    // shown. Fixed-height pages subtract this via calc(100dvh - var(--chrome-h)),
+    // so it must shrink when a non-hockey brand hides the scoreboard.
+    '--chrome-h': SITE.showScoreboard ? 'calc(4rem + 52px)' : '4rem',
   } as React.CSSProperties;
 
   // Preconnect to the actual Supabase project (env-driven, per deployment).
@@ -134,7 +139,7 @@ export default async function LocaleLayout({
           <TribuneProvider>
             <div className="flex flex-1 min-h-dvh flex-col">
               <Header />
-              <NhlScoreboard />
+              {SITE.showScoreboard && <NhlScoreboard />}
               <main id="main-content" className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
               <Footer />
               <CookieConsent />
