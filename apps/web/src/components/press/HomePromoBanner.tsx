@@ -21,8 +21,9 @@ import { BRAND } from '@/lib/brand';
 interface Sister {
   name: string;
   url: string;
-  taglineFr: string;
-  taglineEn: string;
+  domain: string;
+  subtitleFr: string;
+  subtitleEn: string;
   logo: string;
   from: string;
   to: string;
@@ -36,8 +37,9 @@ const SISTERS: Record<string, Sister> = {
   zonenordiques: {
     name: 'Zone Expos',
     url: 'https://zoneexpos.com',
-    taglineFr: 'Le retour du baseball à Montréal',
-    taglineEn: 'Baseball’s return to Montreal',
+    domain: 'zoneexpos.com',
+    subtitleFr: 'L’antichambre de la MLB',
+    subtitleEn: 'The MLB fan zone',
     logo: '/images/zoneexpos.png',
     from: '#0A2A5E',
     to: '#C8102E',
@@ -46,8 +48,9 @@ const SISTERS: Record<string, Sister> = {
   zoneexpos: {
     name: 'Zone Nordiques',
     url: 'https://zonenordiques.com',
-    taglineFr: 'Le retour des Nordiques à Québec',
-    taglineEn: 'The Nordiques’ return to Quebec City',
+    domain: 'zonenordiques.com',
+    subtitleFr: 'L’antichambre de la LNH',
+    subtitleEn: 'The NHL fan zone',
     logo: '/images/zonenordiques.png',
     from: '#002B57',
     to: '#003E7E',
@@ -160,12 +163,12 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
           />
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
-              {isFr ? 'Notre autre site' : 'Our other site'}
+              {sister.domain}
             </p>
             <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-white drop-shadow sm:text-2xl">
-              {isFr ? 'Découvre' : 'Discover'} {sister.name}
+              {isFr ? 'Visite' : 'Visit'} {sister.name}
             </p>
-            <p className="mt-1 max-w-2xl text-sm text-white/90">{isFr ? sister.taglineFr : sister.taglineEn}</p>
+            <p className="mt-1 max-w-2xl text-sm text-white/90">{isFr ? sister.subtitleFr : sister.subtitleEn}</p>
           </div>
         </div>
         <span
