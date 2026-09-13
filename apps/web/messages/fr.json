@@ -3,7 +3,7 @@
     "name": "Zone Nordiques",
     "tagline": "L'antichambre du hockey",
     "taglineLead": "L'antichambre",
-    "taglineRest": " du hockey"
+    "taglineRest": " du {sport}"
   },
   "search": {
     "title": "Recherche",

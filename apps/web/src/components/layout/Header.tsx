@@ -13,6 +13,7 @@ import { MobileNav } from './MobileNav';
 import { NotificationBell } from './NotificationBell';
 import { fetchUserCommunities, type UserCommunitySummary } from '@/services/communityService';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
 import { Sun, Moon, Monitor, Search } from 'lucide-react';
 
 export function Header() {
@@ -106,13 +107,13 @@ export function Header() {
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
                 <div className="hidden md:block">
                   <span className="text-lg font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:text-xl">{BRAND.name}</span>
-                  <p className="text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest')}</p>
+                  <p className="text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
                 </div>
               </>
             ) : (
               <div>
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 sm:text-lg md:text-xl">{BRAND.name}</span>
-                <p className="hidden text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest')}</p>
+                <p className="hidden text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
               </div>
             )}
           </Link>
