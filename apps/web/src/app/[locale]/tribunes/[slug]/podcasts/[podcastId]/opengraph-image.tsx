@@ -7,10 +7,10 @@ import { plainText } from '@/lib/articleText';
 
 // Branded 1200x630 social card for a podcast episode: the cover (when it's a
 // social-safe JPG/PNG) full-bleed with a dark scrim, otherwise a brand gradient,
-// plus a "PUCKCAST" badge, the episode title and the Zone Nordiques signature.
+// plus the podcast badge, the episode title and the brand signature.
 // Always a PNG, so X/Twitter/Facebook all render it.
 
-export const alt = 'Puckcast — Zone Nordiques';
+export const alt = `${BRAND.podcastLabel} — ${BRAND.name}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -22,10 +22,10 @@ export default async function PodcastOgImage({
   const { podcastId } = await params;
   const id = Number(podcastId);
 
-  const logoData = readFileSync(join(process.cwd(), 'public/images/zonenordiques.png'));
+  const logoData = readFileSync(join(process.cwd(), 'public', BRAND.logoPngPath.replace(/^\/+/, '')));
   const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
-  let title = 'Puckcast';
+  let title = BRAND.podcastLabel;
   let cover: string | null = null;
   if (Number.isFinite(id)) {
     const db = createClient(
@@ -98,7 +98,7 @@ export default async function PodcastOgImage({
                 letterSpacing: 2,
               }}
             >
-              PUCKCAST
+              {BRAND.podcastLabel.toUpperCase()}
             </div>
           </div>
 
@@ -107,8 +107,8 @@ export default async function PodcastOgImage({
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 30 }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={logoSrc} alt="" width={54} height={54} />
-              <span style={{ fontWeight: 700 }}>Zone Nordiques</span>
-              <span style={{ opacity: 0.6 }}>· zonenordiques.com</span>
+              <span style={{ fontWeight: 700 }}>{BRAND.name}</span>
+              <span style={{ opacity: 0.6 }}>· {BRAND.domain}</span>
             </div>
           </div>
         </div>

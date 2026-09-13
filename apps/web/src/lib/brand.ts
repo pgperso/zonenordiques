@@ -37,6 +37,9 @@ export const BRAND = {
   nameEn: s(process.env.NEXT_PUBLIC_BRAND_NAME_EN, name),
   shortName: s(process.env.NEXT_PUBLIC_BRAND_SHORT_NAME, 'ZN'),
   tagline: s(process.env.NEXT_PUBLIC_BRAND_TAGLINE, "L'antichambre du hockey"),
+  // Podcast section label (shown on the podcast social card badge). Hockey pun
+  // by default; a non-hockey brand overrides it (e.g. Zone Expos → 'Balado').
+  podcastLabel: s(process.env.NEXT_PUBLIC_BRAND_PODCAST_LABEL, 'Puckcast'),
 
   domain,
   url,

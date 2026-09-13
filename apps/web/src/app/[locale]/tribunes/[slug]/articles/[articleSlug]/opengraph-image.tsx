@@ -7,10 +7,10 @@ import { cleanArticleTitle } from '@/lib/articleText';
 
 // Branded 1200x630 social card for an article: the cover full-bleed with a
 // dark scrim when it's a social-safe JPG/PNG, otherwise a brand gradient, plus
-// the headline and the Zone Nordiques signature. Always a PNG, so every article
+// the headline and the brand signature. Always a PNG, so every article
 // — cover or not — has a card X/Twitter/Facebook render reliably.
 
-export const alt = 'Zone Nordiques';
+export const alt = BRAND.name;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -21,7 +21,7 @@ export default async function ArticleOgImage({
 }) {
   const { slug, articleSlug } = await params;
 
-  const logoData = readFileSync(join(process.cwd(), 'public/images/zonenordiques.png'));
+  const logoData = readFileSync(join(process.cwd(), 'public', BRAND.logoPngPath.replace(/^\/+/, '')));
   const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
   let title: string = BRAND.name;
@@ -93,7 +93,7 @@ export default async function ArticleOgImage({
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontSize: 30, marginTop: 28 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={logoSrc} alt="" width={54} height={54} />
-            <span style={{ fontWeight: 700 }}>Zone Nordiques</span>
+            <span style={{ fontWeight: 700 }}>{BRAND.name}</span>
             <span style={{ opacity: 0.6 }}>· {BRAND.tagline}</span>
           </div>
         </div>
