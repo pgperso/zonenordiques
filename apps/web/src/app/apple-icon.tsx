@@ -6,7 +6,9 @@ export const size = { width: 180, height: 180 };
 export const contentType = 'image/png';
 
 export default function AppleIcon() {
-  const logoData = readFileSync(join(process.cwd(), 'public/images/zonenordiques.png'));
+  // Per-brand: read the deployment's own logo (Zone Nordiques / Zone Expos).
+  const rel = (process.env.NEXT_PUBLIC_BRAND_LOGO_PNG || '/images/zonenordiques.png').replace(/^\/+/, '');
+  const logoData = readFileSync(join(process.cwd(), 'public', rel));
   const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
   return new ImageResponse(
