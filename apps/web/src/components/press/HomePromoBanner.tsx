@@ -43,7 +43,7 @@ const SISTERS: Record<string, Sister> = {
     logo: '/images/zoneexpos.png',
     from: '#0A2A5E',
     to: '#C8102E',
-    bg: '/images/expos_banner.jpg',
+    bg: '/images/expos_banner.webp',
   },
   zoneexpos: {
     name: 'Zone Nordiques',
