@@ -27,6 +27,8 @@ interface Sister {
   logo: string;
   from: string;
   to: string;
+  // Optional full-bleed background photo (a dark scrim keeps the text legible).
+  bg?: string;
 }
 
 // Exactly two brands cross-promote each other. Keyed by the CURRENT brand id:
@@ -41,6 +43,7 @@ const SISTERS: Record<string, Sister> = {
     logo: '/images/zoneexpos.png',
     from: '#0A2A5E',
     to: '#C8102E',
+    bg: '/images/expos_banner.jpg',
   },
   zoneexpos: {
     name: 'Zone Nordiques',
@@ -126,8 +129,24 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
     <a
       href={sister.url}
       className="group relative block overflow-hidden rounded-2xl border border-gray-200 p-5 text-white transition hover:opacity-95 dark:border-gray-700 sm:p-6"
-      style={{ backgroundImage: `linear-gradient(90deg, ${sister.from}, ${sister.to})` }}
+      style={sister.bg ? undefined : { backgroundImage: `linear-gradient(90deg, ${sister.from}, ${sister.to})` }}
     >
+      {sister.bg && (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={sister.bg}
+            alt=""
+            aria-hidden
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          {/* Dark scrim, heavier on the left where the text sits. */}
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{ background: 'linear-gradient(90deg, rgba(3,14,36,0.92) 0%, rgba(3,14,36,0.66) 52%, rgba(3,14,36,0.30) 100%)' }}
+          />
+        </>
+      )}
       <div className="relative z-10 flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
