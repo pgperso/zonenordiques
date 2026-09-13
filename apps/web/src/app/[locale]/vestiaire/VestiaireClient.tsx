@@ -11,6 +11,7 @@ import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 import { displayCommunityName, formatDate } from '@arena/shared';
 import { PollAdminPanel } from './PollAdminPanel';
 import { BRAND } from '@/lib/brand';
+import { SITE } from '@/lib/siteConfig';
 import type { Poll } from '@/services/pollService';
 import type { Database } from '@arena/supabase-client';
 
@@ -263,15 +264,17 @@ export function VestiaireClient({
             scheduledPolls={scheduledPolls}
             activePoll={activePoll}
           />
-          <Link
-            href="/vestiaire/pool"
-            className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#1e1e1e] dark:hover:bg-[#252525]"
-          >
-            <span className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
-              Gérer le Pool LNH
-            </span>
-            <span className="text-sm text-gray-400">barème · règles · échanges →</span>
-          </Link>
+          {SITE.showPool && (
+            <Link
+              href="/vestiaire/pool"
+              className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#1e1e1e] dark:hover:bg-[#252525]"
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Gérer le Pool LNH
+              </span>
+              <span className="text-sm text-gray-400">barème · règles · échanges →</span>
+            </Link>
+          )}
         </>
       )}
 

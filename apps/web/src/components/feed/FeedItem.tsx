@@ -6,6 +6,7 @@ import { FeedMessage } from './FeedMessage';
 import { FeedArticleCard } from './FeedArticleCard';
 import { FeedPodcastCard } from './FeedPodcastCard';
 import { PoolPromoCard, POOL_PROMO_SENTINEL } from './PoolPromoCard';
+import { SITE } from '@/lib/siteConfig';
 import { NordiquometrePromoCard, NORDIQUOMETRE_PROMO_SENTINEL } from './NordiquometrePromoCard';
 
 interface FeedItemProps {
@@ -59,6 +60,7 @@ export const FeedItem = memo(function FeedItem({
         const posterRole = staffRoles?.[item.memberId ?? ''];
         const isStaff = posterRole === 'owner' || posterRole === 'admin' || posterRole === 'moderator';
         if (!isStaff) return null; // faked sentinel from a non-staff member — ignore it
+        if (item.content === POOL_PROMO_SENTINEL && !SITE.showPool) return null; // brand without a pool
         return item.content === POOL_PROMO_SENTINEL ? (
           <PoolPromoCard messageId={item.id} userId={userId} canModerate={canModerate} />
         ) : (

@@ -8,6 +8,7 @@ import { PressFilterBar } from '@/components/press/PressFilterBar';
 import { PressContentCard } from '@/components/press/PressContentCard';
 import { PollBlock } from '@/components/press/PollBlock';
 import { MetreCards } from '@/components/press/MetreCards';
+import { SITE } from '@/lib/siteConfig';
 import { AdBanner } from '@/components/ads/AdBanner';
 import { AdSlot } from '@/components/ads/AdSlot';
 import {
@@ -174,7 +175,8 @@ export function PressGalleryClient({
           </div>
         )}
 
-        {/* Full-width pool banner, above the headline */}
+        {/* Full-width pool banner, above the headline — brands without a pool hide it */}
+        {SITE.showPool && (
         <Link
           href="/lnh/pool"
           className="group relative mb-6 block overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-r from-brand-blue to-brand-blue-dark p-5 text-white transition hover:opacity-95 dark:border-gray-700 sm:p-6"
@@ -200,6 +202,7 @@ export function PressGalleryClient({
             </span>
           </div>
         </Link>
+        )}
 
         {/* Hero section */}
         {heroMode !== 'hidden' && (
