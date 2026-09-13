@@ -128,6 +128,8 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
   return (
     <a
       href={sister.url}
+      target="_blank"
+      rel="noopener noreferrer"
       className="group relative block overflow-hidden rounded-2xl border border-gray-200 p-5 text-white transition hover:opacity-95 dark:border-gray-700 sm:p-6"
       style={sister.bg ? undefined : { backgroundImage: `linear-gradient(90deg, ${sister.from}, ${sister.to})` }}
     >
