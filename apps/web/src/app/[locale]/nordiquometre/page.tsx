@@ -32,7 +32,7 @@ export async function generateMetadata({
       url,
       siteName: BRAND.name,
       locale: isFr ? 'fr_CA' : 'en_CA',
-      images: [{ url: BRAND.logoUrl, alt: 'Nordiquomètre', width: BRAND.logoWidth, height: BRAND.logoHeight }],
+      // og:image comes from the sibling opengraph-image.tsx (the live meter card).
     },
     twitter: { card: 'summary_large_image', title, description },
     alternates: {
