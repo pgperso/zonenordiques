@@ -239,7 +239,7 @@ MISSION :
 2b. LONGUEUR : le corps doit faire AU MINIMUM ${MIN_QUALITY_WORD_COUNT} mots (cible ${TARGET_MIN_WORDS}+). S'il est plus court, DÉVELOPPE les arguments existants avec du contexte, des exemples et des nuances tirés du dossier de recherche. Ne descends jamais sous ${MIN_QUALITY_WORD_COUNT} mots.
 3. STYLE DE L'AUTEUR (IMPORTANT) :
    - L'article DOIT correspondre au style de l'auteur décrit ci-dessus.
-   - Si le ton ne correspond pas (ex: un article trop sérieux pour Rex Paquette qui doit être provocateur), RÉÉCRIS les passages pour coller au personnage.
+   - Si le ton ne correspond pas (ex: un article trop sérieux pour un chroniqueur qui doit être provocateur), RÉÉCRIS les passages pour coller au personnage.
    - Le vocabulaire, le niveau de langue et l'attitude doivent refléter la personnalité de l'auteur.
 4. QUALITÉ : Améliore les transitions, supprime les répétitions.
 5. Dans le texte, utilise les guillemets français « » jamais des guillemets doubles.
@@ -275,7 +275,7 @@ AUTEUR : ${escapeForPrompt(authorName || 'chroniqueur')}
 STYLE ATTENDU : ${authorStyle || `éditorial ${isTaverne ? '' : 'sportif '}québécois`}
 
 MISSION :
-1. VOIX DE L'AUTEUR (PRIORITÉ) : Relis le style attendu ci-dessus. L'article doit SONNER comme cet auteur. Si Rex Paquette est provocateur et sarcastique, l'article doit être provocateur et sarcastique. Si Maika Blitz est passionnée et émotionnelle, l'article doit vibrer d'émotion. Ajuste le vocabulaire, les tournures et l'attitude pour coller au personnage.
+1. VOIX DE L'AUTEUR (PRIORITÉ) : Relis le style attendu ci-dessus. L'article doit SONNER comme cet auteur. Si le style demande un ton provocateur et sarcastique, l'article doit être provocateur et sarcastique ; s'il demande un ton passionné et émotionnel, l'article doit vibrer d'émotion. Ajuste le vocabulaire, les tournures et l'attitude pour coller au personnage.
 2. ORIGINALITÉ : L'article sonne-t-il comme une chronique personnelle ou comme un résumé de nouvelles ? Si c'est trop « journalistique », injecte plus de personnalité et d'opinion dans le style de l'auteur.
 3. Le titre est-il accrocheur, original et < 200 caractères ? Il doit refléter le ton de l'auteur (provocateur, analytique, passionné, critique selon le cas).
 4. L'excerpt SEO fait-il 120-155 caractères ? Ajuste.
