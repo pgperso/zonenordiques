@@ -132,21 +132,23 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
       target="_blank"
       rel="noopener noreferrer"
       className="group relative block overflow-hidden rounded-2xl border border-gray-200 p-5 text-white transition hover:opacity-95 dark:border-gray-700 sm:p-6"
-      style={sister.bg ? undefined : { backgroundImage: `linear-gradient(90deg, ${sister.from}, ${sister.to})` }}
+      style={{ backgroundImage: `linear-gradient(90deg, ${sister.from}, ${sister.to})` }}
     >
       {sister.bg && (
         <>
+          {/* Photo at reduced opacity over the brand gradient, so it reads as a
+              soft translucent background rather than a full-bleed photo. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={sister.bg}
             alt=""
             aria-hidden
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-70 transition-transform duration-700 group-hover:scale-105"
           />
-          {/* Dark scrim, heavier on the left where the text sits. */}
+          {/* Light left scrim, just enough to seat the text. */}
           <div
             className="pointer-events-none absolute inset-0"
-            style={{ background: 'linear-gradient(90deg, rgba(3,14,36,0.92) 0%, rgba(3,14,36,0.66) 52%, rgba(3,14,36,0.30) 100%)' }}
+            style={{ background: 'linear-gradient(90deg, rgba(3,14,36,0.55) 0%, rgba(3,14,36,0.25) 55%, rgba(3,14,36,0) 100%)' }}
           />
         </>
       )}
