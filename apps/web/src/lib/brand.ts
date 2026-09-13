@@ -67,6 +67,7 @@ export const BRAND = {
     blueDark: s(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_DARK, '#002B57'),
     blueLight: s(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_LIGHT, '#6CACE4'),
     orange: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT, '#E4002B'),
+    orangeDark: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_DARK, '#B8001F'),
     orangeLight: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_LIGHT, '#F04A5F'),
     white: '#FFFFFF',
     background: s(process.env.NEXT_PUBLIC_BRAND_COLOR_BACKGROUND, '#F7FAFC'),

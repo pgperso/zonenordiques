@@ -166,7 +166,7 @@
 }
 
 @keyframes message-flash {
-  0%, 15% { background-color: color-mix(in srgb, var(--color-brand-blue) 12%, transparent); }
+  0%, 15% { background-color: color-mix(in srgb, var(--brand-blue, #003E7E) 12%, transparent); }
   100% { background-color: transparent; }
 }
 

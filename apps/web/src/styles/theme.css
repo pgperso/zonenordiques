@@ -1,12 +1,15 @@
 @theme inline {
-  /* Brand — Zone Nordiques (bleu Nordiques classique) */
-  --color-brand-blue: #003E7E;
-  --color-brand-blue-dark: #002B57;
-  --color-brand-blue-light: #6CACE4;
-  --color-brand-red: #E4002B;
-  --color-brand-red-dark: #B8001F;
-  --color-brand-orange: #E4002B;
-  --color-brand-orange-light: #F04A5F;
+  /* Brand colours — the hexes are the Zone Nordiques defaults; each resolves
+     from a runtime --brand-* variable injected at the document root (BrandStyle)
+     from BRAND.colors, so a per-deployment brand override reaches every
+     bg-brand-*/text-brand-* utility without rebuilding this file. */
+  --color-brand-blue: var(--brand-blue, #003E7E);
+  --color-brand-blue-dark: var(--brand-blue-dark, #002B57);
+  --color-brand-blue-light: var(--brand-blue-light, #6CACE4);
+  --color-brand-red: var(--brand-red, #E4002B);
+  --color-brand-red-dark: var(--brand-red-dark, #B8001F);
+  --color-brand-orange: var(--brand-orange, #E4002B);
+  --color-brand-orange-light: var(--brand-orange-light, #F04A5F);
 
   /* Gray scale */
   --color-gray-50: #F9FAFB;
