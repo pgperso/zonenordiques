@@ -23,7 +23,6 @@ interface Sister {
   url: string;
   taglineFr: string;
   taglineEn: string;
-  emoji: string;
   logo: string;
   from: string;
   to: string;
@@ -39,7 +38,6 @@ const SISTERS: Record<string, Sister> = {
     url: 'https://zoneexpos.com',
     taglineFr: 'Le retour du baseball à Montréal',
     taglineEn: 'Baseball’s return to Montreal',
-    emoji: '⚾',
     logo: '/images/zoneexpos.png',
     from: '#0A2A5E',
     to: '#C8102E',
@@ -50,10 +48,10 @@ const SISTERS: Record<string, Sister> = {
     url: 'https://zonenordiques.com',
     taglineFr: 'Le retour des Nordiques à Québec',
     taglineEn: 'The Nordiques’ return to Quebec City',
-    emoji: '🏒',
     logo: '/images/zonenordiques.png',
     from: '#002B57',
     to: '#003E7E',
+    bg: '/images/nordiques_banner.jpg',
   },
 };
 
@@ -162,7 +160,7 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
           />
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
-              {sister.emoji} {isFr ? 'Notre autre site' : 'Our other site'}
+              {isFr ? 'Notre autre site' : 'Our other site'}
             </p>
             <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-white drop-shadow sm:text-2xl">
               {isFr ? 'Découvre' : 'Discover'} {sister.name}
