@@ -10,7 +10,11 @@
         "SUPABASE_URL",
         "SUPABASE_SERVICE_ROLE_KEY",
         "ANTHROPIC_API_KEY",
-        "CRON_SECRET"
+        "CRON_SECRET",
+        "VERCEL_ENV",
+        "NEXT_PUBLIC_CANONICAL_HOST",
+        "NEXT_PUBLIC_BRAND_*",
+        "NEXT_PUBLIC_SITE_*"
       ],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
