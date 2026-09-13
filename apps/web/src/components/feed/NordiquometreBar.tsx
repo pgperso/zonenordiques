@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { useSupabase } from '@/hooks/useSupabase';
 import { Link } from '@/i18n/navigation';
+import { SITE } from '@/lib/siteConfig';
 
 /**
- * Slim, always-on strip at the top of the chat showing the live Nordiquomètre
- * confidence index (average of every member's general vote). Tapping it opens
- * the full Nordiquomètre to vote. Height is fixed whether or not the value has
- * loaded, so it never shifts the feed underneath it.
+ * Slim, always-on strip at the top of the chat showing the live confidence
+ * index of the brand's featured meter (Nordiquomètre for hockey, Exposmètre for
+ * baseball — SITE.meter). Tapping it opens that meter to vote. Height is fixed
+ * whether or not the value has loaded, so it never shifts the feed underneath.
  */
 export function NordiquometreBar() {
   const supabase = useSupabase();
@@ -18,7 +19,7 @@ export function NordiquometreBar() {
   useEffect(() => {
     let cancelled = false;
     supabase
-      .from('nordiquometre_votes')
+      .from(`${SITE.meter}_votes` as 'nordiquometre_votes')
       .select('vote')
       .then(({ data }) => {
         if (cancelled || !data) return;
@@ -34,11 +35,11 @@ export function NordiquometreBar() {
 
   return (
     <Link
-      href="/nordiquometre"
-      title="Nordiquomètre — vote pour l'indice de confiance"
+      href={`/${SITE.meter}`}
+      title={`${SITE.meterLabel} — vote pour l'indice de confiance`}
       className="group flex shrink-0 items-center gap-2 border-b border-gray-200 bg-white px-3 py-1.5 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#1e1e1e] dark:hover:bg-[#272525]"
     >
-      <span className="shrink-0 text-[11px] font-semibold text-brand-blue">Nordiquomètre</span>
+      <span className="shrink-0 text-[11px] font-semibold text-brand-blue">{SITE.meterLabel}</span>
       <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-brand-blue to-brand-blue-dark transition-[width] duration-700 ease-out"

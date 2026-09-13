@@ -3,12 +3,13 @@
 import { ChevronRight } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { SITE } from '@/lib/siteConfig';
 
 /**
- * Two stacked sidebar cards — the Nordiquomètre voting page and a shortcut into
- * the Zone Nordiques chat ("La Zone"). Each is a solid brand-blue tile with a
- * faded background image (the meter's dial / the podcast cover). Rendered in
- * the gallery sidebar between the poll and "Top of the week".
+ * Two stacked sidebar cards — the featured meter's voting page and a shortcut
+ * into the flagship chat tribune ("La Zone"). Each is a solid brand-blue tile
+ * with a faded background image. Route, label, image and tribune are
+ * config-driven (SITE) so a second brand points at its own meter/tribune.
  */
 export function MetreCards() {
   const locale = useLocale();
@@ -16,16 +17,14 @@ export function MetreCards() {
 
   const cards = [
     {
-      href: '/nordiquometre',
+      href: `/${SITE.meter}`,
       bg: '#002B57',
-      image: '/images/nordiquometre.png',
-      title: isFr ? 'Le Nordiquomètre' : 'The Nordiquometer',
-      tagline: isFr
-        ? 'L’indice de confiance du retour des Nordiques'
-        : 'The confidence index for the Nordiques’ return',
+      image: `/images/${SITE.meter}.png`,
+      title: SITE.meterLabel,
+      tagline: isFr ? SITE.meterTagline : SITE.meterTaglineEn,
     },
     {
-      href: '/tribunes/zone-nordiques',
+      href: `/tribunes/${SITE.mainTribune}`,
       bg: '#0B4870',
       image: '/images/la-zone-podcast.webp',
       title: 'La Zone',
