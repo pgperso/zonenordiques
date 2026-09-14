@@ -47,6 +47,10 @@ export function RegisterForm() {
       email,
       password,
       options: {
+        // Send the confirmation link back to the site the visitor signed up on
+        // (Zone Nordiques and Zone Expos share one Supabase, so without this the
+        // link would always point at the Supabase Site URL / the other brand).
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
         data: {
           username,
           display_name: username,
