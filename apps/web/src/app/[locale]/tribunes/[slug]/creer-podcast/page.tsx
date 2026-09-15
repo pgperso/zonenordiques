@@ -15,15 +15,17 @@ async function canCreate(
   communityId: number,
   userId: string,
 ): Promise<boolean> {
+  // 'owner' is GLOBAL (create in any community); the others are community-scoped.
   const { data } = await supabase
     .from('community_member_roles')
-    .select('roles!inner(code)')
-    .eq('community_id', communityId)
+    .select('community_id, roles!inner(code)')
     .eq('member_id', userId);
-  const codes = ((data ?? []) as { roles: { code: string } | null }[])
-    .map((r) => r.roles?.code)
-    .filter(Boolean);
-  return codes.some((c) => c === 'admin' || c === 'moderator' || c === 'owner' || c === 'creator');
+  const rows = (data ?? []) as { community_id: number; roles: { code: string } | null }[];
+  return rows.some((r) => {
+    const code = r.roles?.code;
+    if (code === 'owner') return true;
+    return r.community_id === communityId && (code === 'admin' || code === 'moderator' || code === 'creator');
+  });
 }
 
 export default async function NewPodcastPage({ params }: Props) {

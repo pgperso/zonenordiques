@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSupabase } from '@/hooks/useSupabase';
 import { fetchArticlesByAuthor, fetchArticle, removeArticle } from '@/services/articleService';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { ArticleEditor } from './ArticleEditor';
 
 interface ArticleRow {
@@ -53,8 +54,15 @@ export function ArticleList({ communityId, communitySlug, userId, onClose }: Art
   const [filterAuthor, setFilterAuthor] = useState<string>('all');
 
   const loadArticles = useCallback(async () => {
-    const { data } = await fetchArticlesByAuthor(supabase, userId);
-    if (data) setArticles(data as unknown as ArticleRow[]);
+    // Scope to the current brand's sport: on Zone Expos this list shows only
+    // the member's baseball articles, on Zone Nordiques only their hockey ones.
+    const [{ data }, brandIds] = await Promise.all([
+      fetchArticlesByAuthor(supabase, userId),
+      getBrandCommunityIds(supabase),
+    ]);
+    const brandSet = new Set(brandIds);
+    const rows = (data ?? []) as unknown as ArticleRow[];
+    setArticles(rows.filter((a) => brandSet.has(a.community_id)));
     setLoading(false);
   }, [supabase, userId]);
 
