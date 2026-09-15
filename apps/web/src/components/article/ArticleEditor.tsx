@@ -13,6 +13,7 @@ import { revalidateAfterArticleChange } from '@/app/actions/revalidate';
 import { slugify } from '@/lib/slugify';
 import { CONTENT_AUTHORS as AUTHORS, getContentAuthor, isContentAuthor } from '@/lib/contentAuthors';
 import { countWords, MIN_QUALITY_WORD_COUNT } from '@arena/shared';
+import imageCompression from 'browser-image-compression';
 
 // Word count thresholds tied to Google's perceived content quality.
 // Articles below MIN_QUALITY_WORD_COUNT typically end up "Crawled,
@@ -204,6 +205,41 @@ export function ArticleEditor({
     editor.on('update', update);
     return () => { editor.off('update', update); };
   }, [editor]);
+
+  // Insert an image into the article BODY: compress → upload → drop at cursor.
+  const bodyImageInputRef = useRef<HTMLInputElement>(null);
+  async function handleBodyImage(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !editor) return;
+    if (!['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)) {
+      setError('Type d’image non supporté (JPG, PNG, WebP ou GIF).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('L’image ne doit pas dépasser 5 Mo.');
+      return;
+    }
+    setError(null);
+    try {
+      const compressed = await imageCompression(file, {
+        maxSizeMB: 0.3,
+        maxWidthOrHeight: 1600,
+        useWebWorker: true,
+        fileType: 'image/webp',
+      });
+      const rand = Math.random().toString(36).slice(2, 8);
+      const path = `article-covers/${selectedCommunityId}/body/${Date.now()}_${rand}.webp`;
+      const { error: upErr } = await supabase.storage
+        .from('article-covers')
+        .upload(path, compressed, { contentType: 'image/webp', cacheControl: '31536000' });
+      if (upErr) throw new Error(upErr.message);
+      const { data } = supabase.storage.from('article-covers').getPublicUrl(path);
+      editor.chain().focus().setImage({ src: data.publicUrl }).run();
+    } catch (err) {
+      setError(err instanceof Error ? `Insertion de l’image échouée : ${err.message}` : 'Insertion de l’image échouée.');
+    }
+  }
 
   function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
     const err = onCoverChange(e);
@@ -968,6 +1004,22 @@ export function ArticleEditor({
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
             </svg>
           </ToolbarButton>
+          <ToolbarButton
+            active={false}
+            onClick={() => bodyImageInputRef.current?.click()}
+            title="Insérer une image"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+            </svg>
+          </ToolbarButton>
+          <input
+            ref={bodyImageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={handleBodyImage}
+          />
         </div>
       )}
 
