@@ -4,11 +4,19 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { TRANSLATION_CUTOFF } from '@arena/shared';
 import { createClient } from '@/lib/supabase/server';
 
-// One Claude call per item; a batch of articles can take a while.
-export const maxDuration = 60;
+// One Claude call per item. Long article bodies can each take 10-20s, so the
+// batch is kept small and the loops honour a soft time budget (below) that
+// stops cleanly before Vercel kills the function — no more 504 timeouts.
+export const maxDuration = 120;
 
-const ARTICLE_BATCH = 6;
-const PODCAST_BATCH = 8;
+// Stop starting new items once this much wall-clock has elapsed, leaving room
+// for the in-flight Claude call to finish well under maxDuration. Each call
+// still saves its result before the next begins, so a stopped batch simply
+// resumes on the next invocation (translated items are skipped).
+const TIME_BUDGET_MS = 90_000;
+
+const ARTICLE_BATCH = 3;
+const PODCAST_BATCH = 4;
 const MODEL = 'claude-haiku-4-5-20251001';
 
 /**
@@ -82,6 +90,9 @@ async function handle(request: Request) {
     const client = new Anthropic({ apiKey });
     const admin = createServiceClient(supabaseUrl, serviceKey);
 
+    const startedAt = Date.now();
+    const outOfTime = () => Date.now() - startedAt > TIME_BUDGET_MS;
+
     let articlesDone = 0;
     let podcastsDone = 0;
 
@@ -103,6 +114,7 @@ async function handle(request: Request) {
     for (const a of (articles ?? []) as {
       id: number; source_lang: string | null; title: string; excerpt: string | null; body: string;
     }[]) {
+      if (outOfTime()) break;
       const fields: Record<string, string> = { title: a.title, body: a.body };
       if (a.excerpt) fields.excerpt = a.excerpt;
       const out = await translateFields(client, a.source_lang ?? 'fr', fields);
@@ -135,6 +147,7 @@ async function handle(request: Request) {
     for (const p of (podcasts ?? []) as {
       id: number; source_lang: string | null; title: string; description: string | null;
     }[]) {
+      if (outOfTime()) break;
       const fields: Record<string, string> = { title: p.title };
       if (p.description) fields.description = p.description;
       const out = await translateFields(client, p.source_lang ?? 'fr', fields);
