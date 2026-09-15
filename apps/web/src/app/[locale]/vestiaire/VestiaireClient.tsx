@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/Avatar';
 import { useAvatarUpload } from '@/hooks/useAvatarUpload';
 import { displayCommunityName, formatDate } from '@arena/shared';
 import { PollAdminPanel } from './PollAdminPanel';
+import { ArticleList } from '@/components/article/ArticleList';
 import { BRAND } from '@/lib/brand';
 import { SITE } from '@/lib/siteConfig';
 import type { Poll } from '@/services/pollService';
@@ -93,6 +94,7 @@ export function VestiaireClient({
   const [description, setDescription] = useState(member?.description ?? '');
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(member?.avatar_url ?? null);
+  const [showArticleList, setShowArticleList] = useState(false);
   const { uploading, error: avatarError, uploadAvatar } = useAvatarUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -278,6 +280,24 @@ export function VestiaireClient({
             </Link>
           )}
         </>
+      )}
+
+      {/* My articles — quick access to the brand-scoped article manager
+          (same overlay as the community feed), for anyone who can create
+          content or has already published. */}
+      {member && (isContentCreator || authorMetrics.publishedCount > 0) && (
+        <button
+          onClick={() => setShowArticleList(true)}
+          className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition hover:bg-gray-50 dark:border-gray-700 dark:bg-[#1e1e1e] dark:hover:bg-[#252525]"
+        >
+          <span className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-gray-100">
+            <svg className="h-4 w-4 text-brand-blue" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            </svg>
+            {locale === 'fr' ? 'Mes articles' : 'My articles'}
+          </span>
+          <span className="text-sm text-gray-400">{locale === 'fr' ? 'gérer · modifier →' : 'manage · edit →'}</span>
+        </button>
       )}
 
       {/* Author metrics — only shown if user has published anything */}
@@ -553,6 +573,21 @@ export function VestiaireClient({
             </div>
             <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-gray-100">{t('deleted')}</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400">{t('deletedDetail')}</p>
+          </div>
+        </div>
+      )}
+
+      {/* My articles overlay — brand-scoped list of the member's own articles,
+          reusing the exact component the community feed uses. */}
+      {showArticleList && member && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-white dark:bg-[#1e1e1e]">
+          <div className="p-4">
+            <ArticleList
+              communityId={communities[0]?.id ?? 0}
+              communitySlug={communities[0]?.slug ?? ''}
+              userId={member.id}
+              onClose={() => setShowArticleList(false)}
+            />
           </div>
         </div>
       )}
