@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import { ORIGINAL_CONTENT_CUTOFF } from '@arena/shared';
+import { TRANSLATION_CUTOFF } from '@arena/shared';
 import { createClient } from '@/lib/supabase/server';
 
 // One Claude call per item; a batch of articles can take a while.
@@ -86,15 +86,16 @@ async function handle(request: Request) {
     let podcastsDone = 0;
 
     // ── Articles ──
-    // Gated by ORIGINAL_CONTENT_CUTOFF. On ZN the cutoff is epoch, so the
-    // whole published archive is eligible for translation (batch-limited
-    // below); watch translation cost when running this over the 631 imports.
+    // Gated by TRANSLATION_CUTOFF (migration boundary), NOT the visibility
+    // cutoff: the ~631 legacy imports stay visible everywhere but are never
+    // machine-translated. Only articles written on the new platform (published
+    // from 2026-07-07 on) are eligible here.
     const { data: articles } = await admin
       .from('articles')
       .select('id, source_lang, title, excerpt, body')
       .eq('is_published', true)
       .eq('is_removed', false)
-      .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
+      .gte('published_at', TRANSLATION_CUTOFF)
       .is('translated_at', null)
       .order('published_at', { ascending: false })
       .limit(ARTICLE_BATCH);
@@ -119,10 +120,15 @@ async function handle(request: Request) {
     }
 
     // ── Podcasts ──
+    // Same migration boundary as articles: legacy imported podcasts (created
+    // during the 2026-07-06 migration) are left untranslated; only podcasts
+    // added on the new platform are eligible. Gated on created_at since
+    // podcasts have no published_at column.
     const { data: podcasts } = await admin
       .from('podcasts')
       .select('id, source_lang, title, description')
       .is('translated_at', null)
+      .gte('created_at', TRANSLATION_CUTOFF)
       .order('created_at', { ascending: false })
       .limit(PODCAST_BATCH);
 

@@ -53,6 +53,15 @@ export const GA_MEASUREMENT_ID = 'G-R1BWXR3RGW';
 // the AdSense quality ratio healthy without hiding the archive from readers.
 export const ORIGINAL_CONTENT_CUTOFF = '1970-01-01T00:00:00Z';
 
+// Cutoff for MACHINE TRANSLATION only (see /api/translate-pending). This is a
+// separate gate from ORIGINAL_CONTENT_CUTOFF: the legacy archive must stay
+// fully VISIBLE (gallery/feed/sitemap keep the epoch cutoff above), but we do
+// NOT want to pay to translate ~600 imported articles. The Zone Nordiques
+// migration ran on 2026-07-06, so only content published from 2026-07-07
+// onward — i.e. articles written on the new platform — is translated. Zone
+// Expos launched later, so all of its content is naturally past this date.
+export const TRANSLATION_CUTOFF = '2026-07-07T00:00:00Z';
+
 // Minimum word count for an article to be considered high-quality enough
 // for indexing. Below this threshold Google tends to file articles under
 // "Crawled, currently not indexed" (judged as low value). Keeping these
