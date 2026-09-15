@@ -406,7 +406,14 @@ export function ArticleEditor({
     setSaving(true);
     setError(null);
 
-    const coverImageUrl = await uploadCover();
+    let coverImageUrl: string | null;
+    try {
+      coverImageUrl = await uploadCover();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Échec du téléversement de l'image de couverture.");
+      setSaving(false);
+      return;
+    }
     const slug = (customSlug.trim() || slugify(title)).slice(0, 60) || `article-${Date.now()}`;
     const body = editor?.getHTML() ?? '';
 

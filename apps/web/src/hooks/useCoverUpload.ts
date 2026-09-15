@@ -64,7 +64,9 @@ export function useCoverUpload(
       .from('article-covers')
       .upload(path, compressed, { contentType: 'image/jpeg', cacheControl: '31536000' });
 
-    if (error) return coverPreview;
+    // Surface the real storage error instead of silently persisting the local
+    // blob: preview (which becomes a broken image once the page reloads).
+    if (error) throw new Error(`Téléversement de l'image échoué : ${error.message}`);
 
     const { data: urlData } = supabase.storage.from('article-covers').getPublicUrl(path);
     return urlData.publicUrl;
