@@ -942,9 +942,12 @@ export function ArticleEditor({
         />
       </div>
 
-      {/* Toolbar */}
+      {/* Toolbar — sticky so it stays reachable while editing long articles.
+          Each render context (creer-article, EditArticleClient, the ArticleList
+          inline overlay) puts the editor inside its own overflow-y-auto scroll
+          container, so `top-0` pins the bar to the top of that scroll area. */}
       {editor && (
-        <div className="flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e1e1e] px-2 py-1.5">
+        <div className="sticky top-0 z-20 flex flex-wrap gap-1 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-[#1e1e1e] px-2 py-1.5">
           <ToolbarButton
             active={editor.isActive('bold')}
             onClick={() => editor.chain().focus().toggleBold().run()}
