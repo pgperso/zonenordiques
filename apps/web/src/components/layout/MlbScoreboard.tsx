@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Link } from '@/i18n/navigation';
 
 interface TeamScore {
   abbrev: string;
@@ -267,10 +268,11 @@ function GameChip({ game, locale, isFr }: { game: Game; locale: string; isFr: bo
   const status = statusLabel(game, locale, isFr);
   const started = isLive(game.state) || isFinal(game.state);
 
-  // No public MLB match-detail page yet, so the chip is a plain card (the NHL
-  // one links to /lnh/match/[id]); keep the same visual footprint.
   return (
-    <div className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-2 dark:border-gray-700">
+    <Link
+      href={`/mlb/match/${game.id}`}
+      className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-2 transition hover:border-brand-blue hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+    >
       <div className="flex flex-col justify-center gap-0.5">
         <TeamRow team={game.away} showScore={started} />
         <TeamRow team={game.home} showScore={started} />
@@ -284,7 +286,7 @@ function GameChip({ game, locale, isFr }: { game: Game; locale: string; isFr: bo
           {status.text}
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
