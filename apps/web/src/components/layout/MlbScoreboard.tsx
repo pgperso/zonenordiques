@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Link } from '@/i18n/navigation';
+import { MlbGameModal } from './MlbGameModal';
 
 interface TeamScore {
   abbrev: string;
@@ -56,6 +56,8 @@ export function MlbScoreboard() {
   // Set once the user browses dates, so we fetch scores even off-season.
   const navigatedRef = useRef(false);
   const dateInputRef = useRef<HTMLInputElement>(null);
+  // Which game's detail popup is open (null = none).
+  const [selectedGameId, setSelectedGameId] = useState<number | null>(null);
 
   // Open the native calendar when the date label is clicked.
   const openDatePicker = useCallback(() => {
@@ -153,6 +155,7 @@ export function MlbScoreboard() {
   // Always rendered at a fixed height (reserved via --chrome-h) so the layout
   // never shifts after the scores load.
   return (
+    <>
     <div
       className="shrink-0 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1e1e1e]"
       style={{ height: STRIP_H }}
@@ -227,7 +230,9 @@ export function MlbScoreboard() {
             {/* Games */}
             <div className="scrollbar-none flex flex-1 items-center gap-2 overflow-x-auto px-2">
               {hasGames ? (
-                games!.map((g) => <GameChip key={g.id} game={g} locale={locale} isFr={isFr} />)
+                games!.map((g) => (
+                  <GameChip key={g.id} game={g} locale={locale} isFr={isFr} onSelect={setSelectedGameId} />
+                ))
               ) : (
                 <span className="whitespace-nowrap px-1 text-xs text-gray-400">{emptyMessage}</span>
               )}
@@ -238,6 +243,16 @@ export function MlbScoreboard() {
         )}
       </div>
     </div>
+
+      {selectedGameId != null && (
+        <MlbGameModal
+          gameId={selectedGameId}
+          locale={locale}
+          isFr={isFr}
+          onClose={() => setSelectedGameId(null)}
+        />
+      )}
+    </>
   );
 }
 
@@ -264,13 +279,26 @@ function statusLabel(g: Game, locale: string, isFr: boolean): { text: string; li
   return { text: t, live: false };
 }
 
-function GameChip({ game, locale, isFr }: { game: Game; locale: string; isFr: boolean }) {
+function GameChip({
+  game,
+  locale,
+  isFr,
+  onSelect,
+}: {
+  game: Game;
+  locale: string;
+  isFr: boolean;
+  onSelect: (id: number) => void;
+}) {
   const status = statusLabel(game, locale, isFr);
   const started = isLive(game.state) || isFinal(game.state);
 
+  // Opens the game-detail popup in place (no navigation, so the strip and the
+  // page underneath stay exactly where they were).
   return (
-    <Link
-      href={`/mlb/match/${game.id}`}
+    <button
+      type="button"
+      onClick={() => onSelect(game.id)}
       className="flex h-9 shrink-0 items-center gap-2 rounded-lg border border-gray-200 px-2 transition hover:border-brand-blue hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
     >
       <div className="flex flex-col justify-center gap-0.5">
@@ -286,7 +314,7 @@ function GameChip({ game, locale, isFr }: { game: Game; locale: string; isFr: bo
           {status.text}
         </span>
       </div>
-    </Link>
+    </button>
   );
 }
 
