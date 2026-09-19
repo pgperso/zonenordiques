@@ -69,26 +69,51 @@ export function HomePromoBanner() {
   if (SITE.showPool) slides.push(<PoolSlide key="pool" t={tPool} />);
   if (sister) slides.push(<SisterSlide key="sister" sister={sister} isFr={isFr} />);
 
+  const n = slides.length;
   const [active, setActive] = useState(0);
+  const [animate, setAnimate] = useState(true);
+
+  // Advance one step every ROTATE_MS. `active` runs 0..n (n is the appended
+  // clone of the first slide), so the track only ever slides one direction.
   useEffect(() => {
-    if (slides.length < 2) return;
-    const id = setInterval(() => setActive((a) => (a + 1) % slides.length), ROTATE_MS);
+    if (n < 2) return;
+    const id = setInterval(() => setActive((a) => a + 1), ROTATE_MS);
     return () => clearInterval(id);
-  }, [slides.length]);
+  }, [n]);
 
-  if (slides.length === 0) return null;
-  if (slides.length === 1) return <div className="mb-6">{slides[0]}</div>;
+  // When we land on the clone (index n), let the slide finish, then snap back
+  // to the real first slide with the transition off — an invisible reset that
+  // makes the one-directional loop seamless.
+  useEffect(() => {
+    if (active !== n) return;
+    const t = setTimeout(() => {
+      setAnimate(false);
+      setActive(0);
+    }, 750);
+    return () => clearTimeout(t);
+  }, [active, n]);
 
-  // Sliding carousel: the whole panels swap by translating a flex track, so it
-  // reads as one container sliding out and the next sliding in (not a content
-  // crossfade). Each slide is 100% wide; the track shifts by -active * 100%.
+  // Re-arm the transition on the frame after the snap.
+  useEffect(() => {
+    if (animate) return;
+    const r = requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)));
+    return () => cancelAnimationFrame(r);
+  }, [animate]);
+
+  if (n === 0) return null;
+  if (n === 1) return <div className="mb-6">{slides[0]}</div>;
+
+  // Sliding carousel: the whole panels swap by translating a flex track (one
+  // container slides out, the next slides in — not a content crossfade). A clone
+  // of the first slide is appended so the loop always runs left, never reverses.
+  const track = [...slides, slides[0]];
   return (
     <div className="relative mb-6 overflow-hidden rounded-2xl">
       <div
-        className="flex transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none"
+        className={`flex ${animate ? 'transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)]' : ''} motion-reduce:transition-none`}
         style={{ transform: `translateX(-${active * 100}%)` }}
       >
-        {slides.map((slide, i) => (
+        {track.map((slide, i) => (
           <div
             key={i}
             className="w-full shrink-0"
