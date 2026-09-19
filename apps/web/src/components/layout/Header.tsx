@@ -100,10 +100,17 @@ export function Header() {
             <Image
               src={BRAND.logo}
               alt={BRAND.name}
-              width={36}
-              height={36}
+              // Baseball logo is a wide 4:3 wordmark: give next/image its real
+              // aspect ratio and let it fill the appbar height with auto width
+              // (no distortion). Hockey keeps the original square treatment.
+              width={SITE.category === 'baseball' ? 580 : 36}
+              height={SITE.category === 'baseball' ? 444 : 36}
               priority
-              className="h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9"
+              className={
+                SITE.category === 'baseball'
+                  ? 'h-10 w-auto object-contain sm:h-12 md:h-14'
+                  : 'h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9'
+              }
             />
             {tribune ? (
               <>
