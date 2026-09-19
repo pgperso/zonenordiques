@@ -161,7 +161,7 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
             aria-hidden
             width={48}
             height={48}
-            className="hidden h-12 w-12 shrink-0 rounded-full sm:block"
+            className="hidden h-12 w-12 shrink-0 object-contain sm:block"
           />
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-white/80">
