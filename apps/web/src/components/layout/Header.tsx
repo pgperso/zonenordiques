@@ -32,6 +32,29 @@ export function Header() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userTribunes, setUserTribunes] = useState<UserCommunitySummary[]>([]);
   const [canCreate, setCanCreate] = useState(false);
+  // Collapses the logo (slides up + fades, text shifts left) once the reader
+  // scrolls down. Pages scroll their own inner container (not the window), so
+  // we listen in the capture phase to catch scroll from any nested scroller.
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = (e: Event) => {
+      const target = e.target as HTMLElement | Document;
+      const top =
+        target instanceof HTMLElement ? target.scrollTop : window.scrollY;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setScrolled(top > 24));
+    };
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll, { capture: true });
+    };
+  }, []);
+  // A fresh page starts unscrolled — don't keep the collapsed state on navigation.
+  useEffect(() => {
+    setScrolled(false);
+  }, [pathname]);
 
   const otherLocale = locale === 'fr' ? 'en' : 'fr';
   const switchLocalePath = `/${otherLocale}${pathname}`;
@@ -96,22 +119,26 @@ export function Header() {
               </svg>
             </Link>
           )}
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-            <Image
-              src={BRAND.logo}
-              alt={BRAND.name}
-              // Baseball logo is a wide 4:3 wordmark: real aspect ratio + auto
-              // width so it fills the given height without distortion. Hockey
-              // keeps the original square treatment.
-              width={SITE.category === 'baseball' ? 566 : 36}
-              height={SITE.category === 'baseball' ? 444 : 36}
-              priority
-              className={
-                SITE.category === 'baseball'
-                  ? 'h-6 w-auto object-contain sm:h-7 md:h-8'
-                  : 'h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9'
-              }
-            />
+          <Link href="/" className="flex items-center">
+            {/* Logo column: collapses (slides up + fades, width to 0) on scroll
+                so the name+tagline slide left into its place; restores on scroll
+                up. Shared by both brands (square logos). */}
+            <span
+              className={`flex shrink-0 items-center overflow-hidden transition-all duration-300 ease-out motion-reduce:transition-none ${
+                scrolled
+                  ? 'w-0 -translate-y-4 opacity-0'
+                  : 'mr-1.5 w-7 translate-y-0 opacity-100 sm:mr-2 sm:w-8 md:w-9'
+              }`}
+            >
+              <Image
+                src={BRAND.logo}
+                alt={BRAND.name}
+                width={40}
+                height={40}
+                priority
+                className="h-7 w-7 max-w-none object-contain sm:h-8 sm:w-8 md:h-9 md:w-9"
+              />
+            </span>
             {tribune ? (
               <>
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
