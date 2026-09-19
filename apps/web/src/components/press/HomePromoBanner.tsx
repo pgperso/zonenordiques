@@ -79,19 +79,26 @@ export function HomePromoBanner() {
   if (slides.length === 0) return null;
   if (slides.length === 1) return <div className="mb-6">{slides[0]}</div>;
 
+  // Sliding carousel: the whole panels swap by translating a flex track, so it
+  // reads as one container sliding out and the next sliding in (not a content
+  // crossfade). Each slide is 100% wide; the track shifts by -active * 100%.
   return (
-    <div className="relative mb-6">
-      {slides.map((slide, i) => (
-        <div
-          key={i}
-          aria-hidden={i !== active}
-          className={`transition-opacity duration-1000 ease-in-out motion-reduce:transition-none ${
-            i === active ? 'opacity-100' : 'pointer-events-none absolute inset-0 opacity-0'
-          }`}
-        >
-          {slide}
-        </div>
-      ))}
+    <div className="relative mb-6 overflow-hidden rounded-2xl">
+      <div
+        className="flex transition-transform duration-700 ease-[cubic-bezier(0.65,0,0.35,1)] motion-reduce:transition-none"
+        style={{ transform: `translateX(-${active * 100}%)` }}
+      >
+        {slides.map((slide, i) => (
+          <div
+            key={i}
+            className="w-full shrink-0"
+            aria-hidden={i !== active}
+            inert={i !== active}
+          >
+            {slide}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
