@@ -126,8 +126,8 @@ export function Header() {
             <span
               className={`flex shrink-0 items-center overflow-hidden transition-all duration-300 ease-out motion-reduce:transition-none ${
                 scrolled
-                  ? 'w-0 -translate-y-4 opacity-0'
-                  : 'mr-1.5 w-7 translate-y-0 opacity-100 sm:mr-2 sm:w-8 md:w-9'
+                  ? 'w-0 opacity-0'
+                  : 'mr-1.5 w-7 opacity-100 sm:mr-2 sm:w-8 md:w-9'
               }`}
             >
               <Image
