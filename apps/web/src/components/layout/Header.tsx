@@ -97,24 +97,21 @@ export function Header() {
             </Link>
           )}
           <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-            {SITE.category === 'baseball' ? (
-              // Two-column layout: the logo column self-stretches to the exact
-              // height of the name+tagline block beside it, and its 580:444
-              // aspect ratio sets the width. So the logo always matches the
-              // text height, on every breakpoint, with no magic pixel value.
-              <span className="relative aspect-[580/444] shrink-0 self-stretch">
-                <Image src={BRAND.logo} alt={BRAND.name} fill priority sizes="120px" className="object-contain" />
-              </span>
-            ) : (
-              <Image
-                src={BRAND.logo}
-                alt={BRAND.name}
-                width={36}
-                height={36}
-                priority
-                className="h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9"
-              />
-            )}
+            <Image
+              src={BRAND.logo}
+              alt={BRAND.name}
+              // Baseball logo is a wide 4:3 wordmark: real aspect ratio + auto
+              // width so it fills the given height without distortion. Hockey
+              // keeps the original square treatment.
+              width={SITE.category === 'baseball' ? 580 : 36}
+              height={SITE.category === 'baseball' ? 444 : 36}
+              priority
+              className={
+                SITE.category === 'baseball'
+                  ? 'h-6 w-auto object-contain sm:h-7 md:h-8'
+                  : 'h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9'
+              }
+            />
             {tribune ? (
               <>
                 <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
