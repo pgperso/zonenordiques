@@ -103,7 +103,7 @@ export function Header() {
               // Baseball logo is a wide 4:3 wordmark: real aspect ratio + auto
               // width so it fills the given height without distortion. Hockey
               // keeps the original square treatment.
-              width={SITE.category === 'baseball' ? 580 : 36}
+              width={SITE.category === 'baseball' ? 566 : 36}
               height={SITE.category === 'baseball' ? 444 : 36}
               priority
               className={
