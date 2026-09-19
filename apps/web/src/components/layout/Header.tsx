@@ -108,7 +108,7 @@ export function Header() {
               priority
               className={
                 SITE.category === 'baseball'
-                  ? 'h-7 w-auto object-contain sm:h-8 md:h-9'
+                  ? 'h-6 w-auto object-contain sm:h-7 md:h-8'
                   : 'h-7 w-7 object-contain sm:h-8 sm:w-8 md:h-9 md:w-9'
               }
             />
