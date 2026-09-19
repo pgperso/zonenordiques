@@ -141,16 +141,16 @@ export function Header() {
             </span>
             {tribune ? (
               <>
-                <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
-                <div className="hidden md:block">
-                  <span className="text-lg font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 md:text-xl">{BRAND.name}</span>
-                  <p className="text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
+                <span className="text-base font-bold uppercase leading-none tracking-wide text-gray-900 dark:text-gray-100 md:hidden">{tribune.name}</span>
+                <div className="hidden flex-col justify-center md:flex">
+                  <span className="block text-lg font-bold uppercase leading-none tracking-wide text-gray-900 dark:text-gray-100 md:text-xl">{BRAND.name}</span>
+                  <p className="mt-0.5 text-[10px] leading-none tracking-[0.2em] text-gray-900 dark:text-gray-100"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
                 </div>
               </>
             ) : (
-              <div>
-                <span className="text-base font-bold uppercase tracking-wide text-gray-900 dark:text-gray-100 sm:text-lg md:text-xl">{BRAND.name}</span>
-                <p className="hidden text-[10px] leading-tight tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
+              <div className="flex flex-col justify-center">
+                <span className="block text-base font-bold uppercase leading-none tracking-wide text-gray-900 dark:text-gray-100 sm:text-lg md:text-xl">{BRAND.name}</span>
+                <p className="mt-0.5 hidden text-[10px] leading-none tracking-[0.2em] text-gray-900 dark:text-gray-100 sm:block"><span className="font-bold">{t('brand.taglineLead')}</span>{t('brand.taglineRest', { sport: SITE.sport })}</p>
               </div>
             )}
           </Link>

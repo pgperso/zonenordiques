@@ -40,7 +40,7 @@ const SISTERS: Record<string, Sister> = {
     domain: 'zoneexpos.com',
     subtitleFr: 'L’antichambre du baseball',
     subtitleEn: 'The baseball fan zone',
-    logo: '/images/zoneexpos.png',
+    logo: '/images/logo.png',
     from: '#0A2A5E',
     to: '#C8102E',
     bg: '/images/expos_banner.webp',
