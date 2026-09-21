@@ -8,6 +8,7 @@ import { AdSenseLoader } from '@/components/ads/AdSenseLoader';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { NhlScoreboard } from '@/components/layout/NhlScoreboard';
 import { MlbScoreboard } from '@/components/layout/MlbScoreboard';
+import { InstallPwaPrompt } from '@/components/layout/InstallPwaPrompt';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
@@ -145,6 +146,7 @@ export default async function LocaleLayout({
               <main id="main-content" className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
               <Footer />
               <CookieConsent />
+              <InstallPwaPrompt />
             </div>
             <Toaster position="top-center" richColors closeButton />
           </TribuneProvider>
