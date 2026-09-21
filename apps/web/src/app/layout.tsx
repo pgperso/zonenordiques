@@ -57,7 +57,8 @@ export const metadata: Metadata = {
       'max-snippet': -1,
     },
   },
-  manifest: '/manifest.json',
+  // The PWA manifest is generated per-brand by app/manifest.ts (Next auto-links
+  // /manifest.webmanifest), so each site installs as itself.
   // Per-brand favicon: the brand's own static PNG (Zone Nordiques → ZN,
   // Zone Expos → ZE). A static file rather than a dynamic /icon route, which
   // the i18n middleware would otherwise rewrite to a locale path.
