@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Sun, Moon, Monitor } from 'lucide-react';
+import { Sun, Moon, Monitor, Download } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import type { User } from '@supabase/supabase-js';
 import { useTranslations, useLocale } from 'next-intl';
 import { Avatar } from '@/components/ui/Avatar';
 import { BRAND } from '@/lib/brand';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 import type { UserCommunitySummary } from '@/services/communityService';
 import type { ThemePref } from '@/hooks/useDarkMode';
 
@@ -45,6 +46,7 @@ export function MobileNav({
   const tc = useTranslations('common');
   const ta = useTranslations('a11y');
   const locale = useLocale();
+  const { canInstall, promptInstall } = usePwaInstall();
 
   // Close on ESC for keyboard users
   useEffect(() => {
@@ -135,6 +137,17 @@ export function MobileNav({
 
         {/* Nav items */}
         <nav className="flex flex-col overflow-y-auto px-3 py-3" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+          {/* Always-available install entry (mobile Chrome/Edge), for anyone who
+              dismissed the install card or wants to install later. */}
+          {canInstall && (
+            <button
+              onClick={async () => { await promptInstall(); onClose(); }}
+              className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-brand-blue px-3 py-2 text-sm font-semibold text-brand-blue transition hover:bg-blue-50 dark:hover:bg-blue-950"
+            >
+              <Download className="h-4 w-4" />
+              {locale === 'fr' ? "Installer l'application" : 'Install the app'}
+            </button>
+          )}
           {user ? (
             <>
               <div className="flex flex-col gap-2">

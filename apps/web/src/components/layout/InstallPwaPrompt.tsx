@@ -4,69 +4,43 @@ import { useEffect, useState } from 'react';
 import { useLocale } from 'next-intl';
 import { Download, X } from 'lucide-react';
 import { BRAND } from '@/lib/brand';
+import { usePwaInstall } from '@/hooks/usePwaInstall';
 
-// Chrome/Android fires this instead of showing its own install banner once we
-// call preventDefault() — we keep it and trigger it from our own button.
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
-}
-
-const DISMISS_KEY = 'pwa-install-dismissed';
+const SNOOZE_KEY = 'pwa-install-snoozed-at';
+const SNOOZE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 /**
- * Opt-in PWA install card. Instead of Chrome's surprise bottom banner, we
- * suppress it and offer a clear, dismissible "install this site as an app"
- * prompt the visitor chooses to act on. Only appears where the browser supports
- * it (Android Chrome/Edge), never when already installed or previously dismissed.
+ * Opt-in PWA install card. Instead of Chrome's surprise banner (suppressed in
+ * usePwaInstall), we offer a clear, dismissible "install this site as an app"
+ * card. Closing it snoozes for 30 days (not forever) — and a permanent
+ * "Install" entry stays in the mobile menu. Never shows when already installed
+ * or unsupported.
  */
 export function InstallPwaPrompt() {
   const isFr = useLocale() === 'fr';
-  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [show, setShow] = useState(false);
+  const { canInstall, promptInstall } = usePwaInstall();
+  const [snoozed, setSnoozed] = useState(true); // assume snoozed until we read storage
 
   useEffect(() => {
-    // Already installed (launched standalone) → never prompt.
-    if (typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches) return;
     try {
-      if (localStorage.getItem(DISMISS_KEY) === '1') return;
+      const at = Number(localStorage.getItem(SNOOZE_KEY));
+      setSnoozed(Number.isFinite(at) && at > 0 && Date.now() - at < SNOOZE_MS);
     } catch {
-      /* private mode: just proceed */
+      setSnoozed(false);
     }
-
-    const onPrompt = (e: Event) => {
-      e.preventDefault(); // suppress the automatic banner
-      setDeferred(e as BeforeInstallPromptEvent);
-      setShow(true);
-    };
-    const onInstalled = () => {
-      setShow(false);
-      try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
-    };
-
-    window.addEventListener('beforeinstallprompt', onPrompt);
-    window.addEventListener('appinstalled', onInstalled);
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onPrompt);
-      window.removeEventListener('appinstalled', onInstalled);
-    };
   }, []);
 
-  const dismiss = () => {
-    setShow(false);
-    try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
+  const snooze = () => {
+    setSnoozed(true);
+    try { localStorage.setItem(SNOOZE_KEY, String(Date.now())); } catch { /* ignore */ }
   };
 
   const install = async () => {
-    if (!deferred) return;
-    await deferred.prompt();
-    await deferred.userChoice.catch(() => {});
-    setDeferred(null);
-    setShow(false);
-    try { localStorage.setItem(DISMISS_KEY, '1'); } catch { /* ignore */ }
+    await promptInstall();
+    snooze(); // whatever the choice, don't re-show the card right away
   };
 
-  if (!show) return null;
+  if (!canInstall || snoozed) return null;
 
   return (
     <div className="fixed inset-x-3 bottom-3 z-[70] mx-auto flex max-w-md items-center gap-3 rounded-2xl border border-gray-200 bg-white p-3 shadow-xl dark:border-gray-700 dark:bg-[#252525]">
@@ -90,7 +64,7 @@ export function InstallPwaPrompt() {
         {isFr ? 'Installer' : 'Install'}
       </button>
       <button
-        onClick={dismiss}
+        onClick={snooze}
         aria-label={isFr ? 'Fermer' : 'Close'}
         className="shrink-0 rounded-lg p-1 text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200"
       >
