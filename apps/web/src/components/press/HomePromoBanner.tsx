@@ -19,6 +19,8 @@ import { BRAND } from '@/lib/brand';
  */
 
 interface Sister {
+  /** Matches BRAND.id of that site's deployment. */
+  id: string;
   name: string;
   url: string;
   domain: string;
@@ -29,23 +31,20 @@ interface Sister {
   to: string;
   // Optional full-bleed background photo (a dark scrim keeps the text legible).
   bg?: string;
+  /**
+   * Flip to true once the site is online AND its logo asset is committed.
+   * A brand left false is simply not promoted — that way adding the next one
+   * here early never ships a broken image on the sites already live.
+   */
+  live: boolean;
 }
 
-// Exactly two brands cross-promote each other. Keyed by the CURRENT brand id:
-// each entry is the OTHER site.
-const SISTERS: Record<string, Sister> = {
-  zonenordiques: {
-    name: 'Zone Expos',
-    url: 'https://zoneexpos.com',
-    domain: 'zoneexpos.com',
-    subtitleFr: 'L’antichambre du baseball',
-    subtitleEn: 'The baseball fan zone',
-    logo: '/images/logo.png',
-    from: '#0A2A5E',
-    to: '#C8102E',
-    bg: '/images/expos_banner.webp',
-  },
-  zoneexpos: {
+// Every brand in the family. The banner promotes all the OTHERS — so adding a
+// site is one entry here, not a rewrite (this used to be a 1:1 map that only
+// worked for exactly two brands).
+const BRANDS: Sister[] = [
+  {
+    id: 'zonenordiques',
     name: 'Zone Nordiques',
     url: 'https://zonenordiques.com',
     domain: 'zonenordiques.com',
@@ -55,19 +54,48 @@ const SISTERS: Record<string, Sister> = {
     from: '#002B57',
     to: '#003E7E',
     bg: '/images/nordiques_banner.jpg',
+    live: true,
   },
-};
+  {
+    id: 'zoneexpos',
+    name: 'Zone Expos',
+    url: 'https://zoneexpos.com',
+    domain: 'zoneexpos.com',
+    subtitleFr: 'L’antichambre du baseball',
+    subtitleEn: 'The baseball fan zone',
+    logo: '/images/logo.png',
+    from: '#0A2A5E',
+    to: '#C8102E',
+    bg: '/images/expos_banner.webp',
+    live: true,
+  },
+  {
+    id: 'cflquebec',
+    name: 'CFL Québec',
+    url: 'https://cflquebec.com',
+    domain: 'cflquebec.com',
+    subtitleFr: 'L’antichambre du football',
+    subtitleEn: 'The football fan zone',
+    logo: '/images/cflquebec.png',
+    from: '#0B3D2E',
+    to: '#C8102E',
+    live: false, // ← flip once the domain is live and the logo is committed
+  },
+];
 
 const ROTATE_MS = 9000;
 
 export function HomePromoBanner() {
   const tPool = useTranslations('pool');
   const isFr = useLocale() === 'fr';
-  const sister = SISTERS[BRAND.id] ?? null;
+  // Promote every OTHER live brand, in registry order.
+  const sisters = BRANDS.filter((b) => b.live && b.id !== BRAND.id);
 
   const slides: React.ReactNode[] = [];
   if (SITE.showPool) slides.push(<PoolSlide key="pool" t={tPool} />);
-  if (sister) slides.push(<SisterSlide key="sister" sister={sister} isFr={isFr} />);
+  for (const sister of sisters) {
+    slides.push(<SisterSlide key={sister.id} sister={sister} isFr={isFr} />);
+  }
 
   const n = slides.length;
   const [active, setActive] = useState(0);

@@ -141,8 +141,11 @@ export default async function LocaleLayout({
           <TribuneProvider>
             <div className="flex flex-1 min-h-dvh flex-col">
               <Header />
-              {SITE.showScoreboard &&
-                (SITE.category === 'baseball' ? <MlbScoreboard /> : <NhlScoreboard />)}
+              {/* One scoreboard per sport, explicitly mapped: a brand whose
+                  league has no feed (e.g. football/CFL) shows none rather than
+                  falling back to another sport's board. */}
+              {SITE.showScoreboard && SITE.category === 'hockey' && <NhlScoreboard />}
+              {SITE.showScoreboard && SITE.category === 'baseball' && <MlbScoreboard />}
               <main id="main-content" className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
               <Footer />
               <CookieConsent />

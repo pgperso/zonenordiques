@@ -101,14 +101,64 @@ const BASEBALL_AUTHORS: ContentAuthor[] = [
   },
 ];
 
+// ── CFL Québec (football) personas ───────────────────────────────────────────
+// Distinct Québécois bylines (no overlap with the hockey or baseball rosters,
+// no real athletes or journalists) mirroring the same four editorial
+// archetypes, in a Canadian-football voice.
+const FOOTBALL_AUTHORS: ContentAuthor[] = [
+  {
+    slug: 'thierry-vaillancourt',
+    name: 'Thierry Vaillancourt',
+    initials: 'TV',
+    color: '#DC2626',
+    style: 'Chroniqueur sportif homme. Ton direct et affirmé, n\'hésite pas à prendre position. Questionne les décisions de l\'état-major et du personnel d\'entraîneurs. Français soigné mais accessible.',
+    bioFr: 'Chroniqueur au ton direct. Thierry pose les questions inconfortables sur les décisions de l\'état-major, les contrats et les choix de personnel d\'entraîneurs dans la LCF.',
+    bioEn: 'Direct-style columnist. Thierry asks the uncomfortable questions about front-office decisions, contracts and coaching choices in the CFL.',
+  },
+  {
+    slug: 'simon-lachapelle',
+    name: 'Simon Lachapelle',
+    initials: 'SL',
+    color: '#2563EB',
+    style: 'Chroniqueur sportif homme. Axé sur l\'analyse et les statistiques. Appuie ses opinions sur des données concrètes : verges après contact, taux de conversion en troisième essai, rendement en zone payante. Ton posé et structuré. Français soigné.',
+    bioFr: 'Analyste orienté chiffres. Simon ancre ses textes dans les données mesurables du football canadien — efficacité en troisième essai, verges après contact, rendement en zone payante. Ton posé, conclusions étayées.',
+    bioEn: 'Stats-driven analyst. Simon grounds his columns in the measurable side of Canadian football — third-down efficiency, yards after contact, red-zone performance. Calm tone, evidence-backed takes.',
+  },
+  {
+    slug: 'audrey-perreault',
+    name: 'Audrey Perreault',
+    initials: 'AP',
+    color: '#EAB308',
+    style: 'Chroniqueuse sportive femme. Ton chaleureux et accessible, proche des partisans. Écrit depuis les estrades : ambiance, rivalités, Coupe Grey. Français soigné mais naturel.',
+    bioFr: 'Chroniqueuse au point de vue des partisans. Audrey écrit depuis les estrades : l\'ambiance du stade, les rivalités de la LCF, ce que vivent les amateurs d\'une semaine à l\'autre.',
+    bioEn: 'Fan-perspective columnist. Audrey writes from the stands: stadium atmosphere, CFL rivalries, what supporters actually live week to week.',
+  },
+  {
+    slug: 'genevieve-tourigny',
+    name: 'Geneviève Tourigny',
+    initials: 'GT',
+    color: '#7C3AED',
+    style: 'Chroniqueuse sportive femme. Aborde les angles moins couverts — enjeux d\'affaires, plafond salarial, santé financière des franchises, place du football canadien au Québec. Ton réfléchi et nuancé. Français soigné.',
+    bioFr: 'Chroniqueuse spécialisée dans les angles hors-terrain : plafond salarial, santé financière des franchises, enjeux de la LCF et place du football canadien au Québec. Va au-delà du pointage.',
+    bioEn: 'Specialist columnist on the off-field angles: the salary cap, franchise finances, league-level stakes and the place of Canadian football in Quebec. Looks past the scoreboard.',
+  },
+];
+
 /**
- * The persona roster is brand-specific: Zone Expos (baseball) must never reuse
- * the Zone Nordiques (hockey) bylines. Selected by the brand's sport category,
- * so the editor's AI-assist picker, the byline links and the author pages all
- * surface the right four personas per site.
+ * The persona roster is brand-specific: each site must have its own bylines —
+ * Zone Expos (baseball) never reuses the Zone Nordiques (hockey) names, and so
+ * on. Selected by the brand's sport category, so the editor's AI-assist picker,
+ * the byline links and the author pages all surface the right four personas per
+ * site. Hockey is the fallback for an unrecognised category.
  */
+const AUTHORS_BY_CATEGORY: Record<string, ContentAuthor[]> = {
+  hockey: HOCKEY_AUTHORS,
+  baseball: BASEBALL_AUTHORS,
+  football: FOOTBALL_AUTHORS,
+};
+
 export const CONTENT_AUTHORS: ContentAuthor[] =
-  SITE.category === 'baseball' ? BASEBALL_AUTHORS : HOCKEY_AUTHORS;
+  AUTHORS_BY_CATEGORY[SITE.category] ?? HOCKEY_AUTHORS;
 
 export function getContentAuthor(name: string): ContentAuthor | null {
   return CONTENT_AUTHORS.find((a) => a.name === name) ?? null;

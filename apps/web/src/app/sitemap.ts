@@ -34,8 +34,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { ...withAlternates('/politique-confidentialite'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.3 },
     { ...withAlternates('/mentions-legales'), lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
     { ...withAlternates('/normes-editoriales'), lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
-    // Only the brand's own return-confidence meter (Nordiquomètre / Exposmètre).
-    { ...withAlternates(`/${SITE.meter}`), lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    // Only the brand's own return-confidence meter (Nordiquomètre / Exposmètre),
+    // and only when this brand has one at all.
+    ...(SITE.showMeter
+      ? [{ ...withAlternates(`/${SITE.meter}`), lastModified: new Date(), changeFrequency: 'daily' as const, priority: 0.7 }]
+      : []),
   ];
 
   // Every listing below is scoped to the brand's own sport (shared DB).

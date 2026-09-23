@@ -37,9 +37,14 @@ export const SITE = {
   meterTaglineEn: s(process.env.NEXT_PUBLIC_SITE_METER_TAGLINE_EN, 'The confidence index for the Nordiques’ return'),
   // Slug of the brand's flagship chat tribune (the "La Zone" shortcut).
   mainTribune: s(process.env.NEXT_PUBLIC_SITE_MAIN_TRIBUNE, 'zone-nordiques'),
-  // Live scoreboard strip. Only an NHL scoreboard exists today, so a non-hockey
-  // brand hides it until its league's version is built.
+  // Live scoreboard strip. A scoreboard exists for hockey (NHL) and baseball
+  // (MLB); a brand whose league has no free data feed (e.g. the CFL) turns this
+  // off. The layout also refuses to fall back to another sport's board.
   showScoreboard: flag(process.env.NEXT_PUBLIC_SITE_SCOREBOARD, true),
+  // Whether this brand features a "return-confidence" meter at all. A brand
+  // without one (no `<meter>_votes` table) must hide every meter surface —
+  // sidebar card, chat bar and sitemap entry.
+  showMeter: flag(process.env.NEXT_PUBLIC_SITE_METER_ENABLED, true),
   // Fantasy pool entry points (NHL-only today).
   showPool: flag(process.env.NEXT_PUBLIC_SITE_POOL, true),
 } as const;

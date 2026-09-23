@@ -16,13 +16,16 @@ export function MetreCards() {
   const isFr = locale === 'fr';
 
   const cards = [
-    {
-      href: `/${SITE.meter}`,
-      bg: '#002B57',
-      image: `/images/${SITE.meter}.png`,
-      title: SITE.meterLabel,
-      tagline: isFr ? SITE.meterTagline : SITE.meterTaglineEn,
-    },
+    // A brand without a meter (no `<meter>_votes` table) skips this card.
+    ...(SITE.showMeter
+      ? [{
+          href: `/${SITE.meter}`,
+          bg: '#002B57',
+          image: `/images/${SITE.meter}.png`,
+          title: SITE.meterLabel,
+          tagline: isFr ? SITE.meterTagline : SITE.meterTaglineEn,
+        }]
+      : []),
     {
       href: `/tribunes/${SITE.mainTribune}`,
       bg: '#0B4870',

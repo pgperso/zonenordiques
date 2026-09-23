@@ -16,6 +16,7 @@ import { FeedItem } from './FeedItem';
 import { FeedInput } from './FeedInput';
 import { FeedSkeleton } from './FeedSkeleton';
 import { NordiquometreBar } from './NordiquometreBar';
+import { SITE } from '@/lib/siteConfig';
 import { ThreadPanel } from './ThreadPanel';
 import dynamic from 'next/dynamic';
 import { OnlineMembers } from '@/components/chat/OnlineMembers';
@@ -221,8 +222,9 @@ export function FeedContainer({
       {/* Feed area */}
       <div className="relative flex flex-1 flex-col overflow-hidden dark:border-x dark:border-gray-700">
         <>
-        {/* Live Nordiquomètre index — tap to open the meter and vote */}
-        <NordiquometreBar />
+        {/* Live meter index — tap to open the meter and vote. Hidden for a
+            brand that has no meter (its `<meter>_votes` table doesn't exist). */}
+        {SITE.showMeter && <NordiquometreBar />}
         {/* Live banner — small notification, click to scroll to the live card */}
         {activeLive && (
           <button
