@@ -6,6 +6,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useSupabase } from '@/hooks/useSupabase';
 import { useNotificationSound } from '@/hooks/useNotificationSound';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { Avatar } from '@/components/ui/Avatar';
 import { formatTime, displayCommunityName } from '@arena/shared';
 import {
@@ -25,6 +26,11 @@ interface NotificationBellProps {
  * badge live; coalesced notifications arrive as UPDATEs (not just INSERTs),
  * so the subscription listens to every change and re-reads the authoritative
  * unread count rather than counting events optimistically.
+ *
+ * Every read and the "mark all read" write are scoped to this brand's
+ * communities. The database and the membership are shared across brands, so
+ * without that filter a member active on two sites sees — and clears — the
+ * other sport's notifications from whichever bell they happen to open.
  */
 export function NotificationBell({ userId }: NotificationBellProps) {
   const t = useTranslations('notifications');
@@ -39,20 +45,37 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const refreshUnread = useCallback(async () => {
-    const count = await fetchUnreadNotificationCount(supabase);
-    setUnread(count);
+  // This brand's community ids. Null while resolving — every query below
+  // waits for it rather than running unscoped, so the bell can never flash
+  // another sport's notifications on first paint.
+  const [brandIds, setBrandIds] = useState<number[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getBrandCommunityIds(supabase).then((ids) => {
+      if (!cancelled) setBrandIds(ids);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [supabase]);
 
+  const refreshUnread = useCallback(async () => {
+    if (!brandIds) return;
+    const count = await fetchUnreadNotificationCount(supabase, brandIds);
+    setUnread(count);
+  }, [supabase, brandIds]);
+
   const loadList = useCallback(async () => {
+    if (!brandIds) return;
     setLoading(true);
     try {
-      const data = await fetchNotifications(supabase, 20);
+      const data = await fetchNotifications(supabase, brandIds, 20);
       setItems(data);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, brandIds]);
 
   // Initial count + realtime subscription. Coalescing means a new event on
   // an existing unread group is an UPDATE, so we listen to '*' and let the
@@ -82,7 +105,15 @@ export function NotificationBell({ userId }: NotificationBellProps) {
           // a ping even when the matching message scrolls by in front of
           // them. The hook is a no-op when sound is disabled or the tab
           // is in the background.
-          if (payload.eventType === 'INSERT') {
+          //
+          // The Realtime filter above can only match one column, so events
+          // from the member's OTHER brands arrive here too: gate the sound
+          // on the brand set so a baseball reply doesn't ping the hockey
+          // tab. A row with no community (possible only until migration
+          // 00109 has run) still plays, matching the previous behaviour.
+          const inBrand =
+            row?.community_id == null || (brandIds?.includes(row.community_id) ?? false);
+          if (payload.eventType === 'INSERT' && inBrand) {
             playSound(row?.type);
           }
 
@@ -97,7 +128,7 @@ export function NotificationBell({ userId }: NotificationBellProps) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, userId, refreshUnread, loadList, open, playSound]);
+  }, [supabase, userId, refreshUnread, loadList, open, playSound, brandIds]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -161,9 +192,10 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }
 
   async function handleMarkAllRead() {
+    if (!brandIds) return;
     setItems([]);
     setUnread(0);
-    await markAllNotificationsRead(supabase, userId);
+    await markAllNotificationsRead(supabase, userId, brandIds);
   }
 
   function labelFor(n: NotificationItem): string {

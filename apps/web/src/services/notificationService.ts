@@ -77,8 +77,25 @@ function rowToNotification(r: RawNotificationRow): NotificationItem {
   };
 }
 
+/**
+ * Brand scoping.
+ *
+ * The database is shared across brands and so are the members, so RLS
+ * (`recipient_id = auth.uid()`) is not enough: it returns the member's
+ * notifications from EVERY sport. `communityIds` is the brand's own id set
+ * from `getBrandCommunityIds()` — the same filter the feed, tribunes,
+ * search and sitemap already apply.
+ *
+ * It is a required argument rather than an optional one on purpose: an
+ * unscoped call is always a bug, and a caller that forgets it should fail
+ * to compile instead of quietly leaking another brand's bell.
+ *
+ * Migration 00109 guarantees `community_id` is set on every row, so this
+ * filter hides nothing it shouldn't.
+ */
 export async function fetchNotifications(
   supabase: SupabaseClient<Database>,
+  communityIds: number[],
   limit = 20,
 ): Promise<NotificationItem[]> {
   const { data } = await supabase
@@ -90,6 +107,7 @@ export async function fetchNotifications(
       'community:communities!notifications_community_id_fkey(slug, name, name_en)',
     )
     .eq('is_read', false)
+    .in('community_id', communityIds)
     .order('updated_at', { ascending: false })
     .limit(limit);
 
@@ -99,11 +117,13 @@ export async function fetchNotifications(
 
 export async function fetchUnreadNotificationCount(
   supabase: SupabaseClient<Database>,
+  communityIds: number[],
 ): Promise<number> {
   const { count } = await supabase
     .from('notifications')
     .select('id', { count: 'exact', head: true })
-    .eq('is_read', false);
+    .eq('is_read', false)
+    .in('community_id', communityIds);
   return count ?? 0;
 }
 
@@ -117,15 +137,21 @@ export async function markNotificationRead(
     .eq('id', notificationId);
 }
 
+/**
+ * Scoped like the reads: "mark all read" on one brand must not clear the
+ * unread bell the member still has waiting on another brand's site.
+ */
 export async function markAllNotificationsRead(
   supabase: SupabaseClient<Database>,
   recipientId: string,
+  communityIds: number[],
 ): Promise<void> {
   await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('recipient_id', recipientId)
-    .eq('is_read', false);
+    .eq('is_read', false)
+    .in('community_id', communityIds);
 }
 
 // ── Per-tribune article-notification mutes ───────────────────────────
