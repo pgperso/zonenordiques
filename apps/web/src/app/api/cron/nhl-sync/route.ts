@@ -53,7 +53,12 @@ async function handleSync(request: Request) {
   const admin = createServiceClient(supabaseUrl, serviceKey);
 
   const url = new URL(request.url);
-  const date = url.searchParams.get('date') ?? 'now';
+  const rawDate = url.searchParams.get('date') ?? 'now';
+  // Validate before it reaches the NHL API path and the DATE column.
+  if (rawDate !== 'now' && !/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+    return NextResponse.json({ error: 'date invalide (YYYY-MM-DD)' }, { status: 400 });
+  }
+  const date = rawDate;
 
   // Open a run-log row so a silent failure is visible after the fact.
   const { data: runRow } = await admin

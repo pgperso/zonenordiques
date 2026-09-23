@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
+import { isContentCreator } from '@/lib/authz';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { fetchRecentNews } from '@/lib/newsSearch';
@@ -305,6 +306,20 @@ export async function POST(request: Request) {
     if (userError || !user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
+    // Only content creators may spend AI credits — the UI already gates this,
+    // but the route must enforce it (self-serve signup makes "any member" cheap).
+    if (!(await isContentCreator(supabase, user.id))) {
+      return NextResponse.json({ error: 'Réservé aux créateurs de contenu' }, { status: 403 });
+    }
+    // Global ceiling on top of the per-user limit, so N throwaway accounts
+    // can't multiply the spend.
+    const global = await consumeRateLimit('article-gen:global', 60, RATE_WINDOW_SECONDS);
+    if (!global.allowed) {
+      return NextResponse.json(
+        { error: 'Capacité de génération atteinte. Réessayez plus tard.' },
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds(global.resetAt) || RATE_WINDOW_SECONDS) } },
+      );
+    }
 
     const { allowed, remaining, resetAt } = await consumeRateLimit(
       `article-gen:${user.id}`,
@@ -405,7 +420,8 @@ export async function POST(request: Request) {
       { headers: { 'X-RateLimit-Remaining': String(remaining) } },
     );
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Erreur inconnue';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    // Log the detail server-side; never echo provider/DB messages to the client.
+    console.error('[articles/generate]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Erreur serveur. Réessayez.' }, { status: 500 });
   }
 }

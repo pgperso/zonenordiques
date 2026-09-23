@@ -6,6 +6,7 @@ import { fetchUrlContent, extractUrls } from '@/lib/fetchUrlContent';
 import { sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
 import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
 import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
+import { isContentCreator } from '@/lib/authz';
 
 // Un appel Anthropic + fetch news — rarement plus de 15s, on met 30s pour marge.
 export const maxDuration = 30;
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+    if (!(await isContentCreator(supabase, user.id))) {
+      return NextResponse.json({ error: 'Réservé aux créateurs de contenu' }, { status: 403 });
     }
 
     const { allowed, resetAt } = await consumeRateLimit(
@@ -184,7 +188,7 @@ N'utilise PAS de guillemets doubles dans le texte, utilise « » à la place.`,
 
     return NextResponse.json({ topics: valid });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Erreur inconnue';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[articles/suggest-topics]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Erreur serveur. Réessayez.' }, { status: 500 });
   }
 }

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { sanitizeArticleHtml, sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
 import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
 import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
+import { isContentCreator } from '@/lib/authz';
 
 // Un seul appel Anthropic mais peut générer 4k tokens ; on laisse 60s de marge.
 export const maxDuration = 60;
@@ -21,6 +22,9 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+    if (!(await isContentCreator(supabase, user.id))) {
+      return NextResponse.json({ error: 'Réservé aux créateurs de contenu' }, { status: 403 });
     }
 
     const { allowed, resetAt } = await consumeRateLimit(
@@ -115,7 +119,7 @@ Réponds UNIQUEMENT en JSON valide :
 
     return NextResponse.json({ title: cleanTitle, excerpt: cleanExcerpt, body: cleanBody });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Erreur inconnue';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[articles/refine]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Erreur serveur. Réessayez.' }, { status: 500 });
   }
 }

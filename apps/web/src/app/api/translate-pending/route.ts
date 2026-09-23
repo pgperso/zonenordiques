@@ -176,8 +176,8 @@ async function handle(request: Request) {
 
     return NextResponse.json({ ok: true, articlesDone, podcastsDone });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Erreur inconnue';
-    return NextResponse.json({ error: msg }, { status: 500 });
+    console.error('[translate-pending]', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'Erreur serveur.' }, { status: 500 });
   }
 }
 

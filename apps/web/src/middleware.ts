@@ -76,7 +76,9 @@ function applySecurityHeaders(response: NextResponse, nonce: string) {
 }
 
 function stripLocale(pathname: string): string {
-  const match = pathname.match(/^\/(fr|en)(\/.*)?$/);
+  // Case-insensitive: next-intl matches the locale prefix that way too, so
+  // `/FR/vestiaire` must still classify as protected here.
+  const match = pathname.match(/^\/(fr|en)(\/.*)?$/i);
   return match ? match[2] || '/' : pathname;
 }
 

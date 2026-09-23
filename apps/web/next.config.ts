@@ -34,6 +34,20 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Static security headers on EVERY path — including the ones the
+        // middleware matcher skips (/api/*, /auth/callback, static files, 404s
+        // for extension-suffixed paths). The per-request CSP nonce stays in
+        // the middleware; these are the nonce-free ones.
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(self), geolocation=(), autoplay=(self)' },
+          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+        ],
+      },
+      {
         // Serve ads.txt from a stable CDN cache rather than revalidating
         // against the origin on every hit. AdSense's crawler intermittently
         // reported "not found" because each request previously round-tripped
