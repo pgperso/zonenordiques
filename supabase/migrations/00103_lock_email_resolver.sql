@@ -1,0 +1,12 @@
+-- Security hardening (audit 2026-09): stop member-email harvesting.
+--
+-- get_email_from_username() was EXECUTE-granted to anon, so anyone could call it
+-- directly from the browser with the anon key and iterate usernames to harvest
+-- emails (PII, Loi 25 / GDPR), with no rate limit.
+--
+-- Resolution now goes only through the rate-limited server route
+-- /api/auth/resolve-email, which calls this SECURITY DEFINER function with the
+-- service role (service_role bypasses grants). Revoke direct client access.
+-- Server-side callers (legacy-login, resolve-email) use the service key and are
+-- unaffected.
+REVOKE EXECUTE ON FUNCTION public.get_email_from_username(TEXT) FROM anon, authenticated;

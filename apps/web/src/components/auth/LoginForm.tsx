@@ -19,12 +19,19 @@ export function LoginForm() {
   async function resolveIdentifierToEmail(raw: string): Promise<string | null> {
     const trimmed = raw.trim();
     if (trimmed.includes('@')) return trimmed;
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc('get_email_from_username', {
-      uname: trimmed,
-    });
-    if (error || !data) return null;
-    return data;
+    // Resolve via the rate-limited server route (the direct RPC is revoked from
+    // the browser to stop email harvesting by username enumeration).
+    try {
+      const res = await fetch('/api/auth/resolve-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: trimmed }),
+      });
+      const data = (await res.json()) as { email?: string | null };
+      return data.email ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
