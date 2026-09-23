@@ -68,6 +68,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false }, { status: 401 });
     }
 
+    // Per-ACCOUNT lockout on top of the per-IP limit: an attacker with a pool
+    // of IPs could otherwise grind MD5 guesses against one legacy account.
+    const perAccount = await consumeRateLimit(
+      `legacy-login:id:${identifier.toLowerCase()}`,
+      5,
+      60 * 60,
+    );
+    if (!perAccount.allowed) {
+      return NextResponse.json({ ok: false }, { status: 401 });
+    }
+
     const admin = createServiceClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });

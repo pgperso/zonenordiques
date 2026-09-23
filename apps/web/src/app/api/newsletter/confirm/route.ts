@@ -28,16 +28,22 @@ export async function GET(request: Request) {
   if (!data) return NextResponse.redirect(resultUrl('error'));
   const locale = data.locale === 'en' ? 'en' : 'fr';
 
-  if (data.status !== 'confirmed') {
-    await admin
-      .from('newsletter_subscribers')
-      .update({
-        status: 'confirmed',
-        confirmed_at: new Date().toISOString(),
-        unsubscribed_at: null,
-      })
-      .eq('id', data.id);
-  }
+  // Idempotent re-click of a valid link.
+  if (data.status === 'confirmed') return NextResponse.redirect(resultUrl('confirmed', locale));
+
+  // Only a PENDING consent may be confirmed. An unsubscribed address must go
+  // through /subscribe again (which issues a fresh token) — an old confirmation
+  // email must never re-enrol someone who opted out (CASL/LCAP).
+  if (data.status !== 'pending') return NextResponse.redirect(resultUrl('error', locale));
+
+  await admin
+    .from('newsletter_subscribers')
+    .update({
+      status: 'confirmed',
+      confirmed_at: new Date().toISOString(),
+      unsubscribed_at: null,
+    })
+    .eq('id', data.id);
 
   return NextResponse.redirect(resultUrl('confirmed', locale));
 }

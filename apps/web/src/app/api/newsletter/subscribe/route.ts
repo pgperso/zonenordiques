@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { consumeRateLimit } from '@/lib/rateLimit';
 import { getClientIp } from '@/lib/clientIp';
@@ -65,16 +66,21 @@ export async function POST(request: Request) {
     token = (data as { confirm_token: string }).confirm_token;
   } else if (existing.status === 'confirmed') {
     // Already subscribed. Return generic success without re-sending, so the
-    // endpoint never reveals whether an address is on the list.
+    // endpoint never reveals whether an address is on the list. The other
+    // branches call Resend (hundreds of ms); pad this one so response timing
+    // doesn't act as a "is this address subscribed?" oracle.
+    await new Promise((r) => setTimeout(r, 250 + Math.random() * 300));
     return NextResponse.json({ ok: true });
   } else {
     // pending or previously unsubscribed → reset to pending and re-send the
-    // confirmation (a fresh consent event).
+    // confirmation (a fresh consent event). ROTATE the token: the old one may
+    // sit in an old email (forwarded, compromised inbox) and must not be able
+    // to re-subscribe someone who has since unsubscribed.
+    token = randomUUID();
     await admin
       .from('newsletter_subscribers')
-      .update({ status: 'pending', locale, unsubscribed_at: null })
+      .update({ status: 'pending', locale, unsubscribed_at: null, confirm_token: token })
       .eq('id', existing.id);
-    token = existing.confirm_token;
   }
 
   if (!token) return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

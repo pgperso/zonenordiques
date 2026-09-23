@@ -1,3 +1,5 @@
+// Build-time guarantee this service-role module never reaches a Client Component.
+import 'server-only';
 import { createClient } from '@supabase/supabase-js';
 
 // Distributed fixed-window rate limiting backed by the `rate_limits` table

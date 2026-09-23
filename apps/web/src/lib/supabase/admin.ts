@@ -1,3 +1,6 @@
+// Build-time guarantee that this service-role module can never be imported
+// into a Client Component (the bundle would otherwise carry the key).
+import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 /**
