@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import { createHash } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { getClientIp } from '@/lib/clientIp';
 import { setRequestLocale } from 'next-intl/server';
 import { isIndexableArticle, displayCommunityName, ARTICLE_AD_WORD_THRESHOLD } from '@arena/shared';
 import { sanitizeArticleBody } from '@/lib/sanitizeBodyServer';
@@ -194,14 +196,24 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
 
   // Count a view per UNIQUE visitor (distinct IP), anonymous included. Only a
   // salted hash of the IP is sent — never the raw address — and the DB counts
-  // it once per article. Fire and forget so it never blocks the render.
+  // it once per article. Security: the hash is derived SERVER-side from the
+  // platform-trusted client IP (not the spoofable leftmost X-Forwarded-For) and
+  // the RPC is called with the service role — direct client access to
+  // record_article_view is revoked (migration 00105), so views can't be
+  // inflated by calling the RPC with random hashes. Without a real salt the
+  // stored hashes would be brute-forceable back to IPs, so we skip recording
+  // rather than fall back to a public default. Fire and forget.
   const hdrs = await headers();
-  const forwarded = (hdrs.get('x-forwarded-for') ?? '').split(',')[0]?.trim();
-  const visitorIp = forwarded || hdrs.get('x-real-ip') || '';
-  const ipHash = visitorIp
-    ? createHash('sha256').update(`${visitorIp}:${process.env.VIEW_HASH_SALT ?? 'zn'}`).digest('hex')
-    : '';
-  void (async () => { try { await supabase.rpc('record_article_view' as never, { p_article_id: article.id, p_ip_hash: ipHash } as never); } catch { /* ignore */ } })();
+  const visitorIp = getClientIp(hdrs);
+  const salt = process.env.VIEW_HASH_SALT;
+  if (visitorIp && visitorIp !== 'unknown' && salt) {
+    const ipHash = createHash('sha256').update(`${visitorIp}:${salt}`).digest('hex');
+    void (async () => {
+      try {
+        await createAdminClient().rpc('record_article_view' as never, { p_article_id: article.id, p_ip_hash: ipHash } as never);
+      } catch { /* ignore */ }
+    })();
+  }
 
   const m = article.members;
   const authorDisplayName = article.author_name_override || (m?.first_name && m?.last_name ? `${m.first_name} ${m.last_name}` : null) || m?.username || 'Inconnu';
