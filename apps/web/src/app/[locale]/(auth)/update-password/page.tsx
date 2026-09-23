@@ -81,7 +81,14 @@ export default function UpdatePasswordPage() {
       }
     }
 
-    const { error } = await supabase.auth.updateUser({ password });
+    // `current_password` is also sent so the change still works when Supabase's
+    // "Require current password when updating" is enabled server-side (that
+    // setting is what closes the stolen-session case, which the client-side
+    // re-auth above cannot). Omitted on the recovery path, where the user
+    // legitimately doesn't know it.
+    const { error } = await supabase.auth.updateUser(
+      needsCurrent ? { password, current_password: currentPassword } : { password },
+    );
 
     if (error) {
       setError(error.message);
