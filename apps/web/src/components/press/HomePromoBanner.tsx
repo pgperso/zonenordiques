@@ -22,6 +22,9 @@ interface Sister {
   /** Matches BRAND.id of that site's deployment. */
   id: string;
   name: string;
+  /** English name when the brand is named differently per locale
+   *  (e.g. LCF Québec / CFL Québec). Falls back to `name`. */
+  nameEn?: string;
   url: string;
   domain: string;
   subtitleFr: string;
@@ -71,7 +74,8 @@ const BRANDS: Sister[] = [
   },
   {
     id: 'cflquebec',
-    name: 'CFL Québec',
+    name: 'LCF Québec',
+    nameEn: 'CFL Québec',
     url: 'https://cflquebec.com',
     domain: 'cflquebec.com',
     subtitleFr: 'L’antichambre du football',
@@ -228,7 +232,7 @@ function SisterSlide({ sister, isFr }: { sister: Sister; isFr: boolean }) {
               {sister.domain}
             </p>
             <p className="mt-0.5 text-xl font-extrabold uppercase tracking-tight text-white drop-shadow sm:text-2xl">
-              {isFr ? 'Visite' : 'Visit'} {sister.name}
+              {isFr ? 'Visite' : 'Visit'} {isFr ? sister.name : sister.nameEn ?? sister.name}
             </p>
             <p className="mt-1 max-w-2xl text-sm text-white/90">{isFr ? sister.subtitleFr : sister.subtitleEn}</p>
           </div>

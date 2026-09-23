@@ -15,8 +15,11 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- Flagship tribune for the brand (SITE.mainTribune = 'cfl-quebec'), i.e. the
 -- "La Zone" chat shortcut and the community every football article hangs off.
-INSERT INTO public.communities (name, slug, description, primary_color, secondary_color, is_active, category_id)
+-- Bilingual brand: "LCF Québec" in French, "CFL Québec" in English
+-- (displayCommunityName falls back to `name` when name_en is NULL).
+INSERT INTO public.communities (name, name_en, slug, description, primary_color, secondary_color, is_active, category_id)
 VALUES (
+  'LCF Québec',
   'CFL Québec',
   'cfl-quebec',
   'L''antichambre du football canadien au Québec : LCF, Alouettes, Coupe Grey.',
@@ -26,7 +29,9 @@ VALUES (
   (SELECT id FROM public.categories WHERE slug = 'football')
 )
 ON CONFLICT (slug) DO UPDATE
-  SET category_id = EXCLUDED.category_id,
+  SET name        = EXCLUDED.name,
+      name_en     = EXCLUDED.name_en,
+      category_id = EXCLUDED.category_id,
       is_active   = TRUE;
 
 -- Verify: this should return one row with category 'football'.
