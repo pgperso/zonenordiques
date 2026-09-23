@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { consumeRateLimit } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/clientIp';
 
 // Resolves a username to its login email for the sign-in / password-reset forms.
 // The underlying RPC used to be callable directly from the browser with no rate
@@ -9,20 +10,15 @@ import { consumeRateLimit } from '@/lib/rateLimit';
 // is the only path — rate-limited per IP so bulk enumeration is impractical.
 export const runtime = 'nodejs';
 
-function clientIp(request: Request): string {
-  const xff = request.headers.get('x-forwarded-for');
-  return (xff ? xff.split(',')[0] : '').trim() || 'unknown';
-}
-
 export async function POST(request: Request) {
-  const { allowed } = await consumeRateLimit(`resolve-email:${clientIp(request)}`, 15, 60);
+  const { allowed } = await consumeRateLimit(`resolve-email:${getClientIp(request)}`, 15, 60);
   if (!allowed) {
     return NextResponse.json({ email: null }, { status: 429, headers: { 'Retry-After': '60' } });
   }
 
   let identifier = '';
   try {
-    identifier = String((await request.json()).identifier ?? '').trim();
+    identifier = String((await request.json()).identifier ?? '').trim().slice(0, 254);
   } catch {
     /* invalid body */
   }

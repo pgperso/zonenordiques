@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
+import { Agent } from 'undici';
 import { BRAND } from '@/lib/brand';
 import { consumeRateLimit } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/clientIp';
 
 // This route fetches a user-supplied URL server-side, so it must be protected
 // against SSRF: we resolve the host and refuse private / loopback / link-local
@@ -62,25 +64,44 @@ function isPrivateIp(ip: string): boolean {
   return true; // not a bare IP → caller resolves DNS first
 }
 
-/** Resolve the host and reject if it points anywhere internal. Throws on block. */
-async function assertPublicHost(hostname: string): Promise<void> {
+/**
+ * Resolve the host to a SINGLE safe IP and reject if it points anywhere
+ * internal. Returns the pinned address so the caller connects to exactly the IP
+ * we validated — closing the DNS-rebinding TOCTOU where fetch() would otherwise
+ * re-resolve the hostname to a different (internal) IP after validation.
+ */
+async function resolveSafeAddress(hostname: string): Promise<{ address: string; family: number }> {
   const host = hostname.toLowerCase();
   if (host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.internal') || host.endsWith('.local')) {
     throw new Error('blocked host');
   }
   if (isIP(host)) {
     if (isPrivateIp(host)) throw new Error('blocked ip');
-    return;
+    return { address: host, family: isIP(host) };
   }
   const addrs = await lookup(host, { all: true });
   if (addrs.length === 0 || addrs.some((a) => isPrivateIp(a.address))) {
     throw new Error('blocked resolved ip');
   }
+  const first = addrs[0];
+  return { address: first.address, family: first.family };
 }
 
-function clientIp(request: Request): string {
-  const xff = request.headers.get('x-forwarded-for');
-  return (xff ? xff.split(',')[0] : '').trim() || 'unknown';
+/** An undici dispatcher that connects ONLY to the pre-validated IP, whatever the
+ *  hostname later resolves to (defeats DNS rebinding). TLS servername stays the
+ *  hostname, so certificate validation is unaffected. */
+function pinnedDispatcher(address: string, family: number): Agent {
+  return new Agent({
+    connect: {
+      lookup: (_hostname, options, callback) => {
+        if (options && (options as { all?: boolean }).all) {
+          (callback as (e: Error | null, a: { address: string; family: number }[]) => void)(null, [{ address, family }]);
+        } else {
+          (callback as (e: Error | null, a: string, f: number) => void)(null, address, family);
+        }
+      },
+    },
+  });
 }
 
 export async function GET(request: Request) {
@@ -92,7 +113,7 @@ export async function GET(request: Request) {
   }
 
   // Anonymous endpoint → rate-limit per IP so it can't be a scraping/probing proxy.
-  const { allowed } = await consumeRateLimit(`link-preview:${clientIp(request)}`, 30, 60);
+  const { allowed } = await consumeRateLimit(`link-preview:${getClientIp(request)}`, 30, 60);
   if (!allowed) {
     return NextResponse.json({ error: 'Trop de requêtes' }, { status: 429, headers: { 'Retry-After': '60' } });
   }
@@ -121,9 +142,11 @@ export async function GET(request: Request) {
     );
   }
 
+  const dispatchers: Agent[] = [];
   try {
     // Follow redirects manually, validating the host on every hop (a public URL
-    // could 3xx-redirect to an internal one).
+    // could 3xx-redirect to an internal one) and connecting to the exact IP we
+    // validated (defeats DNS rebinding).
     let current = url;
     let response: Response | null = null;
     for (let hop = 0; hop < MAX_REDIRECTS; hop++) {
@@ -131,7 +154,9 @@ export async function GET(request: Request) {
       if (target.protocol !== 'http:' && target.protocol !== 'https:') {
         return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
       }
-      await assertPublicHost(target.hostname);
+      const { address, family } = await resolveSafeAddress(target.hostname);
+      const dispatcher = pinnedDispatcher(address, family);
+      dispatchers.push(dispatcher);
 
       const res = await fetch(current, {
         signal: AbortSignal.timeout(TIMEOUT_MS),
@@ -140,7 +165,8 @@ export async function GET(request: Request) {
           'Accept': 'text/html',
         },
         redirect: 'manual',
-      });
+        dispatcher,
+      } as RequestInit & { dispatcher: Agent });
 
       if (res.status >= 300 && res.status < 400 && res.headers.get('location')) {
         current = new URL(res.headers.get('location')!, current).toString();
@@ -173,6 +199,8 @@ export async function GET(request: Request) {
     );
   } catch {
     return NextResponse.json({ url, title: null, description: null, image: null, domain: new URL(url).hostname.replace(/^www\./, '') });
+  } finally {
+    for (const d of dispatchers) void d.close().catch(() => {});
   }
 }
 

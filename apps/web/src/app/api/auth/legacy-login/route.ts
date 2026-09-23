@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createHash, timingSafeEqual } from 'crypto';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { consumeRateLimit } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/clientIp';
 
 // Lazy migration endpoint for users coming from the legacy Zone Nordiques PHP
 // site. The old site stored passwords as raw MD5 hashes. When a user tries to
@@ -44,11 +45,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Server not configured' }, { status: 500 });
     }
 
-    // Rate limit by IP (best-effort; behind a proxy the header is what we get)
-    const ip =
-      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
-      request.headers.get('x-real-ip') ??
-      'unknown';
+    // Rate limit by IP. Use the platform-trusted client IP, never the spoofable
+    // leftmost X-Forwarded-For (else the anti-brute-force limit is bypassable).
+    const ip = getClientIp(request);
     const { allowed } = await consumeRateLimit(
       `legacy-login:${ip}`,
       RATE_LIMIT,
@@ -62,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json()) as { identifier?: unknown; password?: unknown };
-    const identifier = typeof body.identifier === 'string' ? body.identifier.trim() : '';
+    const identifier = typeof body.identifier === 'string' ? body.identifier.trim().slice(0, 254) : '';
     const password = typeof body.password === 'string' ? body.password : '';
 
     if (!identifier || !password || password.length > 200) {

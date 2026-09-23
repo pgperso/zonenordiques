@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { consumeRateLimit } from '@/lib/rateLimit';
+import { getClientIp } from '@/lib/clientIp';
 import {
   getResend,
   NEWSLETTER_FROM,
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
 
   // Throttle by IP: 5 subscribe attempts per hour is plenty for a human and
   // blocks using the confirmation mailer as a spam relay.
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  const ip = getClientIp(request);
   const rl = await consumeRateLimit(`newsletter:subscribe:${ip}`, 5, 3600);
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Trop de tentatives. Réessayez plus tard.' }, { status: 429 });
