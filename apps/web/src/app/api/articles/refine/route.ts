@@ -2,9 +2,15 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { sanitizeArticleHtml, sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
+import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
 
 // Un seul appel Anthropic mais peut générer 4k tokens ; on laisse 60s de marge.
 export const maxDuration = 60;
+
+// Opus is the priciest model here — cap per-user calls so a member can't loop
+// this endpoint and drain the Anthropic budget (cost-DoS).
+const RATE_LIMIT = 20;
+const RATE_WINDOW_SECONDS = 60 * 60;
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +18,18 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+
+    const { allowed, resetAt } = await consumeRateLimit(
+      `article-refine:${user.id}`,
+      RATE_LIMIT,
+      RATE_WINDOW_SECONDS,
+    );
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Limite atteinte (${RATE_LIMIT}/heure). Réessayez plus tard.` },
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds(resetAt) || RATE_WINDOW_SECONDS) } },
+      );
     }
 
     const body = await request.json();

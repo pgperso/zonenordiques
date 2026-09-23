@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { TRANSLATION_CUTOFF } from '@arena/shared';
 import { createClient } from '@/lib/supabase/server';
+import { consumeRateLimit } from '@/lib/rateLimit';
 
 // One Claude call per item. Long article bodies can each take 10-20s, so the
 // batch is kept small and the loops honour a soft time budget (below) that
@@ -25,13 +26,13 @@ const MODEL = 'claude-haiku-4-5-20251001';
  * within seconds. The work is a bounded, idempotent batch: once content
  * is translated it is skipped, so repeated calls cost nothing.
  */
-async function authorize(request: Request): Promise<boolean> {
+async function authorize(request: Request): Promise<{ ok: boolean; userId: string | null }> {
   const cronSecret = process.env.CRON_SECRET;
   const authHeader = request.headers.get('authorization');
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return { ok: true, userId: null };
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  return Boolean(user);
+  return { ok: Boolean(user), userId: user?.id ?? null };
 }
 
 function langName(code: string): string {
@@ -76,8 +77,19 @@ ${JSON.stringify(fields, null, 2)}`;
 
 async function handle(request: Request) {
   try {
-    if (!(await authorize(request))) {
+    const auth = await authorize(request);
+    if (!auth.ok) {
       return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+    }
+    // The Vercel cron (no userId) is trusted; a user-triggered call (the publish
+    // poke, or a manual hit) is rate-limited so it can't be scripted to spend
+    // Anthropic credits in a loop. The batch is idempotent, so being throttled
+    // just defers to the next poke / the daily cron.
+    if (auth.userId) {
+      const { allowed } = await consumeRateLimit(`translate-pending:${auth.userId}`, 20, 60 * 60);
+      if (!allowed) {
+        return NextResponse.json({ ok: true, articlesDone: 0, podcastsDone: 0, throttled: true });
+      }
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;

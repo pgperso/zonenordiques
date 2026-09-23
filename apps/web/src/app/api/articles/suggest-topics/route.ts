@@ -4,9 +4,15 @@ import { createClient } from '@/lib/supabase/server';
 import { fetchRecentNews } from '@/lib/newsSearch';
 import { fetchUrlContent, extractUrls } from '@/lib/fetchUrlContent';
 import { sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
+import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
 
 // Un appel Anthropic + fetch news — rarement plus de 15s, on met 30s pour marge.
 export const maxDuration = 30;
+
+// Cap per-user calls: this spends Anthropic (Sonnet) credits, so it must not be
+// scriptable in a loop.
+const RATE_LIMIT = 30;
+const RATE_WINDOW_SECONDS = 60 * 60;
 
 export async function POST(request: Request) {
   try {
@@ -15,6 +21,18 @@ export async function POST(request: Request) {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (userError || !user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    }
+
+    const { allowed, resetAt } = await consumeRateLimit(
+      `article-suggest:${user.id}`,
+      RATE_LIMIT,
+      RATE_WINDOW_SECONDS,
+    );
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Limite atteinte (${RATE_LIMIT}/heure). Réessayez plus tard.` },
+        { status: 429, headers: { 'Retry-After': String(retryAfterSeconds(resetAt) || RATE_WINDOW_SECONDS) } },
+      );
     }
 
     const body = await request.json();

@@ -4,7 +4,12 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(request: Request) {
   const { searchParams, origin, hash } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/';
+  // Only allow a same-site relative path. Without this, `next=@evil.com` makes
+  // `${origin}${next}` a URL whose host is evil.com (userinfo trick) — an open
+  // redirect that phishes through the trusted domain. `//host` and `/\host` are
+  // rejected the same way.
+  const rawNext = searchParams.get('next') ?? '/';
+  const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : '/';
   const token_hash = searchParams.get('token_hash');
   const type = searchParams.get('type');
 
