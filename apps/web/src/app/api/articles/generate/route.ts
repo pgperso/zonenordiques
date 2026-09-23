@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { fetchRecentNews } from '@/lib/newsSearch';
@@ -296,6 +297,8 @@ Soumets l'article FINAL avec l'outil submit_article.`,
 // ─── MAIN ROUTE ───
 
 export async function POST(request: Request) {
+  // Cookie-authenticated, credit-spending mutation: refuse cross-site initiations.
+  if (!isSameOrigin(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   try {
     const supabase = await createClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { announcePoolOpen } from '@/services/botService';
@@ -47,6 +48,8 @@ interface SaveBody {
 }
 
 export async function POST(request: Request) {
+  // Cookie-authenticated mutation: don't rely on SameSite=Lax alone (CSRF).
+  if (!isSameOrigin(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   if (!(await isOwner())) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
   }

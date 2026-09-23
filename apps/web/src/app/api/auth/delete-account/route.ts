@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
+import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient } from '@supabase/supabase-js';
 import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export async function POST(request: Request) {
+  // Cookie-authenticated destructive mutation: refuse cross-site initiations
+  // (defense-in-depth on top of the password re-check below).
+  if (!isSameOrigin(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   try {
     const { password } = await request.json();
 

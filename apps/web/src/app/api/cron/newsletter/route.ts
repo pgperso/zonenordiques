@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import {
@@ -18,9 +19,7 @@ export const maxDuration = 300;
  * owner triggering a manual send. Identical to the nhl-sync authorizer.
  */
 async function authorize(request: Request): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  if (isCronRequest(request)) return true;
 
   const supabase = await createClient();
   const {
@@ -60,6 +59,19 @@ async function handleSend(request: Request) {
     admin = createAdminClient();
   } catch {
     return NextResponse.json({ error: 'Configuration serveur manquante' }, { status: 500 });
+  }
+
+  // Idempotence: the digest goes out at most once a week. A replayed trigger
+  // (double cron fire, or a re-clicked manual send) must never re-mail every
+  // subscriber.
+  const { data: recentOk } = await admin
+    .from('newsletter_sends')
+    .select('id')
+    .eq('status', 'ok')
+    .gte('finished_at', new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString())
+    .limit(1);
+  if ((recentOk as unknown[] | null)?.length) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'already sent this week' });
   }
 
   const { data: runRow } = await admin
@@ -135,9 +147,18 @@ async function handleSend(request: Request) {
   }
 }
 
+// A cookie-authenticated trigger is CSRF-able by a cross-site top-level GET
+// (SameSite=Lax carries the session cookie): a link on a third-party page could
+// make an owner mail every subscriber. Only the cron bearer, or a same-origin /
+// user-initiated request, may reach the handler.
+function guard(request: Request) {
+  return isCronRequest(request) || isSameOrigin(request);
+}
 export function GET(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handleSend(request);
 }
 export function POST(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handleSend(request);
 }

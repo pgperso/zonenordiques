@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 
@@ -10,9 +11,7 @@ export const maxDuration = 30;
  * authenticated global owner triggering a rotation manually.
  */
 async function authorize(request: Request): Promise<boolean> {
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return true;
+  if (isCronRequest(request)) return true;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -91,10 +90,17 @@ async function handleRotate(request: Request) {
   }
 }
 
+// Refuse cross-site initiations (CSRF via top-level GET with the Lax cookie);
+// allow the cron bearer or same-origin / user-initiated requests.
+function guard(request: Request) {
+  return isCronRequest(request) || isSameOrigin(request);
+}
 export function GET(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handleRotate(request);
 }
 
 export function POST(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handleRotate(request);
 }

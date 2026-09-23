@@ -4,6 +4,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { TRANSLATION_CUTOFF } from '@arena/shared';
 import { createClient } from '@/lib/supabase/server';
 import { consumeRateLimit } from '@/lib/rateLimit';
+import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 
 // One Claude call per item. Long article bodies can each take 10-20s, so the
 // batch is kept small and the loops honour a soft time budget (below) that
@@ -27,9 +28,7 @@ const MODEL = 'claude-haiku-4-5-20251001';
  * is translated it is skipped, so repeated calls cost nothing.
  */
 async function authorize(request: Request): Promise<{ ok: boolean; userId: string | null }> {
-  const cronSecret = process.env.CRON_SECRET;
-  const authHeader = request.headers.get('authorization');
-  if (cronSecret && authHeader === `Bearer ${cronSecret}`) return { ok: true, userId: null };
+  if (isCronRequest(request)) return { ok: true, userId: null };
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   return { ok: Boolean(user), userId: user?.id ?? null };
@@ -182,10 +181,17 @@ async function handle(request: Request) {
   }
 }
 
+// Refuse cross-site initiations (CSRF via top-level GET with the Lax cookie);
+// allow the cron bearer or same-origin / user-initiated requests.
+function guard(request: Request) {
+  return isCronRequest(request) || isSameOrigin(request);
+}
 export function GET(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handle(request);
 }
 
 export function POST(request: Request) {
+  if (!guard(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   return handle(request);
 }

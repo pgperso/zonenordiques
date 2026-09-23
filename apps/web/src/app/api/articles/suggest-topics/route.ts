@@ -5,6 +5,7 @@ import { fetchRecentNews } from '@/lib/newsSearch';
 import { fetchUrlContent, extractUrls } from '@/lib/fetchUrlContent';
 import { sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
 import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
+import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 
 // Un appel Anthropic + fetch news — rarement plus de 15s, on met 30s pour marge.
 export const maxDuration = 30;
@@ -15,6 +16,8 @@ const RATE_LIMIT = 30;
 const RATE_WINDOW_SECONDS = 60 * 60;
 
 export async function POST(request: Request) {
+  // Cookie-authenticated, credit-spending mutation: refuse cross-site initiations.
+  if (!isSameOrigin(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   try {
     // Authenticate
     const supabase = await createClient();

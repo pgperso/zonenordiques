@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
 import { sanitizeArticleHtml, sanitizeArticleText } from '@/lib/sanitizeArticleHtml';
 import { consumeRateLimit, retryAfterSeconds } from '@/lib/rateLimit';
+import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 
 // Un seul appel Anthropic mais peut générer 4k tokens ; on laisse 60s de marge.
 export const maxDuration = 60;
@@ -13,6 +14,8 @@ const RATE_LIMIT = 20;
 const RATE_WINDOW_SECONDS = 60 * 60;
 
 export async function POST(request: Request) {
+  // Cookie-authenticated, credit-spending mutation: refuse cross-site initiations.
+  if (!isSameOrigin(request)) return NextResponse.json(CROSS_SITE_REFUSED, { status: 403 });
   try {
     const supabase = await createClient();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
