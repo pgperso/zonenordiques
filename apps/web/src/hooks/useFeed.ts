@@ -698,26 +698,15 @@ export function useFeed(communityId: number, userId: string | null): UseFeedRetu
           const urlRegex = /https?:\/\/[^\s<]+[^\s<.,:;"')\]!?]/g;
           const urls = (hasContent ? options.content!.trim() : '').match(urlRegex);
           if (urls && urls.length > 0) {
-            const uniqueUrls = [...new Set(urls)].slice(0, 3);
-            Promise.all(
-              uniqueUrls.map((u) =>
-                fetch(`/api/link-preview?url=${encodeURIComponent(u)}`)
-                  .then((r) => r.json())
-                  .catch(() => null)
-              )
-            ).then(async (results) => {
-              const previews = results.filter((r: Record<string, unknown> | null) => r && (r.title || r.image));
-              if (previews.length > 0) {
-                const msgId = typed.id;
-                const { error: updateError } = await supabaseRef.current
-                  .from('chat_messages')
-                  .update({ link_previews: previews } as never)
-                  .eq('id', msgId);
-                if (updateError) {
-                  console.error('Link preview update failed:', updateError.message);
-                }
-              }
-            });
+            // Previews are built and attached SERVER-side (ownership-checked,
+            // SSRF-safe, written with the service role) — the client can no
+            // longer forge a preview card by writing link_previews directly.
+            // The realtime UPDATE event refreshes the card for everyone.
+            void fetch('/api/chat/link-previews', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messageId: typed.id }),
+            }).catch(() => {});
           }
         }
       } finally {
