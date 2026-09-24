@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { BRAND } from '@/lib/brand';
+import { isBrandCommunity } from '@/lib/brandScope';
 import { cleanArticleTitle } from '@/lib/articleText';
 
 // Branded 1200x630 social card for an article: the cover full-bleed with a
@@ -30,13 +31,20 @@ export default async function ArticleOgImage({
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   );
+  // Same two gates as the page itself. An image route is a public endpoint in
+  // its own right: without them this returned 200 for another brand's article
+  // (rendered in THIS brand's colours and logo) and for unpublished drafts,
+  // leaking their headlines. It degrades to the plain brand card, never 404s,
+  // so a legitimate card is never broken by a race with publication.
   const { data: community } = await db.from('communities').select('id').eq('slug', slug).single();
-  if (community) {
+  if (community && (await isBrandCommunity(db as never, (community as { id: number }).id))) {
     const { data } = await db
       .from('articles')
       .select('title, cover_image_url')
       .eq('community_id', (community as { id: number }).id)
       .eq('slug', articleSlug)
+      .eq('is_published', true)
+      .eq('is_removed', false)
       .single();
     if (data) {
       title = cleanArticleTitle((data as { title: string | null }).title, null, BRAND.name);

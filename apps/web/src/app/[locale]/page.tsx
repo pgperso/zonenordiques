@@ -129,12 +129,17 @@ export default async function HomePage({
         excludeArticleIds,
         locale,
       }),
-      // La Taverne block stays cross-brand (section-keyed): the off-topic
-      // tribune is intentionally shared between Zone Nordiques and Zone Expos.
+      // La Taverne is the off-topic tribune, intentionally shared by every
+      // brand — but `section: 'taverne'` filters on the articles.section
+      // COLUMN, not on the Taverne community. Without communityIds this
+      // surfaced any article of any sport that happened to carry that
+      // section, and each card linked to a tribune that 404s here. Scoping
+      // keeps the shared Taverne while dropping the strays.
       fetchPressGalleryItems(supabase, {
         filter: 'articles',
         sort: 'latest',
         section: 'taverne',
+        communityIds: brandCommunityIds,
         limit: 6,
         locale,
       }),

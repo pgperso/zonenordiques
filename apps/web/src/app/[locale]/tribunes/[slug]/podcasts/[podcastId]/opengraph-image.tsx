@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { createClient } from '@supabase/supabase-js';
 import { BRAND } from '@/lib/brand';
+import { isBrandCommunity } from '@/lib/brandScope';
 import { plainText } from '@/lib/articleText';
 
 // Branded 1200x630 social card for a podcast episode: the cover (when it's a
@@ -17,9 +18,9 @@ export const contentType = 'image/png';
 export default async function PodcastOgImage({
   params,
 }: {
-  params: Promise<{ podcastId: string }>;
+  params: Promise<{ slug: string; podcastId: string }>;
 }) {
-  const { podcastId } = await params;
+  const { slug, podcastId } = await params;
   const id = Number(podcastId);
 
   const logoData = readFileSync(join(process.cwd(), 'public', BRAND.logoPngPath.replace(/^\/+/, '')));
@@ -32,7 +33,23 @@ export default async function PodcastOgImage({
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
-    const { data } = await db.from('podcasts').select('title, cover_image_url').eq('id', id).single();
+    // The [slug] segment used to be ignored entirely, so any podcast id
+    // rendered under any tribune of any brand — including unpublished ones,
+    // enumerable by integer. Resolve the tribune, check it belongs to this
+    // brand, and require the podcast to live in it and be published.
+    const { data: community } = await db.from('communities').select('id').eq('slug', slug).single();
+    const communityId = (community as { id: number } | null)?.id;
+    const inBrand = communityId != null && (await isBrandCommunity(db as never, communityId));
+
+    const { data } = inBrand
+      ? await db
+          .from('podcasts')
+          .select('title, cover_image_url')
+          .eq('id', id)
+          .eq('community_id', communityId)
+          .eq('is_published', true)
+          .single()
+      : { data: null };
     if (data) {
       title = plainText((data as { title: string }).title) || title;
       cover = (data as { cover_image_url: string | null }).cover_image_url;

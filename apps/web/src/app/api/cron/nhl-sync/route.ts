@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { SITE } from '@/lib/siteConfig';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -43,6 +44,20 @@ async function authorize(request: Request): Promise<boolean> {
 async function handleSync(request: Request) {
   if (!(await authorize(request))) {
     return NextResponse.json({ error: 'Non autorisé' }, { status: 401 });
+  }
+
+  // Only the hockey brand ingests NHL data.
+  //
+  // vercel.json ships with the codebase, so all three deployments registered
+  // this 09:00 cron and all three ran the full ingest against the same shared
+  // nhl_* tables. The per-game write is a DELETE followed by an INSERT in two
+  // separate round-trips, so a second writer landing in between could leave a
+  // game with NO stats until the next night — with the pool standings
+  // recomputing over the hole. It also tripled the load on the NHL's public
+  // API and posted the pool-leader bot message three times, twice with a URL
+  // pointing at a brand whose /lnh/pool now 404s.
+  if (SITE.category !== 'hockey') {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'not the hockey brand' });
   }
 
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

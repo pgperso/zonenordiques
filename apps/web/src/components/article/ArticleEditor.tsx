@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import LinkExtension from '@tiptap/extension-link';
@@ -130,6 +131,17 @@ export function ArticleEditor({
     let cancelled = false;
 
     const loadPublishableCommunities = async () => {
+      // Only this brand's tribunes may be chosen as the destination.
+      //
+      // The URL that opens the editor is brand-gated, but the destination is
+      // a dropdown the author can change afterwards. Unscoped, a creator on
+      // the hockey site could publish into a baseball tribune: the article
+      // would exist only on the baseball domain, the author could not see it
+      // from where they published, the cache purge would run against a path
+      // that 404s here, and the bot announcement would carry this brand's URL.
+      const brandIds = await getBrandCommunityIds(supabase);
+      const brandSet = new Set(brandIds);
+
       const { data: ownerCheck } = await supabase
         .from('community_member_roles')
         .select('id, roles!inner(code)')
@@ -143,6 +155,7 @@ export function ArticleEditor({
         const { data } = await supabase
           .from('communities')
           .select('id, name, slug')
+          .in('id', brandIds)
           .eq('is_active', true)
           .order('name');
         if (!cancelled && data) {
@@ -162,7 +175,7 @@ export function ArticleEditor({
         const comms: { id: number; name: string; slug: string }[] = [];
         for (const row of roleRows as unknown as { communities: { id: number; name: string; slug: string; is_active: boolean } | null }[]) {
           const c = row.communities;
-          if (!c || !c.is_active || seen.has(c.id)) continue;
+          if (!c || !c.is_active || seen.has(c.id) || !brandSet.has(c.id)) continue;
           seen.add(c.id);
           comms.push({ id: c.id, name: c.name, slug: c.slug });
         }
