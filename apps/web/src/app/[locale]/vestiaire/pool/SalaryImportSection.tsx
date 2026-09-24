@@ -23,7 +23,6 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [fullSnapshot, setFullSnapshot] = useState(true);
-  const [budgetM, setBudgetM] = useState('');
   const [report, setReport] = useState<SalaryImportReport | null>(null);
   const [busy, setBusy] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -49,7 +48,6 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           csv,
           dryRun,
           fullSnapshot,
-          budgetDollars: budgetM.trim() ? Number(budgetM) * 1_000_000 : null,
         }),
       });
       const json = await res.json();
@@ -75,6 +73,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       <p className="mb-4 text-sm text-gray-500">
         Fichier CSV exporté d’Excel. Colonnes reconnues : prénom + nom, équipe, position,
         points projetés et masse salariale — en millions ou en dollars, détecté automatiquement.
+        Le plafond salarial du pool se règle dans «&nbsp;Saison &amp; alignement&nbsp;» ci-dessous.
       </p>
 
       <div className="flex flex-wrap items-center gap-3">
@@ -109,7 +108,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
         />
       </details>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="mt-4">
         <label className="flex items-start gap-2 text-sm text-gray-700">
           <input
             type="checkbox"
@@ -125,18 +124,6 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             </span>
           </span>
         </label>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Plafond salarial (M$, facultatif)
-          </label>
-          <input
-            value={budgetM}
-            onChange={(e) => setBudgetM(e.target.value)}
-            inputMode="decimal"
-            placeholder="ex. 95.5"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          />
-        </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3">
