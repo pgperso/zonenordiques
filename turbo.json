@@ -11,6 +11,8 @@
         "SUPABASE_SERVICE_ROLE_KEY",
         "ANTHROPIC_API_KEY",
         "CRON_SECRET",
+        "RESEND_API_KEY",
+        "VIEW_HASH_SALT",
         "VERCEL_ENV",
         "NEXT_PUBLIC_CANONICAL_HOST",
         "NEXT_PUBLIC_BRAND_*",
