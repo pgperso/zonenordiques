@@ -423,6 +423,34 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             </div>
           )}
 
+          {/* Prices moved, so every unlocked roster was re-priced. The number
+              that matters to the admin is who is now over the cap: those
+              members can no longer sauvegarder without dropping someone. */}
+          {!report.dryRun && report.repricedEntries !== null && (
+            <div
+              className={`mt-4 rounded-md border p-3 ${
+                report.overBudgetEntries ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'
+              }`}
+            >
+              <p className="text-gray-700">
+                Masses salariales recalculées : <strong>{report.repricedEntries}</strong> équipe(s)
+                non verrouillée(s) mise(s) à jour au prix du jour.
+              </p>
+              {report.overBudgetEntries ? (
+                <p className="mt-1 text-amber-800">
+                  <strong>{report.overBudgetEntries} équipe(s) dépassent maintenant le plafond</strong> et
+                  devront retirer un joueur avant de pouvoir sauvegarder
+                  {report.unconfirmedEntries
+                    ? ` (dont ${report.unconfirmedEntries} qui étaient confirmées et ne le sont plus)`
+                    : ''}
+                  .
+                </p>
+              ) : (
+                <p className="mt-1 text-gray-500">Aucune équipe ne dépasse le plafond.</p>
+              )}
+            </div>
+          )}
+
           <p className="mt-3 text-xs text-gray-500">
             Colonnes détectées : nom «&nbsp;{report.layout.nameHeader}&nbsp;»
             {report.layout.nameColumns === 'split' && ' + colonne suivante (nom de famille)'}

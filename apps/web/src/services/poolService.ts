@@ -922,6 +922,15 @@ export interface SalaryImportReport {
   delistDrafted: number;
   /** A few names from delistDrafted, to make the number concrete. */
   delistDraftedSample: string[];
+  /** Open entries whose stored salary mass moved because prices changed.
+   *  null in preview mode — nothing was recomputed. */
+  repricedEntries: number | null;
+  /** Open entries now above the cap after the reprice. These members have to
+   *  drop someone before they can save again. */
+  overBudgetEntries: number | null;
+  /** Confirmed entries handed back to their owner because the price change
+   *  put them over the cap. */
+  unconfirmedEntries: number | null;
   /** Sample of matched rows, for the preview table. */
   sample: Array<{ name: string; priceCents: number; position: PoolPosition; projPoints: number | null }>;
 }
@@ -1089,6 +1098,27 @@ export async function importSalaries(
     if (error) throw new Error(`plafond salarial : ${error.message}`);
   }
 
+  // Prices just moved. A roster slot's price is a snapshot taken when the slot
+  // was inserted, so every open entry's stored salary mass is now stale —
+  // "le prix du jour, pour tous" only holds if the stored value follows the
+  // price. Runs after the budget update so the over-cap count uses the new
+  // ceiling. Locked entries stay frozen, by design (00067).
+  let repricedEntries: number | null = null;
+  let overBudgetEntries: number | null = null;
+  let unconfirmedEntries: number | null = null;
+  if (!opts.dryRun) {
+    const { data, error } = await db.rpc('pool_reprice_open_entries' as never, {
+      p_season_id: seasonId,
+    } as never);
+    if (error) throw new Error(`recalcul des masses salariales : ${error.message}`);
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { entries_repriced: number; entries_over_budget: number; entries_unconfirmed: number }
+      | undefined;
+    repricedEntries = row?.entries_repriced ?? 0;
+    overBudgetEntries = row?.entries_over_budget ?? 0;
+    unconfirmedEntries = row?.entries_unconfirmed ?? 0;
+  }
+
   return {
     total: rows.length,
     matched: deduped.length,
@@ -1105,6 +1135,9 @@ export async function importSalaries(
     delistCount,
     delistDrafted,
     delistDraftedSample,
+    repricedEntries,
+    overBudgetEntries,
+    unconfirmedEntries,
     sample: deduped.slice(0, 8).map((m) => ({
       name: m.name,
       priceCents: m.priceCents,
