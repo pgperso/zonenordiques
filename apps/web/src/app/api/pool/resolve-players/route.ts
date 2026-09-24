@@ -22,9 +22,13 @@ async function isOwner(): Promise<boolean> {
   return Boolean((data as unknown[] | null)?.length);
 }
 
-// A full snapshot leaves at most a few hundred names unresolved; anything
-// beyond that is a malformed file, not a roster gap.
-const MAX_NAMES = 400;
+// One sequential outbound search per name against a rate-limited public
+// index. Several hundred of them, with retry backoff, could exceed
+// maxDuration — and since the single upsert only runs at the very end, a
+// timeout discards every player resolved along the way. A file needing more
+// than this many is a malformed file, not a roster gap.
+const MAX_NAMES = 150;
+const MAX_NAME_LENGTH = 80;
 
 /**
  * Add the players a salary import could not match to nhl_players.
@@ -59,9 +63,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Corps de requête invalide' }, { status: 400 });
   }
 
-  const players = (body.players ?? [])
+  // Guard the shape: a non-array `players` makes .filter throw outside the
+  // try below, returning an unhandled 500 instead of the 400 this route
+  // otherwise gives. Names are also capped — each one is interpolated into an
+  // outbound URL.
+  const raw = Array.isArray(body.players) ? body.players : [];
+  const players = raw
     .filter((p) => typeof p?.name === 'string' && p.name.trim())
-    .map((p) => ({ name: p.name.trim(), team: String(p.team ?? '').trim() }))
+    .map((p) => ({
+      name: p.name.trim().slice(0, MAX_NAME_LENGTH),
+      team: (typeof p.team === 'string' ? p.team : '').trim().slice(0, 8),
+    }))
     .slice(0, MAX_NAMES);
 
   if (players.length === 0) {

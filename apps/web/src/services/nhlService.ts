@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { normalizeTeamAbbrev } from '@/lib/nhlTeamAliases';
 import type { Database } from '@arena/supabase-client';
 
 // NHL data tables were added in migration 00054 — the generated Database
@@ -628,7 +629,14 @@ interface SearchHit {
  */
 async function searchPlayers(query: string, attempt = 0): Promise<SearchHit[]> {
   const url = `${SEARCH_API}?culture=en-us&limit=8&q=${encodeURIComponent(query)}`;
-  const res = await fetch(url, { headers: { Accept: 'application/json' }, next: { revalidate: 3600 } });
+  // A timeout, and no redirect following: the repo's safeFetch convention
+  // exists because an unbounded outbound call is how one hung connection eats
+  // the whole function budget and loses every player resolved so far.
+  const res = await fetch(url, {
+    headers: { Accept: 'application/json' },
+    redirect: 'error',
+    signal: AbortSignal.timeout(8000),
+  });
 
   if ((res.status === 429 || res.status >= 500) && attempt < 4) {
     await sleep(Math.min(6000, 400 * 2 ** attempt));
@@ -730,13 +738,15 @@ export async function resolveMissingPlayers(
       continue;
     }
 
+    // isInteger, not isFinite: 1.5 and 0 are finite and would poison the
+    // batch insert, discarding every other resolved player with it.
     const playerId = Number(chosen.playerId);
-    if (!Number.isFinite(playerId)) {
+    if (!Number.isInteger(playerId) || playerId <= 0) {
       report.stillMissing.push({ name: req.name, reason: 'identifiant illisible' });
       continue;
     }
 
-    const abbrev = chosen.teamAbbrev ?? chosen.lastTeamAbbrev ?? null;
+    const abbrev = normalizeTeamAbbrev(chosen.teamAbbrev ?? chosen.lastTeamAbbrev ?? '') || null;
     const [firstName, ...rest] = chosen.name.split(' ');
     toInsert.set(playerId, {
       player_id: playerId,

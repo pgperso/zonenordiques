@@ -7,11 +7,21 @@ import type { SalaryImportReport } from '@/services/poolService';
 /**
  * Salary / projection import for the pool.
  *
- * Deliberately two-step. The spreadsheet carries ~900 players matched by name
- * against the NHL roster, and a handful will always fail — a trade, an accent,
- * a junior call-up. Writing first and reporting afterwards would leave the
- * operator repairing prices in a pool people are already drafting from, so
- * nothing is written until the preview has been read.
+ * Two rules shape this component, both learned from an audit of its first
+ * version:
+ *
+ *  1. **Nothing is applied that was not previewed.** ~900 players are matched
+ *     by name against a live roster and a handful always fail, so writing
+ *     first and reporting afterwards means repairing prices in a pool people
+ *     may already be drafting from. The report records the exact file AND the
+ *     exact snapshot mode it was computed under; Apply refuses if either has
+ *     changed since, because ticking the checkbox after the preview used to
+ *     change the write with no visible difference at all.
+ *
+ *  2. **The latest request wins, not the last response.** Several operations
+ *     chain automatically and the slow ones take minutes; without a run token,
+ *     a stale response could replace the panel with another file's report
+ *     while the filename on screen said something else.
  */
 const M_CENTS = 100_000_000; // cents in one million dollars
 
@@ -19,140 +29,229 @@ function fmtMoney(cents: number): string {
   return `${(cents / M_CENTS).toFixed(2)} M$`;
 }
 
+/** Identity of "the report describes exactly this input". */
+function inputKey(csv: string, fullSnapshot: boolean): string {
+  return `${fullSnapshot ? 'full' : 'partial'}:${csv.length}:${csv.slice(0, 200)}`;
+}
+
+type Phase = 'idle' | 'rosters' | 'analysing' | 'resolving' | 'applying';
+
+const PHASE_LABEL: Record<Exclude<Phase, 'idle'>, string> = {
+  rosters: 'Mise à jour des alignements LNH…',
+  analysing: 'Analyse du fichier…',
+  resolving: 'Recherche des joueurs dans la LNH…',
+  applying: 'Écriture des prix…',
+};
+
 export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; cardCls: string }) {
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [encoding, setEncoding] = useState<'utf-8' | 'windows-1252' | null>(null);
-  const [fullSnapshot, setFullSnapshot] = useState(true);
+  // Off by default: on, a five-row post-trade file retires the rest of the
+  // league in one click.
+  const [fullSnapshot, setFullSnapshot] = useState(false);
   const [report, setReport] = useState<SalaryImportReport | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [resolving, setResolving] = useState(false);
-  // Rosters only need refreshing once per visit; the sync is idempotent but
-  // it is 32 calls against a rate-limited public API.
+  /** The input the visible report was computed from. */
+  const [reportKey, setReportKey] = useState<string | null>(null);
+  const [phase, setPhase] = useState<Phase>('idle');
   const [rostersFresh, setRostersFresh] = useState(false);
+
   const fileRef = useRef<HTMLInputElement>(null);
+  // Monotonic token: a response whose token is stale is discarded rather than
+  // allowed to describe an input the operator has since replaced.
+  const runRef = useRef(0);
+
+  const busy = phase !== 'idle';
+  const upToDate = Boolean(report && reportKey === inputKey(csv, fullSnapshot));
+
+  function clearInput() {
+    setCsv('');
+    setFileName(null);
+    setEncoding(null);
+    setReport(null);
+    setReportKey(null);
+  }
+
+  /** Read a response safely: a proxy or platform error is not JSON. */
+  async function readJson(res: Response): Promise<Record<string, unknown>> {
+    const text = await res.text();
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      throw new Error(
+        res.ok ? 'Réponse illisible du serveur' : `Erreur ${res.status} — réponse inattendue`,
+      );
+    }
+    if (!res.ok) throw new Error(String(parsed.error ?? `Erreur ${res.status}`));
+    return parsed;
+  }
+
+  async function syncRosters(silent = false): Promise<boolean> {
+    setPhase('rosters');
+    try {
+      const json = await readJson(await fetch('/api/pool/rosters', { method: 'POST' }));
+      setRostersFresh(true);
+      if (!silent) toast.success(`${json.players} joueurs sur ${json.teams} équipes`);
+      return true;
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Échec de la synchronisation');
+      return false;
+    } finally {
+      setPhase('idle');
+    }
+  }
+
+  /** Preview. Writes no prices. */
+  async function analyse(text: string, snapshot: boolean) {
+    if (!text.trim()) return;
+    const run = ++runRef.current;
+    setPhase('analysing');
+    try {
+      const json = await readJson(
+        await fetch('/api/pool/salaries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seasonId, csv: text, dryRun: true, fullSnapshot: snapshot }),
+        }),
+      );
+      if (run !== runRef.current) return; // superseded by a newer input
+      setReport(json.report as SalaryImportReport);
+      setReportKey(inputKey(text, snapshot));
+    } catch (e) {
+      if (run !== runRef.current) return;
+      setReport(null);
+      setReportKey(null);
+      toast.error(e instanceof Error ? e.message : 'Échec de l’analyse');
+    } finally {
+      if (run === runRef.current) setPhase('idle');
+    }
+  }
 
   async function onFile(file: File) {
     if (/\.xlsx?$/i.test(file.name) && !/\.csv$/i.test(file.name)) {
+      // Clear, or the operator sees the previous file's report beside a
+      // rejected selection, with Apply still armed for the old content.
+      clearInput();
       toast.error('Excel ne peut pas être lu tel quel. Fichier → Enregistrer sous → CSV UTF-8.');
       return;
     }
 
-    // Excel's plain "CSV" export writes Windows-1252, not UTF-8, and
-    // File.text() always decodes as UTF-8 — so "Stützle" arrives as
-    // "St�tzle" and, worse, the "Équ." header becomes unrecognisable and
-    // the team column silently disappears. Decode both ways and keep the one
-    // that produced no replacement characters.
+    // Excel's plain "CSV" writes Windows-1252 and File.text() always decodes
+    // UTF-8, so "Stützle" arrives broken and — worse — the "Équ." header stops
+    // matching and the team column silently disappears.
     const buf = await file.arrayBuffer();
     const asUtf8 = new TextDecoder('utf-8').decode(buf);
     let text = asUtf8;
     let enc: 'utf-8' | 'windows-1252' = 'utf-8';
     if (asUtf8.includes('�')) {
       const as1252 = new TextDecoder('windows-1252').decode(buf);
-      if (!as1252.includes('�')) {
-        text = as1252;
-        enc = 'windows-1252';
+      if (as1252.includes('�')) {
+        clearInput();
+        toast.error('Encodage du fichier non reconnu. Réexporte en CSV UTF-8.');
+        return;
       }
+      text = as1252;
+      enc = 'windows-1252';
+    }
+    // windows-1252 maps almost every byte, so a UTF-16 export slips through
+    // the check above as plausible garbage. NUL bytes do not occur in a CSV.
+    if (text.includes('\u0000')) {
+      clearInput();
+      toast.error('Ce fichier n’est pas un CSV texte. Réexporte en CSV UTF-8.');
+      return;
+    }
+    if (!text.trim()) {
+      clearInput();
+      toast.error('Le fichier est vide.');
+      return;
     }
 
     setCsv(text);
     setEncoding(enc);
     setFileName(file.name);
     setReport(null);
+    setReportKey(null);
 
-    // Refresh the roster as soon as a file is chosen. It is the prerequisite
-    // for matching and the operator has no reason to know that, so asking
-    // them to remember it only produces a bad first report.
-    if (!rostersFresh) await syncRosters(true);
-    await send(true, text);
+    // The roster refresh is the prerequisite for matching; the operator has no
+    // reason to know that, so it happens here rather than being asked for.
+    if (!rostersFresh) {
+      const ok = await syncRosters(true);
+      if (!ok) toast.error('Alignements non rafraîchis — des joueurs seront signalés à tort.');
+    }
+    await analyse(text, fullSnapshot);
   }
 
-  // The importer matches names against nhl_players, which the nightly sync
-  // only fills with players seen in a boxscore. A prospect who has not dressed
-  // yet is simply absent, and comes back as 'introuvable'. Pulling the 32
-  // current rosters first is what makes a full snapshot match.
-  async function syncRosters(silent = false): Promise<boolean> {
-    setSyncing(true);
+  /** The only action that writes prices. */
+  async function apply() {
+    if (!report || !upToDate) return;
+    const run = ++runRef.current;
+    const text = csv;
+    const snapshot = fullSnapshot;
+    setPhase('applying');
     try {
-      const res = await fetch('/api/pool/rosters', { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
-      setRostersFresh(true);
-      if (!silent) {
-        toast.success(`${json.players} joueurs sur ${json.teams} équipes`);
-        if (csv.trim()) await send(true);
-      }
-      return true;
+      const json = await readJson(
+        await fetch('/api/pool/salaries', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seasonId, csv: text, dryRun: false, fullSnapshot: snapshot }),
+        }),
+      );
+      const applied = json.report as SalaryImportReport;
+      setReport(applied);
+      setReportKey(inputKey(text, snapshot));
+      toast.success(`${applied.matched} joueurs mis à jour`);
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Échec de la synchronisation');
-      return false;
+      // The write may have landed partially. Never leave a panel on screen
+      // claiming nothing was written when that is no longer knowable.
+      setReport(null);
+      setReportKey(null);
+      toast.error(
+        `${e instanceof Error ? e.message : 'Échec'} — relance l’analyse pour voir l’état réel`,
+      );
     } finally {
-      setSyncing(false);
+      if (run === runRef.current) setPhase('idle');
     }
   }
 
-  // A drafted prospect who has not dressed yet is on no NHL roster, so the
-  // roster sync never sees them — but the league's search index does, with a
-  // real playerId. Without that id the pool cannot reference them at all, so
-  // a rookie cap hit in the spreadsheet has nowhere to go.
+  /**
+   * Add the unmatched players to nhl_players so they can be priced. This
+   * writes: a drafted prospect who has not dressed is on no roster, so it is
+   * the only way a rookie cap hit has anywhere to go.
+   */
   async function resolveMissing() {
-    if (!report) return;
-    setResolving(true);
+    if (!report || report.unmatched.length === 0) return;
+    const names = report.unmatched.map((r) => ({ name: r.name, team: r.team }));
+    const text = csv;
+    const snapshot = fullSnapshot;
+    setPhase('resolving');
     try {
-      const res = await fetch('/api/pool/resolve-players', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          players: report.unmatched.map((r) => ({ name: r.name, team: r.team })),
+      const json = await readJson(
+        await fetch('/api/pool/resolve-players', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ players: names }),
         }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
-      const added = json.report.added.length as number;
-      const left = json.report.stillMissing.length as number;
-      toast.success(
-        left > 0
-          ? `${added} joueurs ajoutés, ${left} toujours introuvables`
-          : `${added} joueurs ajoutés`,
       );
-      await send(true);
+      const r = json.report as { added?: unknown[]; stillMissing?: unknown[] } | undefined;
+      const added = r?.added?.length ?? 0;
+      const left = r?.stillMissing?.length ?? 0;
+      toast.success(
+        left > 0 ? `${added} joueurs ajoutés, ${left} toujours introuvables` : `${added} joueurs ajoutés`,
+      );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Échec de la résolution');
     } finally {
-      setResolving(false);
+      setPhase('idle');
     }
-  }
-
-  async function send(dryRun: boolean, csvOverride?: string) {
-    const text = csvOverride ?? csv;
-    if (!text.trim()) return;
-    setBusy(true);
-    try {
-      const res = await fetch('/api/pool/salaries', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          seasonId,
-          csv: text,
-          dryRun,
-          fullSnapshot,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
-      setReport(json.report as SalaryImportReport);
-      if (!dryRun) toast.success(`${json.report.matched} joueurs mis à jour`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Échec de l’import');
-    } finally {
-      setBusy(false);
-    }
+    // The player table changed, so the visible report no longer describes it.
+    await analyse(text, snapshot);
   }
 
   const problems = report
     ? report.unmatched.length + report.ambiguous.length + report.invalidPrice.length
     : 0;
+  const applyDisabled = busy || !report || !upToDate || report.dryRun === false;
 
   return (
     <section className={cardCls}>
@@ -160,32 +259,28 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
         Salaires &amp; projections
       </h2>
       <p className="mb-4 text-sm text-gray-500">
-        Fichier CSV exporté d’Excel. Colonnes reconnues : prénom + nom, équipe, position,
+        Fichier CSV exporté d’Excel. Colonnes reconnues : prénom + nom, équipe,
         points projetés et masse salariale — en millions ou en dollars, détecté automatiquement.
-        Le plafond salarial du pool se règle dans «&nbsp;Saison &amp; alignement&nbsp;» ci-dessous.
+        Le plafond salarial se règle dans «&nbsp;Saison &amp; alignement&nbsp;» ci-dessous.
       </p>
 
       <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-lg text-sm text-gray-600">
-            {syncing ? (
-              <>Mise à jour de la liste des joueurs de la LNH…</>
-            ) : rostersFresh ? (
-              <><strong className="text-green-700">Alignements à jour.</strong> La liste des
-              joueurs de la LNH a été rafraîchie pour cette session.</>
+            {rostersFresh ? (
+              <><strong className="text-green-700">Alignements à jour.</strong> Rafraîchis pour cette session.</>
             ) : (
-              <>La liste des joueurs se met à jour automatiquement au chargement du fichier.
-              La synchro nocturne n’enregistre que les joueurs vus dans un match, donc sans
-              ce rafraîchissement les espoirs ressortent «&nbsp;introuvables&nbsp;».</>
+              <>La liste des joueurs de la LNH se met à jour automatiquement au chargement du
+              fichier. Sans ce rafraîchissement, les espoirs ressortent «&nbsp;introuvables&nbsp;».</>
             )}
           </p>
           <button
             type="button"
             onClick={() => void syncRosters(false)}
-            disabled={syncing}
+            disabled={busy}
             className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
           >
-            {syncing ? 'Synchronisation…' : 'Resynchroniser maintenant'}
+            Resynchroniser maintenant
           </button>
         </div>
       </div>
@@ -196,35 +291,50 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           type="file"
           accept=".csv,text/csv,text/plain"
           className="hidden"
+          aria-hidden="true"
+          tabIndex={-1}
           onChange={(e) => {
             const f = e.target.files?.[0];
+            // Clear the value, or picking the SAME path fires no event at all:
+            // the operator fixes the spreadsheet, re-exports over it, re-picks
+            // it, nothing happens, and Apply then writes the old content.
+            e.target.value = '';
             if (f) void onFile(f);
           }}
         />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50"
+          disabled={busy}
+          aria-describedby="salary-file-name"
+          className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
         >
           Choisir un fichier CSV
         </button>
-        {fileName && <span className="text-sm text-gray-600">{fileName}</span>}
+        <span id="salary-file-name" className="text-sm text-gray-600">{fileName}</span>
         {encoding === 'windows-1252' && (
-          <span className="text-xs text-amber-700">
-            Encodage ANSI détecté et converti — les accents sont récupérés.
-          </span>
+          <span className="text-xs text-amber-700">Encodage ANSI converti.</span>
         )}
       </div>
 
       <details className="mt-3">
         <summary className="cursor-pointer text-sm text-gray-500">ou coller le contenu</summary>
+        <label htmlFor="salary-csv" className="mt-2 block text-xs text-gray-500">
+          Contenu CSV
+        </label>
         <textarea
+          id="salary-csv"
           value={csv}
-          onChange={(e) => { setCsv(e.target.value); setReport(null); setFileName(null); setEncoding(null); }}
+          onChange={(e) => {
+            setCsv(e.target.value);
+            setReport(null);
+            setReportKey(null);
+            setFileName(null);
+            setEncoding(null);
+          }}
           rows={6}
-          onBlur={() => { if (csv.trim() && !report) void send(true); }}
           placeholder="#,Nom,,Âge,Équ.,Pos,PJ,B,P,Pts,PPP,CapH"
-          className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
+          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
         />
       </details>
 
@@ -234,42 +344,58 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             type="checkbox"
             checked={fullSnapshot}
             onChange={(e) => setFullSnapshot(e.target.checked)}
+            disabled={busy}
             className="mt-1"
           />
           <span>
             <strong>Instantané complet</strong>
             <span className="block text-xs text-gray-500">
-              Les joueurs absents du fichier deviennent non repêchables. À décocher pour une
-              simple retouche après un échange.
+              Les joueurs absents du fichier deviennent non repêchables. En début de saison
+              seulement. L’aperçu dira combien sont concernés ; ceux qui sont déjà dans une
+              équipe ne sont jamais retirés.
             </span>
           </span>
         </label>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={() => void send(true)}
-          disabled={busy || syncing || !csv.trim()}
+          onClick={() => void analyse(csv, fullSnapshot)}
+          disabled={busy || !csv.trim()}
           className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
         >
-          {busy ? 'Analyse…' : syncing ? 'Alignements en cours…' : 'Réanalyser'}
+          {upToDate ? 'Réanalyser' : 'Analyser'}
         </button>
         <button
           type="button"
-          onClick={() => void send(false)}
-          disabled={busy || !report || report.dryRun === false}
-          title={!report ? 'Analyse le fichier d’abord' : undefined}
+          onClick={() => void apply()}
+          disabled={applyDisabled}
           className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-50"
         >
           Appliquer
         </button>
+        <span role="status" aria-live="polite" className="text-sm">
+          {busy && <span className="text-gray-600">{PHASE_LABEL[phase as Exclude<Phase, 'idle'>]}</span>}
+          {!busy && report && !upToDate && (
+            <span className="text-amber-700">
+              Le fichier ou l’option a changé depuis l’aperçu — relance l’analyse.
+            </span>
+          )}
+          {!busy && !report && csv.trim() && (
+            <span className="text-gray-500">Analyse le fichier avant d’appliquer.</span>
+          )}
+        </span>
       </div>
 
       {report && (
-        <div className="mt-5 rounded-md border border-gray-200 bg-gray-50 p-4 text-sm">
+        <div
+          className={`mt-5 rounded-md border p-4 text-sm ${
+            upToDate ? 'border-gray-200 bg-gray-50' : 'border-amber-300 bg-amber-50'
+          }`}
+        >
           <p className="font-semibold text-gray-900">
-            {report.dryRun ? 'Aperçu — rien n’a été écrit' : 'Import appliqué'}
+            {report.dryRun ? 'Aperçu — aucun prix n’a été écrit' : 'Import appliqué'}
           </p>
 
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
@@ -278,6 +404,24 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             <div><dt className="text-gray-500">Problèmes</dt><dd className={`font-semibold ${problems ? 'text-orange-700' : ''}`}>{problems}</dd></div>
             <div><dt className="text-gray-500">Salaires lus en</dt><dd className="font-semibold">{report.layout.capUnit === 'millions' ? 'millions' : 'dollars'}</dd></div>
           </dl>
+
+          {report.fullSnapshot && report.delistCount > 0 && (
+            <div className="mt-4 rounded-md border border-red-300 bg-red-50 p-3">
+              <p className="font-semibold text-red-800">
+                Instantané complet : {report.delistCount} joueur(s) deviendront non repêchables.
+              </p>
+              {report.delistDrafted > 0 ? (
+                <p className="mt-1 text-red-800">
+                  <strong>{report.delistDrafted} sont déjà dans une équipe</strong>
+                  {report.delistDraftedSample.length > 0 && <> ({report.delistDraftedSample.join(', ')}
+                    {report.delistDrafted > report.delistDraftedSample.length && '…'})</>}
+                  {' '}et seront <strong>conservés</strong> pour ne pas bloquer ces membres.
+                </p>
+              ) : (
+                <p className="mt-1 text-red-700">Aucun n’est dans une équipe de membre.</p>
+              )}
+            </div>
+          )}
 
           <p className="mt-3 text-xs text-gray-500">
             Colonnes détectées : nom «&nbsp;{report.layout.nameHeader}&nbsp;»
@@ -288,12 +432,19 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             {report.layout.capUnitReason}
           </p>
 
+          {report.missingColumns.length > 0 && (
+            <p className="mt-3 font-medium text-red-700">
+              Colonne(s) introuvable(s) : {report.missingColumns.join(', ')}. Sans la colonne
+              d’équipe, les joueurs partageant un nom de famille ne peuvent pas être départagés.
+            </p>
+          )}
+
           {report.sample.length > 0 && (
             <div className="mt-4">
               <p className="mb-1 font-medium text-gray-700">Vérifie ces montants :</p>
               <ul className="space-y-0.5 text-gray-600">
-                {report.sample.map((s) => (
-                  <li key={s.name}>
+                {report.sample.map((s, i) => (
+                  <li key={`${s.name}-${i}`}>
                     {s.name} <span className="text-gray-400">({s.position})</span> —{' '}
                     <strong>{fmtMoney(s.priceCents)}</strong>
                     {s.projPoints !== null && <span className="text-gray-400"> · {s.projPoints} pts projetés</span>}
@@ -303,17 +454,8 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             </div>
           )}
 
-          {report.missingColumns.length > 0 && (
-            <p className="mt-3 font-medium text-red-700">
-              Colonne(s) introuvable(s) : {report.missingColumns.join(', ')}. Sans la colonne
-              d’équipe, les joueurs partageant un nom de famille ne peuvent pas être départagés.
-            </p>
-          )}
-
           {report.unknownTeams.length > 0 && (
-            <p className="mt-3 text-orange-700">
-              Équipes non reconnues : {report.unknownTeams.join(', ')}
-            </p>
+            <p className="mt-3 text-orange-700">Équipes non reconnues : {report.unknownTeams.join(', ')}</p>
           )}
 
           {report.unmatched.length > 0 && (
@@ -325,10 +467,10 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 <button
                   type="button"
                   onClick={() => void resolveMissing()}
-                  disabled={resolving}
+                  disabled={busy}
                   className="shrink-0 rounded-md border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-800 hover:bg-orange-50 disabled:opacity-50"
                 >
-                  {resolving ? 'Recherche…' : 'Chercher ces joueurs dans la LNH'}
+                  Chercher ces joueurs dans la LNH
                 </button>
               </div>
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
@@ -343,9 +485,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
 
           {report.ambiguous.length > 0 && (
             <div className="mt-3">
-              <p className="font-medium text-orange-700">
-                {report.ambiguous.length} homonyme(s) non tranché(s) :
-              </p>
+              <p className="font-medium text-orange-700">{report.ambiguous.length} homonyme(s) non tranché(s) :</p>
               <ul className="mt-1 text-gray-600">
                 {report.ambiguous.map((a, i) => (
                   <li key={`${a.row.name}-${i}`}>
@@ -357,20 +497,12 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           )}
 
           {report.invalidPrice.length > 0 && (
-            <p className="mt-3 text-orange-700">
-              {report.invalidPrice.length} ligne(s) sans salaire lisible.
-            </p>
+            <p className="mt-3 text-orange-700">{report.invalidPrice.length} ligne(s) sans salaire lisible.</p>
           )}
 
           {report.skippedLines.length > 0 && (
             <p className="mt-3 text-xs text-gray-500">
-              Lignes vides ignorées : {report.skippedLines.join(', ')}
-            </p>
-          )}
-
-          {report.dryRun && (
-            <p className="mt-4 text-xs text-gray-500">
-              Si les montants ci-dessus sont les bons, clique «&nbsp;Appliquer&nbsp;».
+              {report.skippedLines.length} ligne(s) vide(s) ignorée(s).
             </p>
           )}
         </div>
