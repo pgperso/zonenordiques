@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { SITE } from '@/lib/siteConfig';
+import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { ReturnMeter } from '@/components/feed/ReturnMeter';
@@ -52,6 +54,9 @@ export default async function NordiquometrePage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // Each brand has at most one return-confidence meter, and both route files
+  // ship to every deployment: answer only on the brand this one belongs to.
+  if (!SITE.showMeter || SITE.meter !== 'nordiquometre') notFound();
   const { locale } = await params;
   setRequestLocale(locale);
   const supabase = await createClient();

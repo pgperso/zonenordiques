@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { SITE } from '@/lib/siteConfig';
+import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { ReturnMeter } from '@/components/feed/ReturnMeter';
@@ -52,6 +54,8 @@ export default async function ExposmetrePage({
 }: {
   params: Promise<{ locale: string }>;
 }) {
+  // See nordiquometre/page.tsx: one meter per brand, both files ship everywhere.
+  if (!SITE.showMeter || SITE.meter !== 'exposmetre') notFound();
   const { locale } = await params;
   setRequestLocale(locale);
   const supabase = await createClient();

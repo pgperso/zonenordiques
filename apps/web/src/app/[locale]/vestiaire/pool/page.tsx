@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { SITE } from '@/lib/siteConfig';
+import { notFound } from 'next/navigation';
 import { redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
@@ -17,6 +19,8 @@ export async function generateMetadata({
 }
 
 export default async function PoolAdminPage({ params }: { params: Promise<{ locale: string }> }) {
+  // The pool admin panel follows the pool itself.
+  if (!SITE.showPool) notFound();
   const { locale } = await params;
   setRequestLocale(locale);
   const supabase = await createClient();
