@@ -53,6 +53,25 @@ export async function getBrandCommunityIds(
 }
 
 /**
+ * The id of this brand's sport category, or null if the category slug in
+ * the environment matches no row.
+ *
+ * Some things belong to a sport rather than to a tribune — the reader poll
+ * is the current case. Scoping those by category, not by brand id, keeps
+ * them working if a sport ever gets a second site.
+ */
+export async function getBrandCategoryId(
+  supabase: SupabaseClient<Database>,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from('categories')
+    .select('id')
+    .eq('slug', SITE.category)
+    .maybeSingle();
+  return (data as { id: number } | null)?.id ?? null;
+}
+
+/**
  * True when this community's content may be shown on the current brand.
  *
  * The listing surfaces filter with `getBrandCommunityIds()`, but the pages

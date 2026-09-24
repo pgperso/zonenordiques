@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { SITE } from '@/lib/siteConfig';
+import { getBrandCategoryId } from '@/lib/brandScope';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -101,10 +103,13 @@ async function handleGenerate(request: Request) {
       return NextResponse.json({ error: 'Configuration Supabase manquante' }, { status: 500 });
     }
 
-    // Recent Quebec sports headlines as raw material for the questions.
+    // Recent headlines as raw material for the questions — in this brand's
+    // sport. The second query used to be hardcoded to "Canadiens Montréal
+    // LNH hockey", which fed hockey news to the baseball and football
+    // generators.
     const [newsA, newsB] = await Promise.all([
-      fetchRecentNews('sport Québec actualité'),
-      fetchRecentNews('Canadiens Montréal LNH hockey'),
+      fetchRecentNews(`${SITE.sport} Québec actualité`),
+      fetchRecentNews(`${SITE.league} ${SITE.sport} actualité`),
     ]);
     const headlines = [...(newsA ?? []), ...(newsB ?? [])]
       .map((n) => `- ${n.title}`)
@@ -130,7 +135,7 @@ RÈGLES :
 - Ancre les sondages dans l'actualité récente ci-dessus quand c'est pertinent.
 - Options courtes (1 à 6 mots), mutuellement exclusives.
 - Pas de question sensible (politique, religion). Sport et culture sportive seulement.
-- Varie les sujets (hockey, mais aussi baseball, football, etc. si pertinent).
+- Reste sur LE sport de la plateforme : ${SITE.sport} (${SITE.league}). Aucune question sur un autre sport.
 
 Soumets les sondages avec l'outil submit_polls.`,
       }],
@@ -146,11 +151,18 @@ Soumets les sondages avec l'outil submit_polls.`,
     // hides. Inserts are trusted because the caller was authorized above.
     const admin = createServiceClient(supabaseUrl, serviceKey);
 
+    // Polls belong to a sport: the table is shared by every brand, so a row
+    // with no category would surface in all three sidebars at once.
+    const categoryId = await getBrandCategoryId(admin as never);
+    if (categoryId == null) {
+      return NextResponse.json({ error: 'Catégorie de marque introuvable' }, { status: 500 });
+    }
+
     let inserted = 0;
     for (const proposal of proposals) {
       const { data: pollRow, error: pollErr } = await admin
         .from('polls')
-        .insert({ question: proposal.question, status: 'pending_review', created_by: 'ai' })
+        .insert({ question: proposal.question, status: 'pending_review', created_by: 'ai', category_id: categoryId })
         .select('id')
         .single();
 

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { BRAND } from '@/lib/brand';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -64,9 +65,14 @@ async function handleSend(request: Request) {
   // Idempotence: the digest goes out at most once a week. A replayed trigger
   // (double cron fire, or a re-clicked manual send) must never re-mail every
   // subscriber.
+  // Every brand runs this cron against the same shared tables, so each
+  // read and write below is pinned to this deployment's brand. Unpinned,
+  // the first site to fire consumed the week's slot for all of them and
+  // mailed its digest to every other site's subscribers.
   const { data: recentOk } = await admin
     .from('newsletter_sends')
     .select('id')
+    .eq('brand_id', BRAND.id)
     .eq('status', 'ok')
     .gte('finished_at', new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString())
     .limit(1);
@@ -76,7 +82,7 @@ async function handleSend(request: Request) {
 
   const { data: runRow } = await admin
     .from('newsletter_sends')
-    .insert({ status: 'running' })
+    .insert({ status: 'running', brand_id: BRAND.id })
     .select('id')
     .single();
   const runId = (runRow as { id: number } | null)?.id;
@@ -96,6 +102,7 @@ async function handleSend(request: Request) {
     const { data: subsData, error: subsErr } = await admin
       .from('newsletter_subscribers')
       .select('id, email, locale, unsubscribe_token')
+      .eq('brand_id', BRAND.id)
       .eq('status', 'confirmed');
     if (subsErr) throw new Error(subsErr.message);
     const subscribers = (subsData ?? []) as Subscriber[];
@@ -136,6 +143,7 @@ async function handleSend(request: Request) {
     await admin
       .from('newsletter_subscribers')
       .update({ last_sent_at: nowIso })
+      .eq('brand_id', BRAND.id)
       .eq('status', 'confirmed');
 
     await finish({ status: 'ok', articles_count: articles.length, recipients: sent });

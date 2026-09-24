@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getBrandCategoryId } from '@/lib/brandScope';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
@@ -47,10 +48,19 @@ async function handleRotate(request: Request) {
 
     const nowIso = new Date().toISOString();
 
+    // Every brand runs this cron against the same shared table, so each run
+    // must stay inside its own sport — otherwise the first site to fire
+    // archives the other sites' active polls and promotes its own.
+    const categoryId = await getBrandCategoryId(admin as never);
+    if (categoryId == null) {
+      return NextResponse.json({ error: 'Catégorie de marque introuvable' }, { status: 500 });
+    }
+
     // Scheduled polls whose go-live date has arrived, newest date first.
     const { data: dueData } = await admin
       .from('polls')
       .select('id, scheduled_for')
+      .eq('category_id', categoryId)
       .eq('status', 'scheduled')
       .lte('scheduled_for', nowIso)
       .order('scheduled_for', { ascending: false });
@@ -63,10 +73,11 @@ async function handleRotate(request: Request) {
     const winnerId = due[0].id;
     const skippedIds = due.slice(1).map((p) => p.id);
 
-    // Archive the current active poll.
+    // Archive the current active poll of THIS sport only.
     await admin
       .from('polls')
       .update({ status: 'archived', archived_at: nowIso })
+      .eq('category_id', categoryId)
       .eq('status', 'active');
 
     // Archive scheduled polls whose window was skipped.

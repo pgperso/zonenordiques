@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { BRAND } from '@/lib/brand';
 import { randomUUID } from 'node:crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { consumeRateLimit } from '@/lib/rateLimit';
@@ -51,13 +52,14 @@ export async function POST(request: Request) {
     .from('newsletter_subscribers')
     .select('id, status, confirm_token')
     .eq('email_lower', email)
+    .eq('brand_id', BRAND.id)
     .maybeSingle();
 
   let token: string | null = null;
   if (!existing) {
     const { data, error } = await admin
       .from('newsletter_subscribers')
-      .insert({ email, locale })
+      .insert({ email, locale, brand_id: BRAND.id })
       .select('confirm_token')
       .single();
     if (error || !data) {

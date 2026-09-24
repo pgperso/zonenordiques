@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { getBrandCategoryId } from '@/lib/brandScope';
 import type { Database } from '@arena/supabase-client';
 
 // Poll tables were added in migration 00058 — the generated Database
@@ -80,9 +81,14 @@ async function withOptions(supabase: AnyClient, polls: PollRow[]): Promise<Poll[
 
 /** The single poll currently shown in the gallery, or null if none. */
 export async function fetchActivePoll(supabase: AnyClient): Promise<Poll | null> {
+  // Scoped by sport: the table is shared across the sites, so an unscoped
+  // read put the hockey question in the football site's sidebar.
+  const categoryId = await getBrandCategoryId(supabase as never);
+  if (categoryId == null) return null;
   const { data: pollData } = await supabase
     .from('polls')
     .select(POLL_SELECT)
+    .eq('category_id', categoryId)
     .eq('status', 'active')
     .order('activated_at', { ascending: false })
     .limit(1);
@@ -118,9 +124,12 @@ export async function fetchPollOptions(
 
 /** AI proposals awaiting the owner's validation. */
 export async function fetchPendingPolls(supabase: AnyClient): Promise<Poll[]> {
+  const categoryId = await getBrandCategoryId(supabase as never);
+  if (categoryId == null) return [];
   const { data: pollData } = await supabase
     .from('polls')
     .select(POLL_SELECT)
+    .eq('category_id', categoryId)
     .eq('status', 'pending_review')
     .order('created_at', { ascending: false });
   return withOptions(supabase, (pollData ?? []) as unknown as PollRow[]);
@@ -128,9 +137,12 @@ export async function fetchPendingPolls(supabase: AnyClient): Promise<Poll[]> {
 
 /** Approved polls queued for publication, ordered by their go-live date. */
 export async function fetchScheduledPolls(supabase: AnyClient): Promise<Poll[]> {
+  const categoryId = await getBrandCategoryId(supabase as never);
+  if (categoryId == null) return [];
   const { data: pollData } = await supabase
     .from('polls')
     .select(POLL_SELECT)
+    .eq('category_id', categoryId)
     .eq('status', 'scheduled')
     .order('scheduled_for', { ascending: true });
   return withOptions(supabase, (pollData ?? []) as unknown as PollRow[]);
@@ -161,9 +173,15 @@ export async function castPollVote(
  * are queued. Owner-only (RLS).
  */
 async function promoteIfGalleryEmpty(supabase: AnyClient): Promise<void> {
+  // Shared table: 'is the gallery empty' and 'what comes next' are both
+  // questions about THIS brand's sport, not about every sport at once.
+  const categoryId = await getBrandCategoryId(supabase as never);
+  if (categoryId == null) return;
+
   const { data: active } = await supabase
     .from('polls')
     .select('id')
+    .eq('category_id', categoryId)
     .eq('status', 'active')
     .limit(1);
   if (active && active.length > 0) return;
@@ -171,6 +189,7 @@ async function promoteIfGalleryEmpty(supabase: AnyClient): Promise<void> {
   const { data: next } = await supabase
     .from('polls')
     .select('id')
+    .eq('category_id', categoryId)
     .eq('status', 'scheduled')
     .order('scheduled_for', { ascending: true })
     .limit(1);
@@ -237,9 +256,14 @@ export async function unschedulePoll(
 export async function retireActivePoll(
   supabase: AnyClient,
 ): Promise<{ error: Error | null }> {
+  // Retire this brand's active poll, not every brand's.
+  const categoryId = await getBrandCategoryId(supabase as never);
+  if (categoryId == null) return { error: new Error('Catégorie de marque introuvable') };
+
   const archive = await supabase
     .from('polls')
     .update({ status: 'archived', archived_at: new Date().toISOString() } as never)
+    .eq('category_id', categoryId)
     .eq('status', 'active');
   if (archive.error) return { error: new Error(archive.error.message) };
 
