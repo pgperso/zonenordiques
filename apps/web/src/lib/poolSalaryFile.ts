@@ -56,6 +56,8 @@ export interface SalaryFileLayout {
 }
 
 export interface SalaryFileParse {
+  /** Columns the reader could not find at all. */
+  missingColumns: string[];
   rows: SalaryFileRow[];
   layout: SalaryFileLayout;
   /** Lines skipped as blank or separator rows, with their numbers. */
@@ -90,6 +92,22 @@ function headerKey(h: string): string {
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Trim anything that is not a letter off both ends of a name fragment.
+ *
+ * Projection sheets tag players with a status glyph — an asterisk, a dagger,
+ * a rookie marker — and a mis-decoded file leaves U+FFFD stuck to the name.
+ * A name never begins or ends with one of those, and leaving them attached
+ * makes the row unmatchable: "Dylan Larkin †" matches no NHL player.
+ */
+function cleanNamePart(s: string): string {
+  return s
+    .replace(/[ ﻿]/g, ' ')
+    .replace(/^[^\p{L}]+/u, '')
+    .replace(/[^\p{L}]+$/u, '')
+    .trim();
 }
 
 /** Plain number from "1.65", "12,50", " 82 " — null when not numeric. */
@@ -142,6 +160,7 @@ export function parseSalaryFile(text: string): SalaryFileParse {
     },
     skippedLines: [],
     unknownTeams: [],
+    missingColumns: [],
   };
 
   const allLines = text.replace(/^﻿/, '').split(/\r?\n/);
@@ -181,8 +200,8 @@ export function parseSalaryFile(text: string): SalaryFileParse {
       continue;
     }
     const cells = splitCsvLine(line);
-    const first = (cells[nameIdx] ?? '').trim();
-    const last = lastIdx >= 0 ? (cells[lastIdx] ?? '').trim() : '';
+    const first = cleanNamePart(cells[nameIdx] ?? '');
+    const last = lastIdx >= 0 ? cleanNamePart(cells[lastIdx] ?? '') : '';
     if (!first && !last) { skippedLines.push(i + 1); continue; }
     raws.push({ cells, line: i + 1 });
   }
@@ -195,8 +214,8 @@ export function parseSalaryFile(text: string): SalaryFileParse {
 
   const unknownTeams = new Set<string>();
   const rows: SalaryFileRow[] = raws.map((r) => {
-    const first = (r.cells[nameIdx] ?? '').trim();
-    const last = lastIdx >= 0 ? (r.cells[lastIdx] ?? '').trim() : '';
+    const first = cleanNamePart(r.cells[nameIdx] ?? '');
+    const last = lastIdx >= 0 ? cleanNamePart(r.cells[lastIdx] ?? '') : '';
     const teamRaw = teamIdx >= 0 ? (r.cells[teamIdx] ?? '').trim() : '';
     const team = normalizeTeamAbbrev(teamRaw);
     // normalizeTeamAbbrev returns the code unchanged when it recognises
@@ -232,5 +251,9 @@ export function parseSalaryFile(text: string): SalaryFileParse {
     },
     skippedLines,
     unknownTeams: [...unknownTeams],
+    missingColumns: [
+      ...(teamIdx < 0 ? ['équipe'] : []),
+      ...(capIdx < 0 ? ['salaire'] : []),
+    ],
   };
 }

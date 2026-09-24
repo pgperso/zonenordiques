@@ -132,3 +132,39 @@ describe('normalizeTeamAbbrev', () => {
     expect(normalizeTeamAbbrev(null)).toBe('');
   });
 });
+
+describe('parseSalaryFile — a Windows-1252 export decoded as UTF-8', () => {
+  // What File.text() produces when Excel wrote ANSI: every byte above 0x7F
+  // becomes U+FFFD. The accented header stops matching and the accented
+  // names stop matching the NHL roster.
+  const MOJIBAKE = [
+    '#,Nom,,\uFFFDge,\uFFFDqu.,Pos,PJ,B,P,Pts,PPP,CapH',
+    '1,Tim,St\uFFFDtzle,23,Ott,C,82,30,50,80,0.98,8.35',
+    '2,Dylan,Larkin \uFFFD,29,Det,C,80,30,45,75,0.94,8.70',
+  ].join('\n');
+
+  const parsed = parseSalaryFile(MOJIBAKE);
+
+  it('cannot find the team column, and says so', () => {
+    // "Équ." decoded as "\uFFFDqu." normalises to "qu", which matches nothing.
+    expect(parsed.layout.teamHeader).toBe('—');
+    expect(parsed.missingColumns).toContain('équipe');
+  });
+
+  it('strips a stray marker glued to a surname', () => {
+    // Without this, "Dylan Larkin \uFFFD" matches no NHL player at all.
+    expect(parsed.rows[1].name).toBe('Dylan Larkin');
+  });
+
+  it('still reads the salary column, which is pure ASCII', () => {
+    expect(parsed.layout.capUnit).toBe('millions');
+    expect(parsed.rows[0].capHitCents).toBe(835_000_000);
+  });
+});
+
+describe('parseSalaryFile — missing columns are reported', () => {
+  it('names the columns it could not find', () => {
+    const parsed = parseSalaryFile('name\nConnor McDavid');
+    expect(parsed.missingColumns).toEqual(['équipe', 'salaire']);
+  });
+});

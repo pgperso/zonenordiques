@@ -906,6 +906,8 @@ export interface SalaryImportReport {
   layout: SalaryFileLayout;
   /** Team codes in the file that match no NHL club. */
   unknownTeams: string[];
+  /** Columns the reader could not find at all. */
+  missingColumns: string[];
   /** Lines skipped as blank or separator rows. */
   skippedLines: number[];
   /** True when nothing was written (preview mode). */
@@ -1005,6 +1007,7 @@ export async function importSalaries(
     budgetCents: opts.budgetCents ?? null,
     layout: parsed.layout,
     unknownTeams: parsed.unknownTeams,
+    missingColumns: parsed.missingColumns,
     skippedLines: parsed.skippedLines,
     dryRun: Boolean(opts.dryRun),
     sample: deduped.slice(0, 8).map((m) => ({

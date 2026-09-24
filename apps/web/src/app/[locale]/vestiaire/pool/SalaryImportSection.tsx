@@ -22,6 +22,7 @@ function fmtMoney(cents: number): string {
 export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; cardCls: string }) {
   const [csv, setCsv] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
+  const [encoding, setEncoding] = useState<'utf-8' | 'windows-1252' | null>(null);
   const [fullSnapshot, setFullSnapshot] = useState(true);
   const [report, setReport] = useState<SalaryImportReport | null>(null);
   const [busy, setBusy] = useState(false);
@@ -32,7 +33,26 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       toast.error('Excel ne peut pas être lu tel quel. Fichier → Enregistrer sous → CSV UTF-8.');
       return;
     }
-    setCsv(await file.text());
+
+    // Excel's plain "CSV" export writes Windows-1252, not UTF-8, and
+    // File.text() always decodes as UTF-8 — so "Stützle" arrives as
+    // "St�tzle" and, worse, the "Équ." header becomes unrecognisable and
+    // the team column silently disappears. Decode both ways and keep the one
+    // that produced no replacement characters.
+    const buf = await file.arrayBuffer();
+    const asUtf8 = new TextDecoder('utf-8').decode(buf);
+    let text = asUtf8;
+    let enc: 'utf-8' | 'windows-1252' = 'utf-8';
+    if (asUtf8.includes('�')) {
+      const as1252 = new TextDecoder('windows-1252').decode(buf);
+      if (!as1252.includes('�')) {
+        text = as1252;
+        enc = 'windows-1252';
+      }
+    }
+
+    setCsv(text);
+    setEncoding(enc);
     setFileName(file.name);
     setReport(null);
   }
@@ -95,13 +115,18 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           Choisir un fichier CSV
         </button>
         {fileName && <span className="text-sm text-gray-600">{fileName}</span>}
+        {encoding === 'windows-1252' && (
+          <span className="text-xs text-amber-700">
+            Encodage ANSI détecté et converti — les accents sont récupérés.
+          </span>
+        )}
       </div>
 
       <details className="mt-3">
         <summary className="cursor-pointer text-sm text-gray-500">ou coller le contenu</summary>
         <textarea
           value={csv}
-          onChange={(e) => { setCsv(e.target.value); setReport(null); setFileName(null); }}
+          onChange={(e) => { setCsv(e.target.value); setReport(null); setFileName(null); setEncoding(null); }}
           rows={6}
           placeholder="#,Nom,,Âge,Équ.,Pos,PJ,B,P,Pts,PPP,CapH"
           className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
@@ -181,6 +206,13 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 ))}
               </ul>
             </div>
+          )}
+
+          {report.missingColumns.length > 0 && (
+            <p className="mt-3 font-medium text-red-700">
+              Colonne(s) introuvable(s) : {report.missingColumns.join(', ')}. Sans la colonne
+              d’équipe, les joueurs partageant un nom de famille ne peuvent pas être départagés.
+            </p>
           )}
 
           {report.unknownTeams.length > 0 && (
