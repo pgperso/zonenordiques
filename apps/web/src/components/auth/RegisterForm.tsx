@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { BRAND } from '@/lib/brand';
 import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from '@/i18n/navigation';
 import { Link } from '@/i18n/navigation';
@@ -54,6 +55,13 @@ export function RegisterForm() {
         data: {
           username,
           display_name: username,
+          // The brand the visitor signed up on. One Supabase project means
+          // one set of email templates for all three sites, so the
+          // confirmation email cannot know which one to name. Supabase
+          // exposes user metadata to templates as {{ .Data.brand_name }},
+          // which is how "Confirme ton inscription sur Zone Expos" is
+          // possible without a template per brand.
+          brand_name: BRAND.name,
         },
       },
     });
