@@ -201,9 +201,6 @@
     "joinDiscussionBody": "This tribune's chat is reserved for members. Sign up or log in to join the real-time conversation with other fans.",
     "allJoinedMessage": "You've already joined all tribunes in this category."
   },
-  "article": {
-    "aiDisclosure": "Article written with AI assistance and reviewed by the editorial team."
-  },
   "content": {
     "all": "All",
     "articles": "Articles",

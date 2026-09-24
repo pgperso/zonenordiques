@@ -207,9 +207,6 @@
     "joinDiscussionBody": "Le chat de cette tribune est réservé aux membres. Inscris-toi ou connecte-toi pour participer aux échanges en temps réel avec les autres partisans.",
     "allJoinedMessage": "Tu as déjà rejoint toutes les tribunes de cette catégorie."
   },
-  "article": {
-    "aiDisclosure": "Article rédigé avec l'assistance d'une intelligence artificielle et révisé par l'équipe éditoriale."
-  },
   "content": {
     "all": "Tout",
     "articles": "Articles",

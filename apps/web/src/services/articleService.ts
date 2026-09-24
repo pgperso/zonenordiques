@@ -63,7 +63,6 @@ export async function createArticle(
     coverPositionY?: number;
     isPublished?: boolean;
     authorNameOverride?: string | null;
-    isAiGenerated?: boolean;
     section?: 'nordiques' | 'lnh' | 'taverne';
   },
 ) {
@@ -88,7 +87,6 @@ export async function createArticle(
     is_published: data.isPublished ?? true,
     published_at: data.isPublished !== false ? new Date().toISOString() : null,
     author_name_override: data.authorNameOverride?.trim() || null,
-    is_ai_generated: data.isAiGenerated ?? false,
   } as never);
 
   // Bot announcement when published (fire-and-forget)
@@ -127,7 +125,6 @@ export async function updateArticle(
     isPublished?: boolean;
     authorNameOverride?: string | null;
     communityId?: number;
-    isAiGenerated?: boolean;
     section?: 'nordiques' | 'lnh' | 'taverne';
   },
 ) {
@@ -149,7 +146,6 @@ export async function updateArticle(
     author_name_override: data.authorNameOverride?.trim() || null,
     ...(data.section ? { section: data.section } : {}),
     ...(data.communityId ? { community_id: data.communityId } : {}),
-    ...(data.isAiGenerated !== undefined ? { is_ai_generated: data.isAiGenerated } : {}),
     updated_at: new Date().toISOString(),
   };
 
