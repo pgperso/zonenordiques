@@ -27,6 +27,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const [report, setReport] = useState<SalaryImportReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [resolving, setResolving] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function onFile(file: File) {
@@ -68,12 +69,44 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       const res = await fetch('/api/pool/rosters', { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
-      toast.success(`${json.players} joueurs sur ${json.teams} équipes synchronisés`);
+      toast.success(`${json.players} joueurs sur ${json.teams} équipes — relance l'analyse`);
       setReport(null);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Échec de la synchronisation');
     } finally {
       setSyncing(false);
+    }
+  }
+
+  // A drafted prospect who has not dressed yet is on no NHL roster, so the
+  // roster sync never sees them — but the league's search index does, with a
+  // real playerId. Without that id the pool cannot reference them at all, so
+  // a rookie cap hit in the spreadsheet has nowhere to go.
+  async function resolveMissing() {
+    if (!report) return;
+    setResolving(true);
+    try {
+      const res = await fetch('/api/pool/resolve-players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          players: report.unmatched.map((r) => ({ name: r.name, team: r.team })),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
+      const added = json.report.added.length as number;
+      const left = json.report.stillMissing.length as number;
+      toast.success(
+        left > 0
+          ? `${added} joueurs ajoutés, ${left} toujours introuvables — relance l'analyse`
+          : `${added} joueurs ajoutés — relance l'analyse`,
+      );
+      setReport(null);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Échec de la résolution');
+    } finally {
+      setResolving(false);
     }
   }
 
@@ -261,9 +294,19 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
 
           {report.unmatched.length > 0 && (
             <div className="mt-3">
-              <p className="font-medium text-orange-700">
-                {report.unmatched.length} joueur(s) introuvable(s) — ils ne seront pas prix&eacute;s :
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium text-orange-700">
+                  {report.unmatched.length} joueur(s) introuvable(s) — ils ne seront pas prix&eacute;s :
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void resolveMissing()}
+                  disabled={resolving}
+                  className="shrink-0 rounded-md border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-800 hover:bg-orange-50 disabled:opacity-50"
+                >
+                  {resolving ? 'Recherche…' : 'Chercher ces joueurs dans la LNH'}
+                </button>
+              </div>
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
                 {report.unmatched.map((r, i) => (
                   <li key={`${r.name}-${i}`}>

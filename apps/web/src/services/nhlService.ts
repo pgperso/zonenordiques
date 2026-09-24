@@ -602,3 +602,161 @@ export async function seedPoolSeason(
 
   return { seasonId, pricedPlayers: priceRows.length };
 }
+
+// ── Player search: resolving names the roster sync does not carry ──────────
+
+const SEARCH_API = 'https://search.d3.nhle.com/api/v1/search/player';
+
+interface SearchHit {
+  playerId: string;
+  name: string;
+  positionCode: string;
+  teamAbbrev: string | null;
+  lastTeamAbbrev: string | null;
+  active: boolean;
+  sweaterNumber: number | null;
+}
+
+/**
+ * Look a player up in the NHL's public search index.
+ *
+ * `/roster/{team}/current` only lists players on an active NHL roster, so a
+ * drafted prospect who is still in junior or college is missing from it — and
+ * therefore missing from nhl_players, and therefore impossible to price. The
+ * search index does carry them, with their real playerId, which is what the
+ * pool needs in order to reference them at all.
+ */
+async function searchPlayers(query: string, attempt = 0): Promise<SearchHit[]> {
+  const url = `${SEARCH_API}?culture=en-us&limit=8&q=${encodeURIComponent(query)}`;
+  const res = await fetch(url, { headers: { Accept: 'application/json' }, next: { revalidate: 3600 } });
+
+  if ((res.status === 429 || res.status >= 500) && attempt < 4) {
+    await sleep(Math.min(6000, 400 * 2 ** attempt));
+    return searchPlayers(query, attempt + 1);
+  }
+  if (!res.ok) return [];
+  try {
+    return (await res.json()) as SearchHit[];
+  } catch {
+    return [];
+  }
+}
+
+/** C/L/R/D/G — the values nhl_players.position accepts. */
+function searchPosition(code: string): 'C' | 'L' | 'R' | 'D' | 'G' | null {
+  const c = code?.toUpperCase();
+  if (c === 'C' || c === 'D' || c === 'G') return c;
+  if (c === 'L' || c === 'LW') return 'L';
+  if (c === 'R' || c === 'RW') return 'R';
+  return null;
+}
+
+export interface ResolveRequest { name: string; team: string }
+export interface ResolveReport {
+  added: Array<{ name: string; playerId: number; team: string | null; position: string }>;
+  /** Names the index did not return, or returned too ambiguously to accept. */
+  stillMissing: Array<{ name: string; reason: string }>;
+}
+
+/**
+ * Add missing players to nhl_players so they can be priced.
+ *
+ * Never guesses. A hit is accepted only when the normalized full name matches
+ * exactly; when several active players share that name, the spreadsheet's team
+ * must pick one of them, and if it does not the row is left unresolved and
+ * reported. A stale team in the file (a player traded since) is tolerated when
+ * the name alone is unambiguous — Patrick Kane listed under CHI still resolves
+ * to the one Patrick Kane.
+ */
+export async function resolveMissingPlayers(
+  client: AnyClient,
+  requests: ResolveRequest[],
+): Promise<ResolveReport> {
+  // Untyped client, as everywhere else in this file: the generated
+  // Database types make the upsert argument resolve to never.
+  const db = client as unknown as SupabaseClient;
+  const report: ResolveReport = { added: [], stillMissing: [] };
+  if (requests.length === 0) return report;
+
+  // team_abbrev is a FK on nhl_teams; anything else has to be left null.
+  const { data: teamRows } = await db.from('nhl_teams').select('abbrev');
+  const knownTeams = new Set(
+    ((teamRows ?? []) as Array<{ abbrev: string }>).map((t) => t.abbrev),
+  );
+
+  const norm = (s: string) =>
+    s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z ]/g, '').replace(/\s+/g, ' ').trim();
+
+  type NewPlayer = {
+    player_id: number;
+    first_name: string | null;
+    last_name: string | null;
+    full_name: string;
+    position: 'C' | 'L' | 'R' | 'D' | 'G';
+    team_abbrev: string | null;
+    sweater_number: number | null;
+    is_active: boolean;
+  };
+  const toInsert = new Map<number, NewPlayer>();
+
+  for (const req of requests) {
+    const hits = await searchPlayers(req.name);
+    const wanted = norm(req.name);
+    const exact = hits.filter((h) => norm(h.name) === wanted && h.active);
+
+    if (exact.length === 0) {
+      report.stillMissing.push({ name: req.name, reason: 'aucun joueur actif de ce nom' });
+      continue;
+    }
+
+    let chosen = exact[0];
+    if (exact.length > 1) {
+      const byTeam = exact.filter(
+        (h) => (h.teamAbbrev ?? h.lastTeamAbbrev ?? '') === req.team && req.team !== '',
+      );
+      if (byTeam.length !== 1) {
+        report.stillMissing.push({
+          name: req.name,
+          reason: `${exact.length} joueurs actifs de ce nom, l'équipe ne les départage pas`,
+        });
+        continue;
+      }
+      chosen = byTeam[0];
+    }
+
+    const position = searchPosition(chosen.positionCode);
+    if (!position) {
+      report.stillMissing.push({ name: req.name, reason: `position inconnue (${chosen.positionCode})` });
+      continue;
+    }
+
+    const playerId = Number(chosen.playerId);
+    if (!Number.isFinite(playerId)) {
+      report.stillMissing.push({ name: req.name, reason: 'identifiant illisible' });
+      continue;
+    }
+
+    const abbrev = chosen.teamAbbrev ?? chosen.lastTeamAbbrev ?? null;
+    const [firstName, ...rest] = chosen.name.split(' ');
+    toInsert.set(playerId, {
+      player_id: playerId,
+      first_name: firstName ?? null,
+      last_name: rest.join(' ') || null,
+      full_name: chosen.name,
+      position,
+      team_abbrev: abbrev && knownTeams.has(abbrev) ? abbrev : null,
+      sweater_number: chosen.sweaterNumber ?? null,
+      is_active: true,
+    });
+    report.added.push({ name: chosen.name, playerId, team: abbrev, position });
+  }
+
+  if (toInsert.size > 0) {
+    const { error } = await db
+      .from('nhl_players')
+      .upsert([...toInsert.values()], { onConflict: 'player_id' });
+    if (error) throw new Error(`upsert players: ${error.message}`);
+  }
+
+  return report;
+}
