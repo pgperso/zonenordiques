@@ -83,7 +83,7 @@ const BRANDS: Sister[] = [
     logo: '/images/cflquebec.png',
     from: '#0B4F8A',
     to: '#C9A227',
-    live: false, // ← flip once the real logo replaces the placeholder
+    live: true,
   },
 ];
 
