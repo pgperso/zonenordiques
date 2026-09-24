@@ -17,6 +17,21 @@ function flag(value: string | undefined, fallback: boolean): boolean {
   return v !== 'false' && v !== '0' && v !== 'no';
 }
 
+const category = s(process.env.NEXT_PUBLIC_SITE_CATEGORY, 'hockey');
+
+/**
+ * The hockey brand is the one this codebase grew out of, so every feature
+ * below exists for it. Defaulting the feature flags to `true` therefore made
+ * a MISSING variable mean "behave like Zone Nordiques" — the CFL deployment
+ * would have rendered the Nordiquomètre for real and written football fans'
+ * votes into the hockey table, with no error anywhere.
+ *
+ * Deriving the default from the category instead makes the absence of config
+ * safe: an unrecognised sport gets nothing rather than getting hockey. A
+ * brand that does have one of these still opts in explicitly.
+ */
+const isHockey = category === 'hockey';
+
 export const SITE = {
   // User-facing sport word, e.g. 'hockey' | 'baseball'.
   sport: s(process.env.NEXT_PUBLIC_SITE_SPORT, 'hockey'),
@@ -24,7 +39,7 @@ export const SITE = {
   // e.g. 'hockey' | 'baseball'). Every public content surface is scoped to the
   // communities in this category (plus La Taverne and the flagship tribune),
   // so a baseball brand never surfaces hockey content and vice-versa.
-  category: s(process.env.NEXT_PUBLIC_SITE_CATEGORY, 'hockey'),
+  category,
   // League label used in copy, e.g. 'LNH' | 'MLB'.
   league: s(process.env.NEXT_PUBLIC_SITE_LEAGUE, 'LNH'),
   // Which "return-confidence" meter is featured: 'nordiquometre' | 'exposmetre'.
@@ -40,11 +55,16 @@ export const SITE = {
   // Live scoreboard strip. A scoreboard exists for hockey (NHL) and baseball
   // (MLB); a brand whose league has no free data feed (e.g. the CFL) turns this
   // off. The layout also refuses to fall back to another sport's board.
-  showScoreboard: flag(process.env.NEXT_PUBLIC_SITE_SCOREBOARD, true),
+  // Scoreboards exist for hockey (NHL) and baseball (MLB) only; any other
+  // sport has no free data feed, so it gets none unless it says otherwise.
+  showScoreboard: flag(
+    process.env.NEXT_PUBLIC_SITE_SCOREBOARD,
+    isHockey || category === 'baseball',
+  ),
   // Whether this brand features a "return-confidence" meter at all. A brand
   // without one (no `<meter>_votes` table) must hide every meter surface —
   // sidebar card, chat bar and sitemap entry.
-  showMeter: flag(process.env.NEXT_PUBLIC_SITE_METER_ENABLED, true),
+  showMeter: flag(process.env.NEXT_PUBLIC_SITE_METER_ENABLED, isHockey),
   // Fantasy pool entry points (NHL-only today).
-  showPool: flag(process.env.NEXT_PUBLIC_SITE_POOL, true),
+  showPool: flag(process.env.NEXT_PUBLIC_SITE_POOL, isHockey),
 } as const;

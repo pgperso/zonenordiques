@@ -48,8 +48,8 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
           <section>
             {isFr ? (
               <p>
-                Vous avez des questions, des commentaires ou des suggestions concernant La tribune des
-                fans\u00a0? Nous serions ravis de vous entendre. N&apos;hésitez pas à nous contacter en
+                Vous avez des questions, des commentaires ou des suggestions concernant {brandName}
+                &nbsp;? Nous serions ravis de vous entendre. N&apos;hésitez pas à nous contacter en
                 utilisant les moyens ci-dessous.
               </p>
             ) : (

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { TRANSLATION_CUTOFF } from '@arena/shared';
@@ -101,6 +102,19 @@ async function handle(request: Request) {
     const client = new Anthropic({ apiKey });
     const admin = createServiceClient(supabaseUrl, serviceKey);
 
+    // Scope the backlog to this brand's tribunes.
+    //
+    // vercel.json ships with the codebase, so all three deployments register
+    // the same 06:00 cron. Unscoped, the three ran the same deterministic
+    // query, picked the SAME three articles, and each paid Anthropic to
+    // translate them — 3x the bill for no extra throughput, with the last
+    // writer's output winning. Scoping also makes each site responsible for
+    // its own backlog instead of racing for a shared one.
+    const brandIds = await getBrandCommunityIds(admin as never);
+    if (brandIds.length === 0) {
+      return NextResponse.json({ ok: true, articlesDone: 0, podcastsDone: 0, noBrandScope: true });
+    }
+
     const startedAt = Date.now();
     const outOfTime = () => Date.now() - startedAt > TIME_BUDGET_MS;
 
@@ -115,6 +129,7 @@ async function handle(request: Request) {
     const { data: articles } = await admin
       .from('articles')
       .select('id, source_lang, title, excerpt, body')
+      .in('community_id', brandIds)
       .eq('is_published', true)
       .eq('is_removed', false)
       .gte('published_at', TRANSLATION_CUTOFF)
@@ -150,6 +165,7 @@ async function handle(request: Request) {
     const { data: podcasts } = await admin
       .from('podcasts')
       .select('id, source_lang, title, description')
+      .in('community_id', brandIds)
       .is('translated_at', null)
       .gte('created_at', TRANSLATION_CUTOFF)
       .order('created_at', { ascending: false })

@@ -8,7 +8,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default function TwitterImage() {
-  const logoData = readFileSync(join(process.cwd(), 'public/images/zonenordiques.png'));
+  const logoData = readFileSync(join(process.cwd(), 'public', BRAND.logoPngPath.replace(/^\/+/, '')));
   const logoSrc = `data:image/png;base64,${logoData.toString('base64')}`;
 
   return new ImageResponse(

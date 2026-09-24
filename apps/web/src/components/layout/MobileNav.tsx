@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { SITE } from '@/lib/siteConfig';
 import { Sun, Moon, Monitor, Download } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import type { User } from '@supabase/supabase-js';
@@ -152,7 +153,7 @@ export function MobileNav({
             <>
               <div className="flex flex-col gap-2">
                 <Link
-                  href="/tribunes/zone-nordiques"
+                  href={`/tribunes/${SITE.mainTribune}`}
                   onClick={onClose}
                   className="block rounded-lg bg-brand-red px-3 py-2 text-center text-sm font-bold text-white transition hover:bg-brand-red-dark"
                 >
