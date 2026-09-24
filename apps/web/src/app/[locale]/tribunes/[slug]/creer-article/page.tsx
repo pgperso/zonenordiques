@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
+import { isBrandCommunity } from '@/lib/brandScope';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { NewArticleClient } from './NewArticleClient';
@@ -47,7 +48,10 @@ export default async function NewArticlePage({ params }: Props) {
     .select('id, slug')
     .eq('slug', slug)
     .single();
-  if (!community) notFound();
+  // A slug is global but a brand is not: without this gate any tribune of
+  // any sport renders in full on any domain, under that domain's chrome and
+  // canonical tag. See isBrandCommunity().
+  if (!community || !(await isBrandCommunity(supabase, community.id))) notFound();
   const comm = community as { id: number; slug: string };
 
   if (!(await canCreate(supabase, comm.id, user.id))) {

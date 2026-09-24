@@ -51,3 +51,22 @@ export async function getBrandCommunityIds(
   const { data } = await query;
   return ((data ?? []) as Array<{ id: number }>).map((c) => c.id);
 }
+
+/**
+ * True when this community's content may be shown on the current brand.
+ *
+ * The listing surfaces filter with `getBrandCommunityIds()`, but the pages
+ * reached by slug — a tribune, an article, a podcast — resolve their
+ * community from the URL, and a slug is global. Without this check any
+ * tribune of any sport renders in full on any domain, with that domain's
+ * chrome and canonical tag, which both confuses readers and makes the three
+ * sites compete for each other's content in search results.
+ *
+ * Call it before `notFound()` on every by-slug route.
+ */
+export async function isBrandCommunity(
+  supabase: SupabaseClient<Database>,
+  communityId: number,
+): Promise<boolean> {
+  return (await getBrandCommunityIds(supabase)).includes(communityId);
+}

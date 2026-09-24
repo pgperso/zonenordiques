@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { Link } from '@/i18n/navigation';
 import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { translatedField } from '@/lib/contentTranslation';
@@ -66,12 +67,17 @@ export async function RelatedArticles({
     .order('published_at', { ascending: false })
     .limit(6);
 
-  // Same-author candidates across all tribunes, if author is set.
+  // Same-author candidates across this brand's other tribunes, if author is
+  // set. Scoped: an author who writes for more than one of our sites would
+  // otherwise see a baseball piece recommended at the foot of a hockey
+  // article, on the hockey domain.
+  const brandIds = await getBrandCommunityIds(supabase);
   const sameAuthorPromise = authorId
     ? supabase
         .from('articles')
         .select(select)
         .eq('author_id', authorId)
+        .in('community_id', brandIds)
         .eq('is_published', true)
         .eq('is_removed', false)
         .gte('published_at', ORIGINAL_CONTENT_CUTOFF)

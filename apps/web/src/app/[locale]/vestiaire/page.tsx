@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { setRequestLocale } from 'next-intl/server';
 import { VestiaireClient } from './VestiaireClient';
 import { fetchPendingPolls, fetchScheduledPolls, fetchActivePoll, type Poll } from '@/services/pollService';
@@ -73,6 +74,15 @@ export default async function VestiairePage({ params }: { params: Promise<{ loca
     .eq('id', user.id)
     .single();
 
+  // The profile area is per-brand even though the account is not: a member
+  // of both sites sees their hockey tribunes, drafts and author metrics on
+  // the hockey site and their baseball ones on the baseball site. Without
+  // this, "Mes tribunes" linked to tribunes that do not exist on this
+  // domain, and the author totals disagreed with the "Mes articles" list
+  // right beside them, which is already scoped.
+  const brandIds = await getBrandCommunityIds(supabase);
+  const brandSet = new Set(brandIds);
+
   // Fetch communities the user belongs to
   const { data: memberships } = await supabase
     .from('community_members')
@@ -81,8 +91,10 @@ export default async function VestiairePage({ params }: { params: Promise<{ loca
     .limit(500);
 
   let communities: CommunityRow[] = [];
-  if (memberships && memberships.length > 0) {
-    const communityIds = memberships.map((m) => m.community_id);
+  const communityIds = (memberships ?? [])
+    .map((m) => m.community_id)
+    .filter((id) => brandSet.has(id));
+  if (communityIds.length > 0) {
     const { data } = await supabase
       .from('communities')
       .select('id, name, slug, description, member_count, primary_color, logo_url')
@@ -133,10 +145,11 @@ export default async function VestiairePage({ params }: { params: Promise<{ loca
     if (role && !isOwner) roleMap.set(r.community_id, role.code);
   });
 
-  // Admin stats: owners get stats for ALL their communities
+  // Admin stats: owners get stats for ALL their communities on this brand.
+  // roleMap is built from roles held anywhere, so it is narrowed here too.
   const adminCommunityIds = isOwner
     ? communities.map((c) => c.id)
-    : Array.from(roleMap.keys());
+    : Array.from(roleMap.keys()).filter((id) => brandSet.has(id));
 
   let adminStats: Record<number, { articles: number; drafts: number; podcasts: number }> = {};
 
@@ -179,6 +192,7 @@ export default async function VestiairePage({ params }: { params: Promise<{ loca
     .from('articles')
     .select('id, slug, title, view_count, like_count, published_at, communities!inner(slug, name, name_en)')
     .eq('author_id', user.id)
+    .in('community_id', brandIds)
     .eq('is_published', true)
     .eq('is_removed', false)
     .order('view_count', { ascending: false })

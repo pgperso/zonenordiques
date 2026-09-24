@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { isBrandCommunity } from '@/lib/brandScope';
 import { headers } from 'next/headers';
 import { createHash } from 'node:crypto';
 import { createClient } from '@/lib/supabase/server';
@@ -127,7 +128,10 @@ export default async function ArticlePage({ params, searchParams }: ArticlePageP
     .single();
 
   const community = communityData as { id: number; slug: string; name: string; name_en: string | null } | null;
-  if (!community) notFound();
+  // A slug is global but a brand is not: without this gate any tribune of
+  // any sport renders in full on any domain, under that domain's chrome and
+  // canonical tag. See isBrandCommunity().
+  if (!community || !(await isBrandCommunity(supabase, community.id))) notFound();
   const communityDisplayName = displayCommunityName(community, locale);
 
   // Load article with author

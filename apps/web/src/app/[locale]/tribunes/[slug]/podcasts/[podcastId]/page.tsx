@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { isBrandCommunity } from '@/lib/brandScope';
 import { createClient } from '@/lib/supabase/server';
 import { setRequestLocale } from 'next-intl/server';
 import { displayCommunityName } from '@arena/shared';
@@ -94,7 +95,10 @@ export default async function PodcastPage({ params }: PodcastPageProps) {
     .single();
 
   const community = communityData as { id: number; slug: string; name: string; name_en: string | null } | null;
-  if (!community) notFound();
+  // A slug is global but a brand is not: without this gate any tribune of
+  // any sport renders in full on any domain, under that domain's chrome and
+  // canonical tag. See isBrandCommunity().
+  if (!community || !(await isBrandCommunity(supabase, community.id))) notFound();
   const communityDisplayName = displayCommunityName(community, locale);
 
   // Load podcast with publisher info

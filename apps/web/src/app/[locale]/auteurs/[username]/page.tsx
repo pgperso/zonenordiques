@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
+import { getBrandCommunityIds } from '@/lib/brandScope';
 import { formatDate, ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { BRAND } from '@/lib/brand';
 import { AdSlot } from '@/components/ads/AdSlot';
@@ -132,11 +133,18 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
 
   // Members are queried by author_id; personas are queried by the byline
   // string in author_name_override since they have no row in `members`.
+  // Scoped to this brand: an author page on the hockey domain lists their
+  // hockey work only, and the view/like totals below count the same set.
+  // Unscoped, the page mixed sports and every card linked to a tribune that
+  // does not belong here.
+  const brandIds = await getBrandCommunityIds(supabase);
+
   const articlesQuery = supabase
     .from('articles')
     .select(
       'id, slug, title, excerpt, source_lang, title_translated, excerpt_translated, cover_image_url, cover_position_y, view_count, like_count, published_at, author_name_override, communities!inner(name, name_en, slug)',
     )
+    .in('community_id', brandIds)
     .eq('is_published', true)
     .eq('is_removed', false)
     .gte('published_at', ORIGINAL_CONTENT_CUTOFF)
