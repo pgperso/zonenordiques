@@ -81,9 +81,9 @@ const BRANDS: Sister[] = [
     subtitleFr: 'L’antichambre du football',
     subtitleEn: 'The football fan zone',
     logo: '/images/cflquebec.png',
-    from: '#0B3D2E',
-    to: '#C8102E',
-    live: false, // ← flip once the domain is live and the logo is committed
+    from: '#0B4F8A',
+    to: '#C9A227',
+    live: false, // ← flip once the real logo replaces the placeholder
   },
 ];
 

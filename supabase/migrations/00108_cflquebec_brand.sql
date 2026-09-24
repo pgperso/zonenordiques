@@ -23,16 +23,18 @@ VALUES (
   'CFL Québec',
   'cfl-quebec',
   'L''antichambre du football canadien au Québec : LCF, Alouettes, Coupe Grey.',
-  '#0B3D2E',
-  '#C8102E',
+  '#0B4F8A',
+  '#C9A227',
   TRUE,
   (SELECT id FROM public.categories WHERE slug = 'football')
 )
 ON CONFLICT (slug) DO UPDATE
-  SET name        = EXCLUDED.name,
-      name_en     = EXCLUDED.name_en,
-      category_id = EXCLUDED.category_id,
-      is_active   = TRUE;
+  SET name            = EXCLUDED.name,
+      name_en         = EXCLUDED.name_en,
+      category_id     = EXCLUDED.category_id,
+      primary_color   = EXCLUDED.primary_color,
+      secondary_color = EXCLUDED.secondary_color,
+      is_active       = TRUE;
 
 -- Verify: this should return one row with category 'football'.
 --   SELECT c.slug, cat.slug AS category, c.is_active
