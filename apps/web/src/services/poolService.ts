@@ -912,6 +912,16 @@ export interface SalaryImportReport {
   skippedLines: number[];
   /** True when nothing was written (preview mode). */
   dryRun: boolean;
+  /** Echo of the fullSnapshot flag, so the UI can refuse to apply a preview
+   *  that was computed under a different setting. */
+  fullSnapshot: boolean;
+  /** Players currently draftable that this snapshot would retire. */
+  delistCount: number;
+  /** How many of those are already on at least one member's roster — the
+   *  number that actually hurts. */
+  delistDrafted: number;
+  /** A few names from delistDrafted, to make the number concrete. */
+  delistDraftedSample: string[];
   /** Sample of matched rows, for the preview table. */
   sample: Array<{ name: string; priceCents: number; position: PoolPosition; projPoints: number | null }>;
 }
@@ -952,7 +962,20 @@ export async function importSalaries(
     throw new Error(`Colonne de salaire illisible : ${parsed.layout.capUnitReason}`);
   }
 
-  const { data: playersData } = await db.from('nhl_players').select('player_id, full_name, team_abbrev, position');
+  const PAGE = 1000;
+  const playerRows: Array<{ player_id: number; full_name: string; team_abbrev: string | null; position: string }> = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await db
+      .from('nhl_players')
+      .select('player_id, full_name, team_abbrev, position')
+      .order('player_id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(`lecture des joueurs : ${error.message}`);
+    const batch = (data ?? []) as unknown as typeof playerRows;
+    playerRows.push(...batch);
+    if (batch.length < PAGE) break;
+  }
+  const playersData = playerRows;
   const players: MatchablePlayer[] = (
     (playersData ?? []) as unknown as Array<{
       player_id: number;
@@ -967,10 +990,6 @@ export async function importSalaries(
     position: r.position,
   }));
   const result = matchSalaryRows(players, rows);
-
-  if (opts.fullSnapshot && !opts.dryRun) {
-    await db.from('pool_player_prices').update({ is_draftable: false }).eq('season_id', seasonId);
-  }
 
   // De-dupe by player_id (two CSV rows can resolve to the same player, e.g. a
   // player listed twice, or a homonym whose twin isn't on a current roster).
@@ -987,15 +1006,87 @@ export async function importSalaries(
       price_cents: m.priceCents,
       position: m.position,
       is_draftable: true,
-      // The same spreadsheet carries the projection the value sort uses.
-      ...(m.projPoints !== null ? { proj_points: m.projPoints } : {}),
+      // Always present: proj_points is NOT NULL, and postgrest-js derives the
+      // column list from the union of keys across the batch — so omitting it
+      // on one row sends NULL for that row and 400s the entire upsert. A
+      // single blank Pts cell (a goalie, an em-dash) was enough.
+      proj_points: m.projPoints ?? 0,
     }));
     const { error } = await db.from('pool_player_prices').upsert(priceRows, { onConflict: 'season_id,player_id' });
     if (error) throw new Error(`upsert prices: ${error.message}`);
   }
 
+
+  // What a full snapshot would retire — computed in every mode, because the
+  // preview has to be able to show the cost of the destructive option BEFORE
+  // it is taken. Previously the dry run was byte-identical with the checkbox
+  // on or off, so its most dangerous effect was the one thing it never showed.
+  let delistCount = 0;
+  let delistDrafted = 0;
+  let delistDraftedSample: string[] = [];
+  let protectedIds: number[] = [];
+  if (opts.fullSnapshot) {
+    const keep = new Set(deduped.map((m) => m.playerId));
+    const { data: priced } = await db
+      .from('pool_player_prices')
+      .select('player_id')
+      .eq('season_id', seasonId)
+      .eq('is_draftable', true);
+    const losing = ((priced ?? []) as Array<{ player_id: number }>)
+      .map((r) => r.player_id)
+      .filter((id) => !keep.has(id));
+    delistCount = losing.length;
+
+    if (losing.length > 0) {
+      const { data: entries } = await db.from('pool_entries').select('id').eq('season_id', seasonId);
+      const entryIds = ((entries ?? []) as Array<{ id: number }>).map((e) => e.id);
+      if (entryIds.length > 0) {
+        const { data: slots } = await db
+          .from('pool_roster_slots')
+          .select('player_id')
+          .in('entry_id', entryIds)
+          .in('player_id', losing);
+        const draftedIds = [
+          ...new Set(((slots ?? []) as Array<{ player_id: number }>).map((r) => r.player_id)),
+        ];
+        delistDrafted = draftedIds.length;
+        protectedIds = draftedIds;
+        if (draftedIds.length > 0) {
+          const { data: names } = await db
+            .from('nhl_players')
+            .select('full_name')
+            .in('player_id', draftedIds.slice(0, 10));
+          delistDraftedSample = ((names ?? []) as Array<{ full_name: string }>).map((r) => r.full_name);
+        }
+      }
+    }
+  }
+
+  if (opts.fullSnapshot && !opts.dryRun) {
+    // Refuse a snapshot that matched almost nothing. A truncated export, a
+    // mis-detected delimiter or a stale player table all produce "0 appariées",
+    // and de-drafting the whole season on that basis is unrecoverable from the
+    // file — the file is what failed.
+    if (deduped.length < 50) {
+      throw new Error(
+        `Instantané complet refusé : seulement ${deduped.length} joueur(s) appariés. ` +
+        'Corrige le fichier, ou décoche « Instantané complet » pour une retouche.',
+      );
+    }
+
+    // Never retire a player someone already has on their roster.
+    const spare = [...deduped.map((m) => m.playerId), ...protectedIds];
+    let q = db.from('pool_player_prices').update({ is_draftable: false }).eq('season_id', seasonId);
+    if (spare.length > 0) q = q.not('player_id', 'in', `(${spare.join(',')})`);
+    const { error } = await q;
+    if (error) throw new Error(`retrait des joueurs absents : ${error.message}`);
+  }
   if (opts.budgetCents && !opts.dryRun) {
-    await db.from('pool_seasons').update({ budget_cents: opts.budgetCents }).eq('id', seasonId);
+    const { error } = await db
+      .from('pool_seasons')
+      .update({ budget_cents: opts.budgetCents })
+      .eq('id', seasonId);
+    if (error) throw new Error(`plafond salarial : ${error.message}`);
   }
 
   return {
@@ -1010,6 +1101,10 @@ export async function importSalaries(
     missingColumns: parsed.missingColumns,
     skippedLines: parsed.skippedLines,
     dryRun: Boolean(opts.dryRun),
+    fullSnapshot: Boolean(opts.fullSnapshot),
+    delistCount,
+    delistDrafted,
+    delistDraftedSample,
     sample: deduped.slice(0, 8).map((m) => ({
       name: m.name,
       priceCents: m.priceCents,

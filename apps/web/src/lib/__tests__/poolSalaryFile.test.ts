@@ -168,3 +168,50 @@ describe('parseSalaryFile — missing columns are reported', () => {
     expect(parsed.missingColumns).toEqual(['équipe', 'salaire']);
   });
 });
+
+describe('parseSalaryFile — the salary unit must be unanimous', () => {
+  // One cell typed in dollars among a column of millions used to flip the
+  // whole file: max was 925000, so 12.50 became twelve dollars fifty and
+  // every price in the pool was a millionth of the truth, with a green report.
+  it('refuses a column that mixes millions and dollars', () => {
+    const parsed = parseSalaryFile(
+      [
+        'Nom,,Équ.,CapH',
+        'Connor,McDavid,Edm,12.50',
+        'Nikita,Kucherov,TB,9.50',
+        'Un,Recrue,Mtl,925000',
+      ].join('\n'),
+    );
+    expect(parsed.layout.capUnit).toBe('unknown');
+    expect(parsed.layout.capUnitReason).toContain('mélange les unités');
+    expect(parsed.rows.every((r) => r.capHitCents === null)).toBe(true);
+  });
+
+  it('accepts a column that is entirely millions', () => {
+    const parsed = parseSalaryFile('Nom,,Équ.,CapH\nConnor,McDavid,Edm,12.50\nUn,Recrue,Mtl,0.98');
+    expect(parsed.layout.capUnit).toBe('millions');
+  });
+});
+
+describe('parseSalaryFile — other real-world layouts', () => {
+  it('reads a Prénom,Nom header pair', () => {
+    // "Nom" is a first-name header in the operator's file and a surname header
+    // here; getting this wrong produced 900 rows of first-name-only.
+    const parsed = parseSalaryFile('Prénom,Nom,Équ.,Pos,CapH\nConnor,McDavid,Edm,C,12.50');
+    expect(parsed.layout.nameColumns).toBe('split');
+    expect(parsed.rows[0].name).toBe('Connor McDavid');
+  });
+
+  it('reads a semicolon-delimited export (French Excel)', () => {
+    const parsed = parseSalaryFile('Nom;;Équ.;CapH\nConnor;McDavid;Edm;12.50');
+    expect(parsed.rows[0].name).toBe('Connor McDavid');
+    expect(parsed.rows[0].team).toBe('EDM');
+    expect(parsed.rows[0].capHitCents).toBe(1_250_000_000);
+  });
+
+  it('does not invent a surname column when the name column is last', () => {
+    const parsed = parseSalaryFile('Équ.,CapH,Nom\nEdm,12.50,Connor McDavid');
+    expect(parsed.layout.nameColumns).toBe('single');
+    expect(parsed.rows[0].name).toBe('Connor McDavid');
+  });
+});

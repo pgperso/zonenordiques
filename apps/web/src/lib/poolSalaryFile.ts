@@ -66,8 +66,14 @@ export interface SalaryFileParse {
   unknownTeams: string[];
 }
 
-/** Quote-aware split of one CSV line. */
-export function splitCsvLine(line: string): string[] {
+/**
+ * Quote-aware split of one CSV line.
+ *
+ * A French-locale Excel writes ';' rather than ',', which used to collapse
+ * every line into a single cell — the reader then reported 'aucune colonne de
+ * nom trouvée', naming neither the cause nor the fix.
+ */
+export function splitCsvLine(line: string, sep = ','): string[] {
   const out: string[] = [];
   let cur = '';
   let quoted = false;
@@ -78,7 +84,7 @@ export function splitCsvLine(line: string): string[] {
         if (line[i + 1] === '"') { cur += '"'; i++; } else quoted = false;
       } else cur += c;
     } else if (c === '"') quoted = true;
-    else if (c === ',') { out.push(cur); cur = ''; }
+    else if (c === sep) { out.push(cur); cur = ''; }
     else cur += c;
   }
   out.push(cur);
@@ -119,7 +125,13 @@ function num(raw: string): number | null {
 }
 
 const NAME_HEADERS = ['nom', 'name', 'player', 'joueur', 'prenom', 'firstname'];
-const LAST_HEADERS = ['prenomnom', 'lastname', 'nomdefamille', 'surname'];
+// "nom" is deliberately in BOTH lists. In the operator's file "Nom" holds the
+// first name and the surname column has no header at all; in the obvious
+// hand-made variant the pair is "Prénom,Nom", where "Nom" is the surname.
+// Leaving it out of this list made that second layout produce 900 rows of
+// first-name-only — every one unmatched, with a wall of "introuvable" as the
+// only clue.
+const LAST_HEADERS = ['nom', 'prenomnom', 'lastname', 'nomdefamille', 'surname'];
 const TEAM_HEADERS = ['equ', 'equipe', 'team', 'tm', 'eq', 'club'];
 const CAP_HEADERS = ['caph', 'caphit', 'cap', 'salary', 'salaire', 'masse', 'capfriendly'];
 const POS_HEADERS = ['pos', 'position'];
@@ -136,14 +148,44 @@ const PROJ_HEADERS = ['pts', 'points', 'proj', 'projection', 'projpts'];
 function detectCapUnit(values: number[]): { unit: CapUnit; reason: string } {
   const positives = values.filter((v) => v > 0);
   if (positives.length === 0) return { unit: 'unknown', reason: 'aucune valeur de salaire lisible' };
-  const max = Math.max(...positives);
-  if (max < 1000) {
-    return { unit: 'millions', reason: `valeur maximale ${max} — trop petite pour des dollars, lue comme des millions` };
+
+  // EVERY value must sit on the same side of the gap, not just the maximum.
+  // Deciding from Math.max alone meant a single cell typed in dollars —
+  // "925000" pasted among 899 values in millions — flipped the whole file to
+  // dollars, so 12.50 became twelve dollars fifty. Every price in the pool
+  // would be a millionth of the truth, and the report would be entirely
+  // green: the rows all match, nothing is missing, nothing is invalid.
+  const asMillions = positives.filter((v) => v < 1000);
+  const asDollars = positives.filter((v) => v > 100_000);
+
+  if (asMillions.length === positives.length) {
+    return {
+      unit: 'millions',
+      reason: `les ${positives.length} salaires sont sous 1000 — lus comme des millions`,
+    };
   }
-  if (max > 100_000) {
-    return { unit: 'dollars', reason: `valeur maximale ${max} — lue comme des dollars` };
+  if (asDollars.length === positives.length) {
+    return {
+      unit: 'dollars',
+      reason: `les ${positives.length} salaires dépassent 100 000 — lus comme des dollars`,
+    };
   }
-  return { unit: 'unknown', reason: `valeur maximale ${max} — ni des millions (< 1000) ni des dollars (> 100 000)` };
+
+  const strays = positives.filter((v) => v >= 1000 && v <= 100_000);
+  if (strays.length > 0) {
+    return {
+      unit: 'unknown',
+      reason:
+        `${strays.length} valeur(s) ni millions (< 1000) ni dollars (> 100 000), ` +
+        `par exemple ${strays.slice(0, 3).join(', ')}`,
+    };
+  }
+  return {
+    unit: 'unknown',
+    reason:
+      `la colonne mélange les unités : ${asMillions.length} valeur(s) en millions et ` +
+      `${asDollars.length} en dollars (p. ex. ${asDollars.slice(0, 2).join(', ')})`,
+  };
 }
 
 /**
@@ -167,7 +209,11 @@ export function parseSalaryFile(text: string): SalaryFileParse {
   const headerIdx = allLines.findIndex((l) => l.trim() !== '');
   if (headerIdx === -1) return empty;
 
-  const header = splitCsvLine(allLines[headerIdx]);
+  // Sniff the delimiter from the header: whichever separator yields more
+  // columns is the real one.
+  const sep = splitCsvLine(allLines[headerIdx], ';').length >
+              splitCsvLine(allLines[headerIdx], ',').length ? ';' : ',';
+  const header = splitCsvLine(allLines[headerIdx], sep);
   const keys = header.map(headerKey);
   const find = (candidates: string[]) => keys.findIndex((k) => k !== '' && candidates.includes(k));
 
@@ -177,8 +223,9 @@ export function parseSalaryFile(text: string): SalaryFileParse {
   }
 
   // The surname either has its own header, or — as in the real file — sits in
-  // the column right after the first name with a BLANK header.
-  let lastIdx = find(LAST_HEADERS);
+  // the column right after the first name with a BLANK header. Search for it
+  // AFTER the name column so "Nom" cannot be claimed as its own surname.
+  let lastIdx = keys.findIndex((k, i) => i > nameIdx && k !== '' && LAST_HEADERS.includes(k));
   if (lastIdx === -1 && keys[nameIdx + 1] === '') lastIdx = nameIdx + 1;
 
   const teamIdx = find(TEAM_HEADERS);
@@ -199,7 +246,7 @@ export function parseSalaryFile(text: string): SalaryFileParse {
       if (line.trim() !== '') skippedLines.push(i + 1);
       continue;
     }
-    const cells = splitCsvLine(line);
+    const cells = splitCsvLine(line, sep);
     const first = cleanNamePart(cells[nameIdx] ?? '');
     const last = lastIdx >= 0 ? cleanNamePart(cells[lastIdx] ?? '') : '';
     if (!first && !last) { skippedLines.push(i + 1); continue; }
