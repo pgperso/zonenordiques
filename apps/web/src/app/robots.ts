@@ -33,7 +33,18 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/admin/', '/login', '/register', '/reset-password', '/update-password'],
+        // next-intl uses localePrefix: 'always', so the real paths are
+        // /fr/login, /en/login … The unprefixed rules that used to be here
+        // matched nothing at all; only '/api/' was ever doing any work.
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/*/login',
+          '/*/register',
+          '/*/reset-password',
+          '/*/update-password',
+          '/*/vestiaire',
+        ],
       },
       // AI retrieval bots — allowed (needed for AI search citations).
       ...aiRetrieval.map((userAgent) => ({ userAgent, allow: '/' })),

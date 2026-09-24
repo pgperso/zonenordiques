@@ -41,7 +41,7 @@ describe('consumeRateLimit', () => {
     expect(mockRpc).not.toHaveBeenCalled();
   });
 
-  it('allows a hit within the limit and forwards the right RPC args', async () => {
+  it('namespaces the key by brand and forwards the right RPC args', async () => {
     const resetAt = new Date(Date.now() + 60_000).toISOString();
     mockRpc.mockResolvedValue({
       data: [{ allowed: true, remaining: 9, reset_at: resetAt }],
@@ -53,8 +53,11 @@ describe('consumeRateLimit', () => {
     expect(result.allowed).toBe(true);
     expect(result.remaining).toBe(9);
     expect(result.resetAt?.toISOString()).toBe(resetAt);
+    // The three brands share one rate_limits table, so the helper prefixes
+    // every key with BRAND.id. Without it, one brand's traffic exhausts the
+    // others' budgets — and the limiter fails closed, so that is a denial.
     expect(mockRpc).toHaveBeenCalledWith('consume_rate_limit', {
-      p_key: 'article-gen:user-1',
+      p_key: 'zonenordiques:article-gen:user-1',
       p_max: 10,
       p_window_seconds: 3600,
     });

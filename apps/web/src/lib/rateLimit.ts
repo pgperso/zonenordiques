@@ -1,6 +1,7 @@
 // Build-time guarantee this service-role module never reaches a Client Component.
 import 'server-only';
 import { createClient } from '@supabase/supabase-js';
+import { BRAND } from '@/lib/brand';
 
 // Distributed fixed-window rate limiting backed by the `rate_limits` table
 // and the `consume_rate_limit` RPC (migration 00065). Replaces the old
@@ -24,12 +25,22 @@ export interface RateLimitResult {
  * brute-force login surface, so on failure denying is the safe default —
  * and the routes that call this need Supabase anyway, so a Supabase outage
  * already breaks the request regardless of the limiter.
+ *
+ * Keys are namespaced by brand HERE rather than at each call site. The
+ * three sites share one `rate_limits` table, so an unprefixed key is one
+ * budget for all of them: a busy publishing hour on Zone Nordiques returned
+ * "capacité de génération atteinte" to Zone Expos creators, five newsletter
+ * signups from one office blocked signups on the other two sites, and — the
+ * sharp one — a brute-force attempt against one brand exhausted the login
+ * budget on the others, which fail closed, i.e. hard denial. Doing it in the
+ * helper means a new call site cannot forget.
  */
 export async function consumeRateLimit(
   key: string,
   max: number,
   windowSeconds: number,
 ): Promise<RateLimitResult> {
+  const brandKey = `${BRAND.id}:${key}`;
   const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceRoleKey) {
@@ -42,7 +53,7 @@ export async function consumeRateLimit(
     });
 
     const { data, error } = await admin.rpc('consume_rate_limit', {
-      p_key: key,
+      p_key: brandKey,
       p_max: max,
       p_window_seconds: windowSeconds,
     });

@@ -11,13 +11,19 @@ export const revalidate = 3600;
 const BASE_URL = BRAND.url;
 
 function withAlternates(path: string) {
+  // The home page is '/', which would otherwise yield '/fr/' and redirect.
+  const suffix = path === '/' ? '' : path;
   return {
-    url: `${BASE_URL}${path}`,
+    // The locale prefix belongs in <loc> too. next-intl runs with
+    // localePrefix: 'always', so `${BASE_URL}${path}` 307-redirects to the
+    // French version — Search Console reported the entire sitemap as "Page
+    // with redirect". French is the default, so it is the URL we submit.
+    url: `${BASE_URL}/fr${suffix}`,
     alternates: {
       languages: {
-        'fr-CA': `${BASE_URL}/fr${path}`,
-        'en-CA': `${BASE_URL}/en${path}`,
-        'x-default': `${BASE_URL}/fr${path}`,
+        'fr-CA': `${BASE_URL}/fr${suffix}`,
+        'en-CA': `${BASE_URL}/en${suffix}`,
+        'x-default': `${BASE_URL}/fr${suffix}`,
       },
     },
   };
