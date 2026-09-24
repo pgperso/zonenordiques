@@ -28,6 +28,9 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const [busy, setBusy] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [resolving, setResolving] = useState(false);
+  // Rosters only need refreshing once per visit; the sync is idempotent but
+  // it is 32 calls against a rate-limited public API.
+  const [rostersFresh, setRostersFresh] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function onFile(file: File) {
@@ -57,22 +60,32 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     setEncoding(enc);
     setFileName(file.name);
     setReport(null);
+
+    // Refresh the roster as soon as a file is chosen. It is the prerequisite
+    // for matching and the operator has no reason to know that, so asking
+    // them to remember it only produces a bad first report.
+    if (!rostersFresh) await syncRosters(true);
   }
 
   // The importer matches names against nhl_players, which the nightly sync
   // only fills with players seen in a boxscore. A prospect who has not dressed
   // yet is simply absent, and comes back as 'introuvable'. Pulling the 32
   // current rosters first is what makes a full snapshot match.
-  async function syncRosters() {
+  async function syncRosters(silent = false): Promise<boolean> {
     setSyncing(true);
     try {
       const res = await fetch('/api/pool/rosters', { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? 'Erreur inconnue');
-      toast.success(`${json.players} joueurs sur ${json.teams} équipes — relance l'analyse`);
-      setReport(null);
+      setRostersFresh(true);
+      if (!silent) {
+        toast.success(`${json.players} joueurs sur ${json.teams} équipes`);
+        setReport(null);
+      }
+      return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Échec de la synchronisation');
+      return false;
     } finally {
       setSyncing(false);
     }
@@ -152,17 +165,24 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-lg text-sm text-gray-600">
-            <strong>Avant un instantané complet :</strong> rafraîchis la liste des joueurs.
-            La synchro nocturne n’enregistre que les joueurs vus dans un match, donc les
-            espoirs qui n’ont pas encore joué sont absents et ressortent «&nbsp;introuvables&nbsp;».
+            {syncing ? (
+              <>Mise à jour de la liste des joueurs de la LNH…</>
+            ) : rostersFresh ? (
+              <><strong className="text-green-700">Alignements à jour.</strong> La liste des
+              joueurs de la LNH a été rafraîchie pour cette session.</>
+            ) : (
+              <>La liste des joueurs se met à jour automatiquement au chargement du fichier.
+              La synchro nocturne n’enregistre que les joueurs vus dans un match, donc sans
+              ce rafraîchissement les espoirs ressortent «&nbsp;introuvables&nbsp;».</>
+            )}
           </p>
           <button
             type="button"
-            onClick={() => void syncRosters()}
+            onClick={() => void syncRosters(false)}
             disabled={syncing}
             className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
           >
-            {syncing ? 'Synchronisation…' : 'Synchroniser les alignements LNH'}
+            {syncing ? 'Synchronisation…' : 'Resynchroniser maintenant'}
           </button>
         </div>
       </div>
@@ -226,10 +246,10 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
         <button
           type="button"
           onClick={() => void send(true)}
-          disabled={busy || !csv.trim()}
+          disabled={busy || syncing || !csv.trim()}
           className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
         >
-          {busy ? 'Analyse…' : 'Analyser sans écrire'}
+          {busy ? 'Analyse…' : syncing ? 'Alignements en cours…' : 'Analyser sans écrire'}
         </button>
         <button
           type="button"
