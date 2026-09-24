@@ -65,6 +65,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     // for matching and the operator has no reason to know that, so asking
     // them to remember it only produces a bad first report.
     if (!rostersFresh) await syncRosters(true);
+    await send(true, text);
   }
 
   // The importer matches names against nhl_players, which the nightly sync
@@ -80,7 +81,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       setRostersFresh(true);
       if (!silent) {
         toast.success(`${json.players} joueurs sur ${json.teams} équipes`);
-        setReport(null);
+        if (csv.trim()) await send(true);
       }
       return true;
     } catch (e) {
@@ -112,10 +113,10 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
       const left = json.report.stillMissing.length as number;
       toast.success(
         left > 0
-          ? `${added} joueurs ajoutés, ${left} toujours introuvables — relance l'analyse`
-          : `${added} joueurs ajoutés — relance l'analyse`,
+          ? `${added} joueurs ajoutés, ${left} toujours introuvables`
+          : `${added} joueurs ajoutés`,
       );
-      setReport(null);
+      await send(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Échec de la résolution');
     } finally {
@@ -123,7 +124,9 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     }
   }
 
-  async function send(dryRun: boolean) {
+  async function send(dryRun: boolean, csvOverride?: string) {
+    const text = csvOverride ?? csv;
+    if (!text.trim()) return;
     setBusy(true);
     try {
       const res = await fetch('/api/pool/salaries', {
@@ -131,7 +134,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           seasonId,
-          csv,
+          csv: text,
           dryRun,
           fullSnapshot,
         }),
@@ -219,6 +222,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           value={csv}
           onChange={(e) => { setCsv(e.target.value); setReport(null); setFileName(null); setEncoding(null); }}
           rows={6}
+          onBlur={() => { if (csv.trim() && !report) void send(true); }}
           placeholder="#,Nom,,Âge,Équ.,Pos,PJ,B,P,Pts,PPP,CapH"
           className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs"
         />
@@ -249,7 +253,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           disabled={busy || syncing || !csv.trim()}
           className="rounded-md border border-gray-300 px-4 py-2 text-sm font-semibold hover:bg-gray-50 disabled:opacity-50"
         >
-          {busy ? 'Analyse…' : syncing ? 'Alignements en cours…' : 'Analyser sans écrire'}
+          {busy ? 'Analyse…' : syncing ? 'Alignements en cours…' : 'Réanalyser'}
         </button>
         <button
           type="button"
