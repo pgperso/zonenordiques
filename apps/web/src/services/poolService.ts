@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { parseSalaryFile, type SalaryFileLayout } from '@/lib/poolSalaryFile';
+import { normalizeTeamAbbrev } from '@/lib/nhlTeamAliases';
 import type { Database } from '@arena/supabase-client';
 import { poolPosition } from './nhlService';
 
@@ -782,6 +784,14 @@ export interface SalaryCsvRow {
   name: string;
   team: string;
   capHit: string;
+  /** Set by parseSalaryFile, which knows the column's unit. Takes precedence
+   *  over parsing `capHit` here: '12.50' means 12.5 MILLION in the real file,
+   *  and parseMoneyCents would read it as twelve dollars fifty. */
+  capHitCents?: number | null;
+  /** Projected points from the same spreadsheet, when present. */
+  projPoints?: number | null;
+  /** 1-based line in the source file, for error messages. */
+  line?: number;
 }
 
 /** Parse CSV text into rows. Accepts headers: name/player, team, cap_hit/salary. */
@@ -807,7 +817,7 @@ export interface MatchablePlayer {
 }
 
 export interface SalaryMatchResult {
-  matched: Array<{ playerId: number; priceCents: number; position: PoolPosition; name: string }>;
+  matched: Array<{ playerId: number; priceCents: number; position: PoolPosition; name: string; projPoints: number | null }>;
   unmatched: SalaryCsvRow[];
   ambiguous: Array<{ row: SalaryCsvRow; candidates: number }>;
   invalidPrice: SalaryCsvRow[];
@@ -831,7 +841,7 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
     const nf = normalizeName(p.fullName);
     push(byFull, nf, p);
     const last = nf.split(' ').slice(1).join(' ');
-    if (last) push(byLastTeam, `${last}|${(p.teamAbbrev ?? '').toUpperCase()}`, p);
+    if (last) push(byLastTeam, `${last}|${normalizeTeamAbbrev(p.teamAbbrev)}`, p);
   }
 
   const res: SalaryMatchResult = { matched: [], unmatched: [], ambiguous: [], invalidPrice: [] };
@@ -847,19 +857,21 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
   for (const r of rows) nameCount.set(normOf(r.name), (nameCount.get(normOf(r.name)) ?? 0) + 1);
 
   for (const row of rows) {
-    const priceCents = parseMoneyCents(row.capHit);
+    // The file reader already scaled by the detected unit; fall back to
+    // parsing the raw string only for callers that did not go through it.
+    const priceCents = row.capHitCents ?? parseMoneyCents(row.capHit);
     if (priceCents === null || priceCents <= 0) {
       res.invalidPrice.push(row);
       continue;
     }
     const norm = normOf(row.name);
-    const team = row.team.trim().toUpperCase();
+    const team = normalizeTeamAbbrev(row.team);
     const isHomonym = (nameCount.get(norm) ?? 0) > 1 || (byFull.get(norm)?.length ?? 0) > 1;
 
     let candidates = byFull.get(norm) ?? [];
     if (isHomonym) {
       // Disambiguate strictly by team; no team match → don't guess.
-      candidates = team ? candidates.filter((c) => (c.teamAbbrev ?? '').toUpperCase() === team) : [];
+      candidates = team ? candidates.filter((c) => normalizeTeamAbbrev(c.teamAbbrev) === team) : [];
     } else if (candidates.length === 0) {
       const last = norm.split(' ').slice(1).join(' ');
       candidates = byLastTeam.get(`${last}|${team}`) ?? [];
@@ -872,6 +884,7 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
         priceCents,
         position: poolPosition(p.position),
         name: p.fullName,
+        projPoints: row.projPoints ?? null,
       });
     } else if (candidates.length > 1) {
       res.ambiguous.push({ row, candidates: candidates.length });
@@ -889,6 +902,16 @@ export interface SalaryImportReport {
   ambiguous: Array<{ row: SalaryCsvRow; candidates: number }>;
   invalidPrice: SalaryCsvRow[];
   budgetCents: number | null;
+  /** What the reader detected: which columns, and the salary unit. */
+  layout: SalaryFileLayout;
+  /** Team codes in the file that match no NHL club. */
+  unknownTeams: string[];
+  /** Lines skipped as blank or separator rows. */
+  skippedLines: number[];
+  /** True when nothing was written (preview mode). */
+  dryRun: boolean;
+  /** Sample of matched rows, for the preview table. */
+  sample: Array<{ name: string; priceCents: number; position: PoolPosition; projPoints: number | null }>;
 }
 
 /**
@@ -907,10 +930,25 @@ export async function importSalaries(
   client: AnyClient,
   seasonId: number,
   csvText: string,
-  opts: { budgetCents?: number; fullSnapshot?: boolean } = {},
+  opts: { budgetCents?: number; fullSnapshot?: boolean; dryRun?: boolean } = {},
 ): Promise<SalaryImportReport> {
   const db = client as unknown as Db;
-  const rows = parseSalaryCsv(csvText);
+  const parsed = parseSalaryFile(csvText);
+  const rows: SalaryCsvRow[] = parsed.rows.map((r) => ({
+    name: r.name,
+    team: r.team,
+    capHit: '',
+    capHitCents: r.capHitCents,
+    projPoints: r.projPoints,
+    line: r.line,
+  }));
+
+  // Refuse rather than guess: a salary column we could not denominate would
+  // write every price out by a factor of a million, and nothing downstream
+  // would flag it.
+  if (parsed.layout.capUnit === 'unknown') {
+    throw new Error(`Colonne de salaire illisible : ${parsed.layout.capUnitReason}`);
+  }
 
   const { data: playersData } = await db.from('nhl_players').select('player_id, full_name, team_abbrev, position');
   const players: MatchablePlayer[] = (
@@ -928,7 +966,7 @@ export async function importSalaries(
   }));
   const result = matchSalaryRows(players, rows);
 
-  if (opts.fullSnapshot) {
+  if (opts.fullSnapshot && !opts.dryRun) {
     await db.from('pool_player_prices').update({ is_draftable: false }).eq('season_id', seasonId);
   }
 
@@ -940,19 +978,21 @@ export async function importSalaries(
   for (const m of result.matched) byPlayer.set(m.playerId, m);
   const deduped = [...byPlayer.values()];
 
-  if (deduped.length > 0) {
+  if (deduped.length > 0 && !opts.dryRun) {
     const priceRows = deduped.map((m) => ({
       season_id: seasonId,
       player_id: m.playerId,
       price_cents: m.priceCents,
       position: m.position,
       is_draftable: true,
+      // The same spreadsheet carries the projection the value sort uses.
+      ...(m.projPoints !== null ? { proj_points: m.projPoints } : {}),
     }));
     const { error } = await db.from('pool_player_prices').upsert(priceRows, { onConflict: 'season_id,player_id' });
     if (error) throw new Error(`upsert prices: ${error.message}`);
   }
 
-  if (opts.budgetCents) {
+  if (opts.budgetCents && !opts.dryRun) {
     await db.from('pool_seasons').update({ budget_cents: opts.budgetCents }).eq('id', seasonId);
   }
 
@@ -963,5 +1003,15 @@ export async function importSalaries(
     ambiguous: result.ambiguous,
     invalidPrice: result.invalidPrice,
     budgetCents: opts.budgetCents ?? null,
+    layout: parsed.layout,
+    unknownTeams: parsed.unknownTeams,
+    skippedLines: parsed.skippedLines,
+    dryRun: Boolean(opts.dryRun),
+    sample: deduped.slice(0, 8).map((m) => ({
+      name: m.name,
+      priceCents: m.priceCents,
+      position: m.position,
+      projPoints: m.projPoints,
+    })),
   };
 }

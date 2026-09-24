@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { SCORING_CATALOG, type PoolSeason, type ScoringRule } from '@/services/poolService';
+import { SalaryImportSection } from './SalaryImportSection';
 
 const M = 100_000_000; // cents per 1 M$
 
@@ -130,6 +131,8 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
           {saving ? 'Enregistrement…' : 'Enregistrer'}
         </button>
       </div>
+
+      <SalaryImportSection seasonId={season.id} cardCls={cardCls} />
 
       {/* Season config */}
       <section className={cardCls}>

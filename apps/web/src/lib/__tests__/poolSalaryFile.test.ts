@@ -1,0 +1,134 @@
+import { describe, it, expect } from 'vitest';
+import { parseSalaryFile } from '../poolSalaryFile';
+import { normalizeTeamAbbrev, isKnownTeamAbbrev } from '../nhlTeamAliases';
+
+// The header and rows below are copied verbatim from the operator's export,
+// including the unnamed surname column and the all-commas separator row.
+const REAL_FILE = [
+  '#,Nom,,Âge,Équ.,Pos,PJ,B,P,Pts,PPP,CapH',
+  '1,Connor,McDavid,29,Edm,C,82,44,91,135,1.65,12.50',
+  '2,Nikita,Kucherov,33,TB,RW,79,44,90,134,1.70,9.50',
+  '3,Nathan,MacKinnon,31,Col,C,82,51,80,131,1.60,12.60',
+  '4,Macklin,Celebrini,20,SJ,C,83,43,68,111,1.34,0.98',
+  '7,Mark,Scheifele,33,Win,C,83,37,64,101,1.22,8.50',
+  ',,,,,,,,,,,',
+  '10,Jason,Robertson,27,Dal,LW,84,43,51,94,1.12,12.00',
+].join('\n');
+
+describe('parseSalaryFile — the operator’s real export', () => {
+  const parsed = parseSalaryFile(REAL_FILE);
+
+  it('joins the first name and the unnamed surname column', () => {
+    expect(parsed.layout.nameColumns).toBe('split');
+    expect(parsed.rows.map((r) => r.name)).toEqual([
+      'Connor McDavid',
+      'Nikita Kucherov',
+      'Nathan MacKinnon',
+      'Macklin Celebrini',
+      'Mark Scheifele',
+      'Jason Robertson',
+    ]);
+  });
+
+  it('reads CapH as millions, not dollars', () => {
+    // The whole point: 12.50 is $12.5M. Read literally it would be $12.50,
+    // and every price in the pool would be a millionth of the truth.
+    expect(parsed.layout.capUnit).toBe('millions');
+    expect(parsed.rows[0].capHitCents).toBe(1_250_000_000); // 12.50M = $12,500,000
+    expect(parsed.rows[3].capHitCents).toBe(98_000_000); //    0.98M = $980,000
+  });
+
+  it('normalizes the spreadsheet’s team codes to the NHL’s', () => {
+    expect(parsed.rows.map((r) => r.team)).toEqual([
+      'EDM', 'TBL', 'COL', 'SJS', 'WPG', 'DAL',
+    ]);
+    expect(parsed.unknownTeams).toEqual([]);
+  });
+
+  it('keeps the position and the projection', () => {
+    expect(parsed.rows[0].position).toBe('C');
+    expect(parsed.rows[0].projPoints).toBe(135);
+    expect(parsed.layout.projHeader).toBe('Pts');
+  });
+
+  it('skips the all-commas separator row and reports the line number', () => {
+    expect(parsed.rows).toHaveLength(6);
+    expect(parsed.skippedLines).toContain(7);
+    expect(parsed.rows[0].line).toBe(2);
+  });
+
+  it('records which headers it matched', () => {
+    expect(parsed.layout.nameHeader).toBe('Nom');
+    expect(parsed.layout.teamHeader).toBe('Équ.');
+    expect(parsed.layout.capHeader).toBe('CapH');
+  });
+});
+
+describe('parseSalaryFile — other shapes', () => {
+  it('still reads a plain name/team/salary file in dollars', () => {
+    const parsed = parseSalaryFile(
+      'name,team,cap_hit\nConnor McDavid,EDM,12500000\nCale Makar,COL,9000000',
+    );
+    expect(parsed.layout.nameColumns).toBe('single');
+    expect(parsed.layout.capUnit).toBe('dollars');
+    expect(parsed.rows[0].capHitCents).toBe(1_250_000_000);
+  });
+
+  it('refuses to denominate an ambiguous column', () => {
+    // 5000 is neither a plausible millions figure nor a plausible salary.
+    const parsed = parseSalaryFile('name,team,salary\nX Y,EDM,5000');
+    expect(parsed.layout.capUnit).toBe('unknown');
+    expect(parsed.rows[0].capHitCents).toBeNull();
+  });
+
+  it('reports an unrecognised team instead of guessing', () => {
+    const parsed = parseSalaryFile('name,team,cap_hit\nX Y,ZZZ,1000000');
+    expect(parsed.unknownTeams).toEqual(['ZZZ']);
+  });
+
+  it('returns nothing useful when there is no name column', () => {
+    const parsed = parseSalaryFile('a,b,c\n1,2,3');
+    expect(parsed.rows).toEqual([]);
+  });
+
+  it('tolerates a UTF-8 BOM and CRLF line endings', () => {
+    const parsed = parseSalaryFile('﻿name,team,cap_hit\r\nConnor McDavid,EDM,12500000\r\n');
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.rows[0].name).toBe('Connor McDavid');
+  });
+});
+
+describe('normalizeTeamAbbrev', () => {
+  it('maps the spreadsheet short forms', () => {
+    expect(normalizeTeamAbbrev('TB')).toBe('TBL');
+    expect(normalizeTeamAbbrev('SJ')).toBe('SJS');
+    expect(normalizeTeamAbbrev('Win')).toBe('WPG');
+    expect(normalizeTeamAbbrev('LA')).toBe('LAK');
+    expect(normalizeTeamAbbrev('NJ')).toBe('NJD');
+  });
+
+  it('upper-cases codes that are already correct', () => {
+    expect(normalizeTeamAbbrev('Edm')).toBe('EDM');
+    expect(normalizeTeamAbbrev('mtl')).toBe('MTL');
+  });
+
+  it('strips punctuation', () => {
+    expect(normalizeTeamAbbrev('T.B.')).toBe('TBL');
+  });
+
+  it('maps the former Arizona codes to Utah', () => {
+    expect(normalizeTeamAbbrev('ARI')).toBe('UTA');
+    expect(normalizeTeamAbbrev('PHX')).toBe('UTA');
+  });
+
+  it('returns an unknown code unchanged rather than guessing', () => {
+    expect(normalizeTeamAbbrev('ZZZ')).toBe('ZZZ');
+    expect(isKnownTeamAbbrev('ZZZ')).toBe(false);
+    expect(isKnownTeamAbbrev('TB')).toBe(true);
+  });
+
+  it('handles blank input', () => {
+    expect(normalizeTeamAbbrev('')).toBe('');
+    expect(normalizeTeamAbbrev(null)).toBe('');
+  });
+});
