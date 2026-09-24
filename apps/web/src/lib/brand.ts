@@ -24,6 +24,26 @@ function s(value: string | undefined, fallback: string): string {
   return value && value.trim() ? value.trim() : fallback;
 }
 
+/**
+ * Same as `s()` for colours, but tolerates a hex value written without the
+ * leading '#'.
+ *
+ * Deployment configs travel through .env-shaped text more often than not —
+ * a pasted block in the Vercel dashboard, a `vercel env pull`, a compose
+ * file. In that syntax '#' opens a comment, so `COLOR=#0B3D2E` silently
+ * becomes an empty value and the brand quietly renders in another brand's
+ * colours. That happened on the CFL Québec deployment and is invisible
+ * until someone eyeballs the site, because falling back is not an error.
+ *
+ * Accepting a bare `0B3D2E` removes the hazard without weakening anything:
+ * a 3/6/8-digit hex body is unambiguous, and any other shape is passed
+ * through untouched so named colours and rgb()/oklch() still work.
+ */
+function color(value: string | undefined, fallback: string): string {
+  const v = s(value, fallback);
+  return /^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$|^[0-9a-fA-F]{8}$/.test(v) ? `#${v}` : v;
+}
+
 const domain = s(process.env.NEXT_PUBLIC_BRAND_DOMAIN, 'zonenordiques.com');
 const url = s(process.env.NEXT_PUBLIC_BRAND_URL, `https://${domain}`);
 const name = s(process.env.NEXT_PUBLIC_BRAND_NAME, 'Zone Nordiques');
@@ -70,13 +90,13 @@ export const BRAND = {
   // Keys stay blue/orange for legacy call sites; values are the brand's
   // primary / accent colours (Expos would set its own hexes via env).
   colors: {
-    blue: s(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY, '#003E7E'),
-    blueDark: s(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_DARK, '#002B57'),
-    blueLight: s(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_LIGHT, '#6CACE4'),
-    orange: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT, '#E4002B'),
-    orangeDark: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_DARK, '#B8001F'),
-    orangeLight: s(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_LIGHT, '#F04A5F'),
+    blue: color(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY, '#003E7E'),
+    blueDark: color(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_DARK, '#002B57'),
+    blueLight: color(process.env.NEXT_PUBLIC_BRAND_COLOR_PRIMARY_LIGHT, '#6CACE4'),
+    orange: color(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT, '#E4002B'),
+    orangeDark: color(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_DARK, '#B8001F'),
+    orangeLight: color(process.env.NEXT_PUBLIC_BRAND_COLOR_ACCENT_LIGHT, '#F04A5F'),
     white: '#FFFFFF',
-    background: s(process.env.NEXT_PUBLIC_BRAND_COLOR_BACKGROUND, '#F7FAFC'),
+    background: color(process.env.NEXT_PUBLIC_BRAND_COLOR_BACKGROUND, '#F7FAFC'),
   },
 } as const;
