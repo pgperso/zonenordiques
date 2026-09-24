@@ -49,7 +49,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
   const { locale } = await params;
   setRequestLocale(locale);
   const isFr = locale === 'fr';
-  const lastUpdated = isFr ? 'Dernière mise à jour : 17 avril 2026' : 'Last updated: April 17, 2026';
+  // Legal text must name the brand the visitor is actually on: the same
+  // codebase serves several sites off one database.
+  const brandName = isFr ? BRAND.name : BRAND.nameEn;
+  const lastUpdated = isFr ? 'Dernière mise à jour : 24 septembre 2026' : 'Last updated: September 24, 2026';
 
   return (
     <div className="flex flex-1 min-h-0 flex-col px-4 py-8 md:py-12">
@@ -65,10 +68,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  La présente politique de confidentialité explique comment <strong>Zone Nordiques</strong>{' '}
-                  (« nous », « notre », « Zone Nordiques ») collecte, utilise, conserve, partage et protège
+                  La présente politique de confidentialité explique comment <strong>{brandName}</strong>{' '}
+                  (« nous », « notre », « {brandName} ») collecte, utilise, conserve, partage et protège
                   vos renseignements personnels lorsque vous utilisez le site{' '}
-                  <strong>zonenordiques.com</strong> et les services associés.
+                  <strong>{BRAND.domain}</strong> et les services associés.
                 </p>
                 <p>
                   Nous opérons depuis le Québec, Canada, et nous nous conformons à la{' '}
@@ -81,16 +84,16 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 </p>
                 <p>
                   Nous vous encourageons à lire cette politique attentivement. En utilisant
-                  zonenordiques.com, vous acceptez les pratiques décrites ici. Si vous n&apos;êtes pas
+                  {BRAND.domain}, vous acceptez les pratiques décrites ici. Si vous n&apos;êtes pas
                   d&apos;accord avec cette politique, merci de ne pas utiliser la plateforme.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
                 <p>
-                  This privacy policy explains how <strong>Zone Nordiques</strong> (&quot;we&quot;, &quot;our&quot;,
-                  &quot;Zone Nordiques&quot;) collects, uses, retains, shares, and protects your personal
-                  information when you use the <strong>zonenordiques.com</strong> website and related services.
+                  This privacy policy explains how <strong>{brandName}</strong> (&quot;we&quot;, &quot;our&quot;,
+                  &quot;{brandName}&quot;) collects, uses, retains, shares, and protects your personal
+                  information when you use the <strong>{BRAND.domain}</strong> website and related services.
                 </p>
                 <p>
                   We operate from Quebec, Canada, and comply with Quebec&apos;s{' '}
@@ -101,7 +104,7 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                   for European visitors.
                 </p>
                 <p>
-                  We encourage you to read this policy carefully. By using zonenordiques.com, you accept
+                  We encourage you to read this policy carefully. By using {BRAND.domain}, you accept
                   the practices described here. If you do not agree with this policy, please do not use
                   the platform.
                 </p>
@@ -129,8 +132,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                   </li>
                   <li>
                     <strong>Courriel&nbsp;:</strong>{' '}
-                    <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                      info@zonenordiques.com
+                    <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                      {BRAND.email}
                     </a>
                   </li>
                 </ul>
@@ -155,8 +158,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                   </li>
                   <li>
                     <strong>Email:</strong>{' '}
-                    <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                      info@zonenordiques.com
+                    <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                      {BRAND.email}
                     </a>
                   </li>
                 </ul>
@@ -168,10 +171,72 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 2. Data collected */}
+          {/* 2. One account across our sites */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '2. Renseignements que nous collectons' : '2. Information We Collect'}
+              {isFr ? '2. Un compte, plusieurs sites' : '2. One Account, Several Sites'}
+            </h2>
+            {isFr ? (
+              <div className="space-y-3">
+                <p>
+                  {brandName} fait partie d&apos;une famille de sites d&apos;actualité sportive
+                  exploités par la même personne, chacun consacré à un sport différent. Ces sites
+                  partagent <strong>une seule base de membres</strong> : le compte que vous créez
+                  sur l&apos;un d&apos;eux vous identifie sur tous les autres.
+                </p>
+                <p>
+                  Concrètement, votre adresse courriel, votre pseudonyme, votre avatar et votre
+                  mot de passe sont enregistrés une seule fois et vous permettent de vous connecter
+                  partout, sans créer de nouveau compte. Vos commentaires, articles et messages
+                  publiés restent quant à eux rattachés au site où vous les avez publiés.
+                </p>
+                <p>
+                  Il ne s&apos;agit pas d&apos;une communication à un tiers : le même responsable du
+                  traitement demeure seul détenteur de vos renseignements, et la présente politique
+                  s&apos;applique de façon identique à chacun des sites. Aucune donnée n&apos;est
+                  transmise à une autre entreprise du fait de ce partage.
+                </p>
+                <p>
+                  Les conséquences sont les mêmes partout : une demande de suppression de compte
+                  supprime votre compte sur l&apos;ensemble des sites, et un bannissement prononcé
+                  sur un site s&apos;applique aux autres. Si vous souhaitez être présent sur un seul
+                  site, il n&apos;est pas nécessaire de visiter les autres — mais votre compte y
+                  existera techniquement.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p>
+                  {brandName} is part of a family of sports news sites operated by the same person,
+                  each devoted to a different sport. These sites share{' '}
+                  <strong>a single member database</strong>: the account you create on one of them
+                  identifies you on all the others.
+                </p>
+                <p>
+                  In practice, your email address, username, avatar and password are stored once and
+                  let you sign in everywhere without creating another account. The comments,
+                  articles and messages you publish, by contrast, stay attached to the site where
+                  you published them.
+                </p>
+                <p>
+                  This is not a disclosure to a third party: the same controller remains the sole
+                  holder of your information, and this policy applies identically to each site. No
+                  data is passed to another company as a result of this sharing.
+                </p>
+                <p>
+                  The consequences are the same everywhere: a request to delete your account deletes
+                  it across all of the sites, and a ban issued on one site applies to the others. If
+                  you only want a presence on a single site, you need not visit the others — but
+                  your account will technically exist there.
+                </p>
+              </div>
+            )}
+          </section>
+
+          {/* 3. Data collected */}
+          <section>
+            <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
+              {isFr ? '3. Renseignements que nous collectons' : '3. Information We Collect'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -253,10 +318,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 3. Purpose and legal basis */}
+          {/* 4. Purpose and legal basis */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '3. Finalités et base légale du traitement' : '3. Purposes and Legal Basis for Processing'}
+              {isFr ? '4. Finalités et base légale du traitement' : '4. Purposes and Legal Basis for Processing'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -323,10 +388,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 4. Cookies */}
+          {/* 5. Cookies */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '4. Cookies et technologies similaires' : '4. Cookies and Similar Technologies'}
+              {isFr ? '5. Cookies et technologies similaires' : '5. Cookies and Similar Technologies'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -415,10 +480,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 5. Subprocessors */}
+          {/* 6. Subprocessors */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '5. Sous-traitants et destinataires des données' : '5. Subprocessors and Data Recipients'}
+              {isFr ? '6. Sous-traitants et destinataires des données' : '6. Subprocessors and Data Recipients'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -489,10 +554,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 6. Transfers outside Quebec */}
+          {/* 7. Transfers outside Quebec */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '6. Transferts de données hors Québec' : '6. Transfers of Data Outside Quebec'}
+              {isFr ? '7. Transferts de données hors Québec' : '7. Transfers of Data Outside Quebec'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -511,8 +576,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 <p>
                   Vous pouvez, à tout moment, demander de plus amples renseignements sur les transferts
                   réalisés et les garanties appliquées en écrivant à{' '}
-                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                    info@zonenordiques.com
+                  <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                    {BRAND.email}
                   </a>
                   .
                 </p>
@@ -533,8 +598,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 <p>
                   You may, at any time, request further information about transfers and the safeguards
                   applied by writing to{' '}
-                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                    info@zonenordiques.com
+                  <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                    {BRAND.email}
                   </a>
                   .
                 </p>
@@ -542,10 +607,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 7. Retention */}
+          {/* 8. Retention */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '7. Durée de conservation' : '7. Retention Period'}
+              {isFr ? '8. Durée de conservation' : '8. Retention Period'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -612,10 +677,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 8. Your rights */}
+          {/* 9. Your rights */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '8. Vos droits' : '8. Your Rights'}
+              {isFr ? '9. Vos droits' : '9. Your Rights'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -673,8 +738,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 </ul>
                 <p>
                   Pour exercer ces droits, écrivez à{' '}
-                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                    info@zonenordiques.com
+                  <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                    {BRAND.email}
                   </a>
                   . Nous pourrons vous demander une preuve d&apos;identité raisonnable pour protéger
                   votre compte. Nous répondons dans un délai maximal de 30 jours.
@@ -734,8 +799,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 </ul>
                 <p>
                   To exercise these rights, write to{' '}
-                  <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                    info@zonenordiques.com
+                  <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                    {BRAND.email}
                   </a>
                   . We may ask for reasonable proof of identity to protect your account. We respond
                   within a maximum of 30 days.
@@ -744,10 +809,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 9. Security */}
+          {/* 10. Security */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '9. Sécurité' : '9. Security'}
+              {isFr ? '10. Sécurité' : '10. Security'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -797,17 +862,17 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 10. Children */}
+          {/* 11. Children */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '10. Protection des mineurs' : '10. Protection of Minors'}
+              {isFr ? '11. Protection des mineurs' : '11. Protection of Minors'}
             </h2>
             {isFr ? (
               <p>
                 Notre plateforme n&apos;est pas destinée aux enfants de moins de 13 ans. Nous ne
                 collectons pas sciemment de renseignements personnels auprès d&apos;enfants de moins de
                 13 ans. Si vous êtes parent ou tuteur et que vous découvrez que votre enfant nous a
-                fourni des renseignements sans votre consentement, écrivez à info@zonenordiques.com et
+                fourni des renseignements sans votre consentement, écrivez à {BRAND.email} et
                 nous supprimerons ces informations dans les meilleurs délais.
               </p>
             ) : (
@@ -815,15 +880,15 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
                 Our platform is not intended for children under 13. We do not knowingly collect personal
                 information from children under 13. If you are a parent or guardian and become aware
                 that your child has provided information without your consent, please write to
-                info@zonenordiques.com and we will promptly delete the information.
+                {BRAND.email} and we will promptly delete the information.
               </p>
             )}
           </section>
 
-          {/* 11. Advertising — AdSense */}
+          {/* 12. Advertising — AdSense */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '11. Publicité — Google AdSense' : '11. Advertising — Google AdSense'}
+              {isFr ? '12. Publicité — Google AdSense' : '12. Advertising — Google AdSense'}
             </h2>
             {isFr ? (
               <div className="space-y-3">
@@ -930,10 +995,10 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 12. Changes */}
+          {/* 13. Changes */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '12. Modifications de la politique' : '12. Changes to This Policy'}
+              {isFr ? '13. Modifications de la politique' : '13. Changes to This Policy'}
             </h2>
             {isFr ? (
               <p>
@@ -954,18 +1019,18 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
             )}
           </section>
 
-          {/* 13. Contact */}
+          {/* 14. Contact */}
           <section>
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100">
-              {isFr ? '13. Nous contacter' : '13. Contact Us'}
+              {isFr ? '14. Nous contacter' : '14. Contact Us'}
             </h2>
             {isFr ? (
               <p>
                 Pour toute question concernant cette politique de confidentialité ou pour exercer vos
                 droits, contactez notre responsable de la protection des renseignements personnels
                 à{' '}
-                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                  info@zonenordiques.com
+                <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                  {BRAND.email}
                 </a>
                 . Consultez également nos{' '}
                 <a href={`/${locale}/mentions-legales`} className="text-red-600 hover:underline font-medium">
@@ -977,8 +1042,8 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
               <p>
                 For any question about this privacy policy or to exercise your rights, contact our
                 privacy officer at{' '}
-                <a href="mailto:info@zonenordiques.com" className="text-red-600 hover:underline font-medium">
-                  info@zonenordiques.com
+                <a href={`mailto:${BRAND.email}`} className="text-red-600 hover:underline font-medium">
+                  {BRAND.email}
                 </a>
                 . Also see our{' '}
                 <a href={`/${locale}/mentions-legales`} className="text-red-600 hover:underline font-medium">

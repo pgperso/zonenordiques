@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  // Bare — the root title template appends "| Zone Nordiques" once.
+  // Bare — the root title template appends "| {brandName}" once.
   title: 'À propos',
   description:
     `Découvrez ${BRAND.name} (${BRAND.nameEn}), la plateforme communautaire bilingue pour les fans de sport. Chat tribunes, articles, podcasts, jauges de confiance et plus encore.`,
@@ -33,6 +33,9 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   setRequestLocale(locale);
 
   const isFr = locale === 'fr';
+  // Legal text must name the brand the visitor is actually on: the same
+  // codebase serves several sites off one database.
+  const brandName = isFr ? BRAND.name : BRAND.nameEn;
 
   return (
     <div className="flex flex-1 min-h-0 flex-col px-4 py-8 md:py-12">
@@ -40,18 +43,18 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
         {/* Main content */}
         <article className="flex-1 min-w-0">
           <h1 className="mb-6 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
-            {isFr ? 'À propos de Zone Nordiques' : 'About Zone Nordiques'}
+            {isFr ? `À propos de ${BRAND.name}` : `About ${BRAND.nameEn}`}
           </h1>
 
           {/* Section 1: What is it */}
           <section className="mb-8">
             <h2 className="mb-3 text-xl font-semibold text-gray-900 dark:text-gray-100 md:text-2xl">
-              {isFr ? 'Qu\'est-ce que Zone Nordiques\u00a0?' : 'What is Zone Nordiques?'}
+              {isFr ? `Qu\u2019est-ce que ${BRAND.name}\u00a0?` : `What is ${BRAND.nameEn}?`}
             </h2>
             {isFr ? (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  <strong>Zone Nordiques</strong> est une plateforme communautaire en ligne
+                  <strong>{brandName}</strong> est une plateforme communautaire en ligne
                   dédiée aux passionnés de sport. Que vous soyez fan de hockey, de football, de soccer,
                   de basketball ou de tout autre sport, vous trouverez ici un espace pour partager votre
                   passion avec d&apos;autres fans.
@@ -65,7 +68,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  <strong>Zone Nordiques</strong> is an online community platform
+                  <strong>{brandName}</strong> is an online community platform
                   dedicated to sports enthusiasts. Whether you&apos;re a fan of hockey, football, soccer,
                   basketball, or any other sport, you&apos;ll find a space here to share your passion with
                   other fans.
@@ -149,7 +152,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                   share their passion, and connect with other enthusiasts.
                 </p>
                 <p>
-                  We believe in a respectful, inclusive, and passionate community. Zone Nordiques is a
+                  We believe in a respectful, inclusive, and passionate community. {brandName} is a
                   place where sports debates are encouraged, where diverse opinions are welcome, and
                   where mutual respect is the norm.
                 </p>
@@ -165,27 +168,27 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  Zone Nordiques a été fondée par <strong>Pascal Grenon</strong>, connu sous le
+                  {brandName} a été fondée par <strong>Pascal Grenon</strong>, connu sous le
                   pseudonyme <strong>QcFan</strong>. Fan de sport passionné depuis toujours, Pascal a
                   créé cette plateforme pour offrir aux fans un espace moderne et convivial pour
                   échanger sur leurs équipes et sports favoris.
                 </p>
                 <p>
                   L&apos;idée est née du constat qu&apos;il manquait une plateforme communautaire bilingue
-                  dédiée aux fans de sport au Québec et au Canada. Zone Nordiques comble ce
+                  dédiée aux fans de sport au Québec et au Canada. {brandName} comble ce
                   vide en offrant une expérience riche et engageante.
                 </p>
               </div>
             ) : (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  Zone Nordiques was founded by <strong>Pascal Grenon</strong>, known by the username{' '}
+                  {brandName} was founded by <strong>Pascal Grenon</strong>, known by the username{' '}
                   <strong>QcFan</strong>. A lifelong passionate sports fan, Pascal created this platform
                   to offer fans a modern and friendly space to discuss their favorite teams and sports.
                 </p>
                 <p>
                   The idea was born from the observation that there was a lack of a bilingual community
-                  platform dedicated to sports fans in Quebec and Canada. Zone Nordiques fills this gap
+                  platform dedicated to sports fans in Quebec and Canada. {brandName} fills this gap
                   by offering a rich and engaging experience.
                 </p>
               </div>
@@ -200,7 +203,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             {isFr ? (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  Zone Nordiques est construite avec des technologies web modernes de pointe pour
+                  {brandName} est construite avec des technologies web modernes de pointe pour
                   offrir une expérience rapide, fiable et agréable. Notre plateforme utilise les
                   dernières avancées en développement web pour garantir des performances optimales
                   sur tous les appareils — ordinateurs, tablettes et téléphones mobiles.
@@ -214,7 +217,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
             ) : (
               <div className="space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
                 <p>
-                  Zone Nordiques is built with cutting-edge modern web technologies to deliver a fast,
+                  {brandName} is built with cutting-edge modern web technologies to deliver a fast,
                   reliable, and enjoyable experience. Our platform uses the latest advances in web
                   development to ensure optimal performance across all devices — computers, tablets,
                   and mobile phones.
@@ -238,10 +241,10 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
                 ? 'Vous avez des questions ou des suggestions\u00a0? N\'hésitez pas à nous écrire à '
                 : 'Have questions or suggestions? Feel free to reach out at '}
               <a
-                href="mailto:info@zonenordiques.com"
+                href={`mailto:${BRAND.email}`}
                 className="text-red-600 hover:underline font-medium"
               >
-                info@zonenordiques.com
+                {BRAND.email}
               </a>
             </p>
           </section>

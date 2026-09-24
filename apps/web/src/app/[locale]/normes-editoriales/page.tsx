@@ -99,7 +99,7 @@ function FrenchContent() {
     <article className="prose max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-a:text-brand-blue">
       <h2>Notre mission</h2>
       <p>
-        Zone Nordiques publie des analyses, opinions et chroniques sportives écrites par des
+        {BRAND.name} publie des analyses, opinions et chroniques sportives écrites par des
         passionnés du Québec et du Canada. Nous croyons que les meilleurs commentaires sur le sport
         viennent souvent de fans engagés et informés, complémentaires aux médias traditionnels.
       </p>
@@ -108,7 +108,7 @@ function FrenchContent() {
       <p>
         Nos contributeurs sont des fans, des chroniqueurs indépendants et des collaborateurs invités.
         Chaque article est signé par un auteur identifiable, avec sa biographie et son historique de
-        publications accessibles publiquement. Zone Nordiques n&apos;est pas une plateforme
+        publications accessibles publiquement. {BRAND.name} n&apos;est pas une plateforme
         anonyme : nos auteurs assument leurs opinions sous leur identité ou un alias éditorial
         permanent et vérifié.
       </p>
@@ -142,13 +142,13 @@ function FrenchContent() {
       </p>
       <p>
         Pour signaler une erreur, contactez-nous à{' '}
-        <a href="mailto:info@zonenordiques.com">info@zonenordiques.com</a> avec le lien de l&apos;article
+        <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a> avec le lien de l&apos;article
         concerné et la nature de l&apos;erreur. Nous répondons généralement dans les 48 heures.
       </p>
 
       <h2>Indépendance éditoriale</h2>
       <p>
-        Zone Nordiques est indépendante. Aucune équipe sportive, ligue, commanditaire ou
+        {BRAND.name} est indépendante. Aucune équipe sportive, ligue, commanditaire ou
         annonceur n&apos;influence le contenu éditorial. Les revenus publicitaires (notamment
         Google AdSense) sont gérés séparément de la rédaction : les annonceurs n&apos;ont aucun
         droit de regard sur les articles publiés ou leur classement.
@@ -178,7 +178,7 @@ function FrenchContent() {
       <p>
         <strong>Éditeur :</strong> Pascal Grenon (QcFan)<br />
         <strong>Courriel :</strong>{' '}
-        <a href="mailto:info@zonenordiques.com">info@zonenordiques.com</a>
+        <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a>
         <br />
         <strong>Adresse :</strong> Québec, Canada
       </p>
@@ -191,7 +191,7 @@ function EnglishContent() {
     <article className="prose max-w-none prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-a:text-brand-blue">
       <h2>Our mission</h2>
       <p>
-        Zone Nordiques publishes sports analysis, opinion and column writing from passionate
+        {BRAND.nameEn} publishes sports analysis, opinion and column writing from passionate
         contributors across Quebec and Canada. We believe the best commentary often comes from
         engaged, informed fans — a complement to traditional sports media.
       </p>
@@ -200,7 +200,7 @@ function EnglishContent() {
       <p>
         Our contributors are fans, independent columnists and invited collaborators. Every
         article is signed by an identifiable author, with a public bio and publication history.
-        Zone Nordiques is not an anonymous platform: our authors stand behind their opinions under
+        {BRAND.nameEn} is not an anonymous platform: our authors stand behind their opinions under
         their real identity or a permanent, verified editorial pen name.
       </p>
 
@@ -233,13 +233,13 @@ function EnglishContent() {
       </p>
       <p>
         To report an error, contact us at{' '}
-        <a href="mailto:info@zonenordiques.com">info@zonenordiques.com</a> with the article link and the
+        <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a> with the article link and the
         nature of the error. We typically respond within 48 hours.
       </p>
 
       <h2>Editorial independence</h2>
       <p>
-        Zone Nordiques is independent. No sports team, league, sponsor or advertiser influences
+        {BRAND.nameEn} is independent. No sports team, league, sponsor or advertiser influences
         editorial content. Advertising revenue (notably Google AdSense) is managed separately
         from the newsroom: advertisers have no say over which articles are published or how they
         are ranked.
@@ -268,7 +268,7 @@ function EnglishContent() {
       <p>
         <strong>Publisher:</strong> Pascal Grenon (QcFan)<br />
         <strong>Email:</strong>{' '}
-        <a href="mailto:info@zonenordiques.com">info@zonenordiques.com</a>
+        <a href={`mailto:${BRAND.email}`}>{BRAND.email}</a>
         <br />
         <strong>Address:</strong> Quebec, Canada
       </p>

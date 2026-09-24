@@ -7,7 +7,7 @@ import type { Metadata } from 'next';
 export const revalidate = 86400;
 
 export const metadata: Metadata = {
-  // Bare — the root title template appends "| Zone Nordiques" once.
+  // Bare — the root title template appends "| {brandName}" once.
   title: 'Contact',
   description:
     `Contactez l'équipe de ${BRAND.name} (${BRAND.nameEn}). Envoyez-nous un courriel ou suivez-nous sur les réseaux sociaux.`,
@@ -32,6 +32,9 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
   setRequestLocale(locale);
 
   const isFr = locale === 'fr';
+  // Legal text must name the brand the visitor is actually on: the same
+  // codebase serves several sites off one database.
+  const brandName = isFr ? BRAND.name : BRAND.nameEn;
 
   return (
     <div className="flex flex-1 min-h-0 flex-col px-4 py-8 md:py-12">
@@ -51,7 +54,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
               </p>
             ) : (
               <p>
-                Have questions, feedback, or suggestions about Zone Nordiques? We&apos;d love to hear from
+                Have questions, feedback, or suggestions about {brandName}? We&apos;d love to hear from
                 you. Feel free to reach out using the methods below.
               </p>
             )}
@@ -69,7 +72,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             </p>
             <ObfuscatedEmail
               user="info"
-              domain="zonenordiques.com"
+              domain={BRAND.domain}
               className="inline-flex items-center gap-2 text-lg font-medium text-red-600 hover:underline"
             />
             <span className="sr-only">{isFr ? 'Adresse courriel masquée anti-spam' : 'Email address hidden from spam bots'}</span>
@@ -87,7 +90,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             </p>
             <div className="flex flex-col gap-3">
               <a
-                href="https://x.com/zonenordiques"
+                href={BRAND.twitterUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-500 transition-colors"
@@ -95,7 +98,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
-                <span className="font-medium">@zonenordiques</span>
+                <span className="font-medium">{BRAND.twitterHandle}</span>
                 <span className="text-sm text-gray-500">(X / Twitter)</span>
               </a>
             </div>
@@ -109,7 +112,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             {isFr ? (
               <div className="space-y-3">
                 <p>
-                  Zone Nordiques est une plateforme communautaire bilingue pour les fans de sport.
+                  {brandName} est une plateforme communautaire bilingue pour les fans de sport.
                   Nous offrons des tribunes de chat en temps réel, des articles, des podcasts, des jauges
                   de confiance et bien plus encore.
                 </p>
@@ -129,7 +132,7 @@ export default async function ContactPage({ params }: { params: Promise<{ locale
             ) : (
               <div className="space-y-3">
                 <p>
-                  Zone Nordiques is a bilingual community platform for sports fans. We offer real-time chat
+                  {brandName} is a bilingual community platform for sports fans. We offer real-time chat
                   tribunes, articles, podcasts, confidence gauges, and much more.
                 </p>
                 <p>
