@@ -120,6 +120,22 @@ function cleanNamePart(s: string): string {
     .trim();
 }
 
+/**
+ * "Elias-D" → "Elias".
+ *
+ * The draft kit tells the two Elias Petterssons apart by appending the
+ * position to the first name. No NHL player is named that, so the row matched
+ * nothing at all — and the file's own Pos column already carries the same
+ * information, which the matcher uses to break the tie.
+ *
+ * A genuine hyphenated first name always has a multi-letter second part
+ * (Pierre-Luc, Marc-André, Jean-Gabriel), so a lone position letter cannot be
+ * mistaken for one.
+ */
+function stripPositionSuffix(first: string): string {
+  return first.replace(/-(?:[CDGLRW])$/i, '');
+}
+
 /** Plain number from "1.65", "12,50", " 82 " — null when not numeric. */
 function num(raw: string): number | null {
   const s = raw.trim().replace(/\s/g, '').replace(',', '.');
@@ -333,7 +349,7 @@ export function parseSalaryFile(text: string): SalaryFileParse {
 
   const unknownTeams = new Set<string>();
   const rows: SalaryFileRow[] = raws.map((r) => {
-    const first = cleanNamePart(r.cells[nameIdx] ?? '');
+    const first = stripPositionSuffix(cleanNamePart(r.cells[nameIdx] ?? ''));
     const last = lastIdx >= 0 ? cleanNamePart(r.cells[lastIdx] ?? '') : '';
     const teamRaw = teamIdx >= 0 ? (r.cells[teamIdx] ?? '').trim() : '';
     const team = normalizeTeamAbbrev(teamRaw);

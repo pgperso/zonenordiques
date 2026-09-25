@@ -734,7 +734,40 @@ export async function resolveMissingPlayers(
   for (const req of requests) {
     const hits = await searchPlayers(req.name);
     const wanted = norm(req.name);
-    const exact = hits.filter((h) => norm(h.name) === wanted);
+    let exact = hits.filter((h) => norm(h.name) === wanted);
+
+    // "P.O Joseph" is Pierre-Olivier Joseph. The draft kit shortens long first
+    // names to initials, which match nothing by name. When the first name is
+    // only initials the surname plus the club still identifies one player —
+    // and the club must do it, so nothing is guessed.
+    if (exact.length === 0) {
+      const parts = req.name.trim().split(/\s+/);
+      const surname = parts.slice(1).join(' ');
+      const initials = /^(?:\p{L}\.?){1,3}$/u.test((parts[0] ?? '').replace(/\s/g, ''));
+      if (surname && initials && req.team) {
+        const wantedLast = norm(surname);
+        const surnameWords = surname.trim().split(/\s+/).length;
+        const wantedInitials = (parts[0] ?? '').replace(/[^\p{L}]/gu, '').toUpperCase();
+        /** Initials of everything before the surname: "Pierre-Olivier" → "PO". */
+        const initialsOf = (fullName: string) =>
+          fullName.trim().split(/\s+/).slice(0, -surnameWords)
+            .flatMap((w) => w.split(/[-']/))
+            .filter(Boolean)
+            .map((w) => w[0])
+            .join('')
+            .toUpperCase();
+
+        const byTeam = (await searchPlayers(surname)).filter(
+          (h) =>
+            norm(h.name).split(' ').slice(1).join(' ') === wantedLast &&
+            (h.teamAbbrev ?? h.lastTeamAbbrev ?? '') === req.team &&
+            // Without this, "P.O Joseph (EDM)" resolves to Mathieu Joseph —
+            // right surname, right club, wrong man.
+            initialsOf(h.name).startsWith(wantedInitials),
+        );
+        if (byTeam.length === 1) exact = byTeam;
+      }
+    }
 
     if (exact.length === 0) {
       report.stillMissing.push({

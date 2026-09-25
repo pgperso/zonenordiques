@@ -260,3 +260,29 @@ describe('parseSalaryFile — the banded draft kit', () => {
     expect(parsed.rows.map((r) => r.position)).toEqual(['C', 'D']);
   });
 });
+
+describe('parseSalaryFile — the kit’s own disambiguation suffix', () => {
+  // "Elias-D" is how the draft kit separates the two Elias Petterssons. No NHL
+  // player is named that, so the row used to match nothing at all — while the
+  // Pos column beside it already said D.
+  const KIT = [
+    '#,Nom,,Âge,Équ.,Pos,Pts,CapH',
+    '1,Elias-D,Pettersson,26,Van,D,30,7.25',
+    '2,Elias,Pettersson,27,Van,C,85,11.60',
+    '3,Pierre-Luc,Dubois,28,Wsh,C,70,8.50',
+  ].join('\n');
+  const parsed = parseSalaryFile(KIT);
+
+  it('drops the position suffix but keeps the position column', () => {
+    expect(parsed.rows.map((r) => r.name)).toEqual([
+      'Elias Pettersson', 'Elias Pettersson', 'Pierre-Luc Dubois',
+    ]);
+    expect(parsed.rows.map((r) => r.position)).toEqual(['D', 'C', 'C']);
+  });
+
+  it('leaves a real hyphenated first name alone', () => {
+    // Pierre-Luc, Marc-André, Jean-Gabriel: the part after the hyphen is a
+    // name, not a position code, so it always has more than one letter.
+    expect(parsed.rows[2].name).toBe('Pierre-Luc Dubois');
+  });
+});
