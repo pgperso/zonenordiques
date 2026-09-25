@@ -103,6 +103,9 @@ export function UnpricedPlayersSection({ seasonId, cardCls }: { seasonId: number
         soit ton fichier les nomme sans montant (joueurs sans contrat), soit ils traînent encore
         un prix inventé au démarrage. Écris le salaire <strong>en millions</strong> — p. ex.
         <span className="font-mono"> 8.6</span> pour 8,6 M$ — puis enregistre.
+        <br />
+        Seules les positions que ta saison repêche apparaissent ici : si l’alignement ne
+        prévoit aucun gardien, les gardiens sans salaire sont ignorés.
       </p>
 
       {players === null && <p className="text-sm text-gray-500">Chargement…</p>}
