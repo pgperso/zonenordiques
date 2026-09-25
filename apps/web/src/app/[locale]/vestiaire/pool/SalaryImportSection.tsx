@@ -447,15 +447,25 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
               }`}
             >
               <p className="text-gray-700">
-                Masses salariales recalculées : <strong>{report.repricedEntries}</strong> équipe(s)
-                non verrouillée(s) mise(s) à jour au prix du jour.
+                Masses salariales recalculées : <strong>{report.repricedEntries}</strong>{' '}
+                {report.repricedEntries === 1
+                  ? 'équipe non verrouillée mise à jour'
+                  : 'équipes non verrouillées mises à jour'}{' '}
+                au prix du jour.
               </p>
               {report.overBudgetEntries ? (
                 <p className="mt-1 text-amber-800">
-                  <strong>{report.overBudgetEntries} équipe(s) dépassent maintenant le plafond</strong> et
-                  devront retirer un joueur avant de pouvoir sauvegarder
+                  <strong>
+                    {report.overBudgetEntries === 1
+                      ? 'Une équipe dépasse maintenant le plafond'
+                      : `${report.overBudgetEntries} équipes dépassent maintenant le plafond`}
+                  </strong>{' '}
+                  et {report.overBudgetEntries === 1 ? 'devra' : 'devront'} retirer un joueur avant
+                  de pouvoir sauvegarder
                   {report.unconfirmedEntries
-                    ? ` (dont ${report.unconfirmedEntries} qui étaient confirmées et ne le sont plus)`
+                    ? report.unconfirmedEntries === 1
+                      ? ' (dont une qui était confirmée et ne l’est plus)'
+                      : ` (dont ${report.unconfirmedEntries} qui étaient confirmées et ne le sont plus)`
                     : ''}
                   .
                 </p>
