@@ -456,11 +456,6 @@
     "standings": "Standings",
     "navHome": "Home",
     "goaliesTitle": "Official goalies (team salary)",
-    "beta": {
-      "badge": "Under construction",
-      "message": "The pool is under construction. You can already explore and build your team to try it out, but it's for testing only: all teams will be reset before the official season launch.",
-      "dismiss": "Dismiss"
-    },
     "defaultTeamName": "{username}'s team",
     "defaultTeamNameFallback": "My team",
     "positions": { "F": "Forwards", "D": "Defensemen", "G": "Goalies" },

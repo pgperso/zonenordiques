@@ -4,7 +4,6 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getActiveSeason, getScoringRules, SCORING_CATALOG } from '@/services/poolService';
 import { PoolShell } from './PoolShell';
-import { BetaNotice } from './BetaNotice';
 import { fmtNum } from '@/components/pool/format';
 import { BRAND } from '@/lib/brand';
 
@@ -118,7 +117,6 @@ export default async function PoolHomePage({ params }: { params: Promise<{ local
 
   return (
     <PoolShell>
-            <BetaNotice />
             {/* Hero / CTA */}
             <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-6 dark:border-gray-700 dark:from-[#252525] dark:to-[#1e1e1e]">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('eyebrow')}</p>

@@ -462,11 +462,6 @@
     "standings": "Classement",
     "navHome": "Accueil",
     "goaliesTitle": "Gardiens officiels (salaire de l'équipe)",
-    "beta": {
-      "badge": "En construction",
-      "message": "Le pool est en construction. Tu peux déjà explorer et bâtir ton équipe pour l'essayer, mais c'est uniquement pour tester : toutes les équipes seront remises à zéro avant le lancement officiel de la saison.",
-      "dismiss": "Fermer"
-    },
     "defaultTeamName": "Équipe de {username}",
     "defaultTeamNameFallback": "Mon équipe",
     "positions": { "F": "Attaquants", "D": "Défenseurs", "G": "Gardiens" },
