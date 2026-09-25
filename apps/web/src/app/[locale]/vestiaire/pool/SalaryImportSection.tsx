@@ -263,10 +263,17 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     ? report.unmatched.length + report.ambiguous.length + report.invalidPrice.length
     : 0;
   // Kept prices that no import ever confirmed: the ones that look real in the
-  // composer and are not.
+  // composer and are not. Named, not counted — the list below scrolls, so an
+  // aggregate warning points at players the operator cannot see.
   const unverified = report
-    ? report.keptPrices.filter((k) => k.priceCents !== null && !k.importedAt && k.draftable).length
-    : 0;
+    ? report.keptPrices.filter((k) => k.priceCents !== null && !k.importedAt && k.draftable)
+    : [];
+  // Those same players first: they are the only actionable rows in the list.
+  const keptSorted = report
+    ? [...report.keptPrices].sort(
+        (a, b) => Number(b.priceCents !== null && !b.importedAt) - Number(a.priceCents !== null && !a.importedAt),
+      )
+    : [];
   const applyDisabled = busy || !report || !upToDate || report.dryRun === false;
 
   return (
@@ -586,20 +593,20 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 {report.keptPrices.length} joueur(s) sans salaire dans le fichier — ils gardent
                 leur prix actuel :
               </p>
-              {unverified > 0 && (
+              {unverified.length > 0 && (
                 <p className="mt-1 text-red-700">
                   <strong>
-                    {unverified === 1
-                      ? 'L’un d’eux est sur un prix jamais importé'
-                      : `${unverified} d’entre eux sont sur un prix jamais importé`}
+                    {unverified.map((k) => k.name).join(', ')}
                   </strong>{' '}
-                  — un chiffre dérivé au démarrage, pas un vrai plafond.{' '}
-                  {unverified === 1 ? 'Donne-lui' : 'Donne-leur'} un salaire dans le chiffrier
-                  avant l’ouverture du repêchage.
+                  {unverified.length === 1 ? 'est repêchable' : 'sont repêchables'} à un prix
+                  jamais importé — un chiffre dérivé au démarrage, pas un vrai plafond. Ajoute
+                  {unverified.length === 1 ? '-lui' : '-leur'} un salaire dans ton fichier Excel
+                  avant l’ouverture du repêchage. Les autres, sans prix du tout, ne sont pas
+                  repêchables : rien à faire de ce côté.
                 </p>
               )}
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
-                {report.keptPrices.map((k, i) => (
+                {keptSorted.map((k, i) => (
                   <li key={`${k.name}-${i}`}>
                     ligne {k.line ?? '?'} · {k.name || '(sans nom)'} —{' '}
                     {k.priceCents === null ? (
