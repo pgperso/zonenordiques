@@ -55,6 +55,10 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const [reportKey, setReportKey] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
   const [rostersFresh, setRostersFresh] = useState(false);
+  // Why each name could not be resolved. A bare count ("18 toujours
+  // introuvables") gives the operator nothing to act on — a misspelling, a
+  // homonym and a player absent from the league all read the same.
+  const [unresolved, setUnresolved] = useState<Array<{ name: string; reason: string }>>([]);
 
   const fileRef = useRef<HTMLInputElement>(null);
   // Monotonic token: a response whose token is stale is discarded rather than
@@ -70,6 +74,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     setEncoding(null);
     setReport(null);
     setReportKey(null);
+    setUnresolved([]);
   }
 
   /** Read a response safely: a proxy or platform error is not JSON. */
@@ -172,6 +177,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
     setFileName(file.name);
     setReport(null);
     setReportKey(null);
+    setUnresolved([]);
 
     // The roster refresh is the prerequisite for matching; the operator has no
     // reason to know that, so it happens here rather than being asked for.
@@ -233,11 +239,16 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           body: JSON.stringify({ players: names }),
         }),
       );
-      const r = json.report as { added?: unknown[]; stillMissing?: unknown[] } | undefined;
+      const r = json.report as
+        | { added?: unknown[]; stillMissing?: Array<{ name: string; reason: string }> }
+        | undefined;
       const added = r?.added?.length ?? 0;
-      const left = r?.stillMissing?.length ?? 0;
+      const left = r?.stillMissing ?? [];
+      setUnresolved(left);
       toast.success(
-        left > 0 ? `${added} joueurs ajoutés, ${left} toujours introuvables` : `${added} joueurs ajoutés`,
+        left.length > 0
+          ? `${added} joueurs ajoutés, ${left.length} toujours introuvables`
+          : `${added} joueurs ajoutés`,
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Échec de la résolution');
@@ -503,6 +514,23 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 {report.unmatched.map((r, i) => (
                   <li key={`${r.name}-${i}`}>
                     ligne {r.line ?? '?'} · {r.name || '(sans nom)'} {r.team && `(${r.team})`}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* After a search, the ones it could not place — with the reason,
+              because a misspelling and a genuine homonym need opposite fixes. */}
+          {unresolved.length > 0 && (
+            <div className="mt-3 rounded-md border border-gray-200 bg-white p-3">
+              <p className="font-medium text-gray-700">
+                {unresolved.length} nom(s) que la recherche LNH n’a pas pu placer :
+              </p>
+              <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
+                {unresolved.map((u, i) => (
+                  <li key={`${u.name}-${i}`}>
+                    {u.name} — <span className="text-gray-500">{u.reason}</span>
                   </li>
                 ))}
               </ul>

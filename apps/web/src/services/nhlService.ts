@@ -670,11 +670,18 @@ export interface ResolveReport {
  * Add missing players to nhl_players so they can be priced.
  *
  * Never guesses. A hit is accepted only when the normalized full name matches
- * exactly; when several active players share that name, the spreadsheet's team
- * must pick one of them, and if it does not the row is left unresolved and
+ * exactly; when several players share that name, the spreadsheet's team must
+ * pick one of them, and if it does not the row is left unresolved and
  * reported. A stale team in the file (a player traded since) is tolerated when
  * the name alone is unambiguous — Patrick Kane listed under CHI still resolves
  * to the one Patrick Kane.
+ *
+ * `active` in the search index means "on an NHL roster right now", which is
+ * exactly the population syncRosters already covers. Gating on it here
+ * rejected the players this function exists for — Rutger McGroarty (PIT),
+ * Jani Nyman (SEA) and Jonathan Drouin (STL) are all in the index, all with
+ * a team, all `active: false`. So it is used only to break a tie between two
+ * players of the same name, never to reject one.
  */
 export async function resolveMissingPlayers(
   client: AnyClient,
@@ -710,26 +717,34 @@ export async function resolveMissingPlayers(
   for (const req of requests) {
     const hits = await searchPlayers(req.name);
     const wanted = norm(req.name);
-    const exact = hits.filter((h) => norm(h.name) === wanted && h.active);
+    const exact = hits.filter((h) => norm(h.name) === wanted);
 
     if (exact.length === 0) {
-      report.stillMissing.push({ name: req.name, reason: 'aucun joueur actif de ce nom' });
+      report.stillMissing.push({
+        name: req.name,
+        reason: 'aucun joueur de ce nom dans l’index de la LNH — vérifie l’orthographe',
+      });
       continue;
     }
 
     let chosen = exact[0];
     if (exact.length > 1) {
+      // The file's team decides. Only if it picks several of them does
+      // "currently on a roster" break the remaining tie.
       const byTeam = exact.filter(
         (h) => (h.teamAbbrev ?? h.lastTeamAbbrev ?? '') === req.team && req.team !== '',
       );
-      if (byTeam.length !== 1) {
+      const narrowed = byTeam.length > 1 ? byTeam.filter((h) => h.active) : byTeam;
+      if (narrowed.length !== 1) {
         report.stillMissing.push({
           name: req.name,
-          reason: `${exact.length} joueurs actifs de ce nom, l'équipe ne les départage pas`,
+          reason: req.team
+            ? `${exact.length} joueurs de ce nom, l’équipe « ${req.team} » ne les départage pas`
+            : `${exact.length} joueurs de ce nom, et le fichier ne donne pas d’équipe`,
         });
         continue;
       }
-      chosen = byTeam[0];
+      chosen = narrowed[0];
     }
 
     const position = searchPosition(chosen.positionCode);
@@ -756,7 +771,10 @@ export async function resolveMissingPlayers(
       position,
       team_abbrev: abbrev && knownTeams.has(abbrev) ? abbrev : null,
       sweater_number: chosen.sweaterNumber ?? null,
-      is_active: true,
+      // Recorded as the index reports it. Nothing filters on this column, and
+      // a prospect who has not dressed is genuinely not active — claiming
+      // otherwise would be the only false fact in the row.
+      is_active: chosen.active,
     });
     report.added.push({ name: chosen.name, playerId, team: abbrev, position });
   }
