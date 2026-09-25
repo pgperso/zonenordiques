@@ -264,27 +264,6 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
         Le plafond salarial se règle dans «&nbsp;Saison &amp; alignement&nbsp;» ci-dessous.
       </p>
 
-      <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="max-w-lg text-sm text-gray-600">
-            {rostersFresh ? (
-              <><strong className="text-green-700">Alignements à jour.</strong> Rafraîchis pour cette session.</>
-            ) : (
-              <>La liste des joueurs de la LNH se met à jour automatiquement au chargement du
-              fichier. Sans ce rafraîchissement, les espoirs ressortent «&nbsp;introuvables&nbsp;».</>
-            )}
-          </p>
-          <button
-            type="button"
-            onClick={() => void syncRosters(false)}
-            disabled={busy}
-            className="shrink-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-          >
-            Resynchroniser maintenant
-          </button>
-        </div>
-      </div>
-
       <div className="flex flex-wrap items-center gap-3">
         <input
           ref={fileRef}
@@ -316,6 +295,25 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
           <span className="text-xs text-amber-700">Encodage ANSI converti.</span>
         )}
       </div>
+
+      {/* The roster refresh runs on its own when a file is loaded — saying so
+          in passing, rather than in a box with a button, keeps it from
+          reading as a step the operator has to take first. The manual link
+          stays for the one case the chain does not cover: re-syncing without
+          re-loading the file. */}
+      <p className="mt-2 text-xs text-gray-500">
+        Au chargement, les alignements de la LNH sont resynchronisés puis le fichier est
+        analysé — automatiquement. Seul «&nbsp;Appliquer&nbsp;» écrit les prix.
+        {rostersFresh && <span className="text-green-700"> Alignements à jour.</span>}{' '}
+        <button
+          type="button"
+          onClick={() => void syncRosters(false)}
+          disabled={busy}
+          className="underline hover:text-gray-700 disabled:opacity-50"
+        >
+          Resynchroniser maintenant
+        </button>
+      </p>
 
       <details className="mt-3">
         <summary className="cursor-pointer text-sm text-gray-500">ou coller le contenu</summary>
