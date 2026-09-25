@@ -29,7 +29,10 @@ CREATE INDEX IF NOT EXISTS idx_pool_prices_never_imported
 -- The operator's audit query: after an import, whoever is left here is a
 -- player a member could draft at a price nobody ever verified.
 CREATE OR REPLACE FUNCTION public.pool_prices_never_imported(p_season_id BIGINT)
-RETURNS TABLE (player_id BIGINT, full_name TEXT, team_abbrev TEXT, position TEXT,
+-- `pos`, not `position`: POSITION is a reserved word in Postgres (the
+-- POSITION(x IN y) function), so it is a syntax error as a RETURNS TABLE
+-- column name even though the table's own column is called that.
+RETURNS TABLE (player_id BIGINT, full_name TEXT, team_abbrev TEXT, pos TEXT,
                price_cents BIGINT, is_draftable BOOLEAN)
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT pp.player_id, np.full_name, np.team_abbrev, pp.position,
