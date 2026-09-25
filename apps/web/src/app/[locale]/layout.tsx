@@ -139,7 +139,14 @@ export default async function LocaleLayout({
         </a>
         <NextIntlClientProvider messages={messages}>
           <TribuneProvider>
-            <div className="flex flex-1 min-h-dvh flex-col">
+            {/* The shell is exactly the viewport and never scrolls: `main`
+                clips, and each page carries its own scroll container. With
+                `min-h-dvh` that was only a convention — anything that made the
+                shell taller (a horizontal scrollbar, a stray overflow) let the
+                document scroll a little past the footer, which is what it was
+                doing. `h-dvh` + `overflow-hidden` makes it a rule.
+                `flex-1` was dead here: <body> is not a flex container. */}
+            <div className="flex h-dvh flex-col overflow-hidden">
               <Header />
               {/* One scoreboard per sport, explicitly mapped: a brand whose
                   league has no feed (e.g. football/CFL) shows none rather than

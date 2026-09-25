@@ -28,17 +28,19 @@ export default async function NewsletterResultPage({
   const key = status === 'confirmed' ? 'confirmed' : status === 'unsubscribed' ? 'unsubscribed' : 'error';
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-20 text-center">
-      <h1 className="mb-3 text-2xl font-bold text-gray-900 dark:text-gray-100">
-        {t(`result.${key}.title`)}
-      </h1>
-      <p className="mb-8 text-gray-600 dark:text-gray-400">{t(`result.${key}.body`)}</p>
-      <Link
-        href="/"
-        className="rounded-lg bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
-      >
-        {t('result.backHome')}
-      </Link>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-20 text-center">
+        <h1 className="mb-3 text-2xl font-bold text-gray-900 dark:text-gray-100">
+          {t(`result.${key}.title`)}
+        </h1>
+        <p className="mb-8 text-gray-600 dark:text-gray-400">{t(`result.${key}.body`)}</p>
+        <Link
+          href="/"
+          className="rounded-lg bg-brand-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+        >
+          {t('result.backHome')}
+        </Link>
+      </div>
     </div>
   );
 }

@@ -38,7 +38,7 @@ export default async function AboutPage({ params }: { params: Promise<{ locale: 
   const brandName = isFr ? BRAND.name : BRAND.nameEn;
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col px-4 py-8 md:py-12">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-8 md:py-12">
       <div className="mx-auto flex w-full max-w-5xl gap-8">
         {/* Main content */}
         <article className="flex-1 min-w-0">

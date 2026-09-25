@@ -125,101 +125,103 @@ export default async function MatchPage({
         : '';
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6">
-      <Link href="/" className="mb-4 inline-block text-sm text-gray-500 hover:text-brand-blue dark:text-gray-400">
-        ← {isFr ? 'Accueil' : 'Home'}
-      </Link>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-2xl px-4 py-6">
+        <Link href="/" className="mb-4 inline-block text-sm text-gray-500 hover:text-brand-blue dark:text-gray-400">
+          ← {isFr ? 'Accueil' : 'Home'}
+        </Link>
 
-      {/* Scoreboard header */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#1e1e1e]">
-        <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-brand-red">
-          {statusText}
-        </p>
-        <div className="flex items-center justify-center gap-6">
-          <TeamHead team={away} locale={locale} />
-          <div className="flex items-center gap-3 text-4xl font-extrabold tabular-nums text-gray-900 dark:text-gray-100">
-            <span>{started ? away.score ?? 0 : '–'}</span>
-            <span className="text-gray-300 dark:text-gray-600">:</span>
-            <span>{started ? home.score ?? 0 : '–'}</span>
+        {/* Scoreboard header */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#1e1e1e]">
+          <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-brand-red">
+            {statusText}
+          </p>
+          <div className="flex items-center justify-center gap-6">
+            <TeamHead team={away} locale={locale} />
+            <div className="flex items-center gap-3 text-4xl font-extrabold tabular-nums text-gray-900 dark:text-gray-100">
+              <span>{started ? away.score ?? 0 : '–'}</span>
+              <span className="text-gray-300 dark:text-gray-600">:</span>
+              <span>{started ? home.score ?? 0 : '–'}</span>
+            </div>
+            <TeamHead team={home} locale={locale} />
           </div>
-          <TeamHead team={home} locale={locale} />
         </div>
+
+        {/* Linescore */}
+        {byPeriod.length > 0 && (
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[360px] border-collapse text-sm">
+              <thead>
+                <tr className="text-gray-400">
+                  <th className="px-2 py-1 text-left font-medium"></th>
+                  {byPeriod.map((p, i) => (
+                    <th key={i} className="px-2 py-1 text-center font-medium">
+                      {periodLabel(p.periodDescriptor?.number, p.periodDescriptor?.periodType, isFr)}
+                    </th>
+                  ))}
+                  <th className="px-2 py-1 text-center font-bold">T</th>
+                  <th className="px-2 py-1 text-center font-medium">{isFr ? 'Tirs' : 'SOG'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <LineRow label={away.abbrev ?? ''} periods={byPeriod} shots={shots} total={away.score} sog={away.sog} side="away" />
+                <LineRow label={home.abbrev ?? ''} periods={byPeriod} shots={shots} total={home.score} sog={home.sog} side="home" />
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Scoring summary */}
+        {scoring.some((p) => (p.goals?.length ?? 0) > 0) && (
+          <div className="mt-6">
+            <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              {isFr ? 'Buts' : 'Scoring'}
+            </h2>
+            <div className="space-y-4">
+              {scoring.map((per, i) => {
+                const goals = per.goals ?? [];
+                if (goals.length === 0) return null;
+                return (
+                  <div key={i}>
+                    <p className="mb-1 text-xs font-semibold text-gray-400">
+                      {periodLabel(per.periodDescriptor?.number, per.periodDescriptor?.periodType, isFr)}
+                      {per.periodDescriptor?.periodType === 'REG' || !per.periodDescriptor?.periodType
+                        ? isFr ? 'ᵉ période' : ''
+                        : ''}
+                    </p>
+                    <ul className="space-y-1.5">
+                      {goals.map((goal, j) => {
+                        const scorer = nm(goal.name, locale) || `${nm(goal.firstName, locale)} ${nm(goal.lastName, locale)}`.trim();
+                        const team = nm(goal.teamAbbrev, locale);
+                        const assists = (goal.assists ?? [])
+                          .map((a) => nm(a.name, locale) || `${nm(a.firstName, locale)} ${nm(a.lastName, locale)}`.trim())
+                          .filter(Boolean);
+                        return (
+                          <li key={j} className="flex items-baseline gap-2 text-sm">
+                            <span className="w-10 shrink-0 tabular-nums text-gray-400">{goal.timeInPeriod ?? ''}</span>
+                            <span className="w-9 shrink-0 font-bold text-brand-blue">{team}</span>
+                            <span className="text-gray-900 dark:text-gray-100">
+                              <span className="font-semibold">{scorer}</span>
+                              {assists.length > 0 && (
+                                <span className="text-gray-500 dark:text-gray-400"> ({assists.join(', ')})</span>
+                              )}
+                              {goal.strength && goal.strength !== 'ev' && (
+                                <span className="ml-1 text-xs uppercase text-brand-red">{goal.strength}</span>
+                              )}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
       </div>
-
-      {/* Linescore */}
-      {byPeriod.length > 0 && (
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[360px] border-collapse text-sm">
-            <thead>
-              <tr className="text-gray-400">
-                <th className="px-2 py-1 text-left font-medium"></th>
-                {byPeriod.map((p, i) => (
-                  <th key={i} className="px-2 py-1 text-center font-medium">
-                    {periodLabel(p.periodDescriptor?.number, p.periodDescriptor?.periodType, isFr)}
-                  </th>
-                ))}
-                <th className="px-2 py-1 text-center font-bold">T</th>
-                <th className="px-2 py-1 text-center font-medium">{isFr ? 'Tirs' : 'SOG'}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <LineRow label={away.abbrev ?? ''} periods={byPeriod} shots={shots} total={away.score} sog={away.sog} side="away" />
-              <LineRow label={home.abbrev ?? ''} periods={byPeriod} shots={shots} total={home.score} sog={home.sog} side="home" />
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Scoring summary */}
-      {scoring.some((p) => (p.goals?.length ?? 0) > 0) && (
-        <div className="mt-6">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {isFr ? 'Buts' : 'Scoring'}
-          </h2>
-          <div className="space-y-4">
-            {scoring.map((per, i) => {
-              const goals = per.goals ?? [];
-              if (goals.length === 0) return null;
-              return (
-                <div key={i}>
-                  <p className="mb-1 text-xs font-semibold text-gray-400">
-                    {periodLabel(per.periodDescriptor?.number, per.periodDescriptor?.periodType, isFr)}
-                    {per.periodDescriptor?.periodType === 'REG' || !per.periodDescriptor?.periodType
-                      ? isFr ? 'ᵉ période' : ''
-                      : ''}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {goals.map((goal, j) => {
-                      const scorer = nm(goal.name, locale) || `${nm(goal.firstName, locale)} ${nm(goal.lastName, locale)}`.trim();
-                      const team = nm(goal.teamAbbrev, locale);
-                      const assists = (goal.assists ?? [])
-                        .map((a) => nm(a.name, locale) || `${nm(a.firstName, locale)} ${nm(a.lastName, locale)}`.trim())
-                        .filter(Boolean);
-                      return (
-                        <li key={j} className="flex items-baseline gap-2 text-sm">
-                          <span className="w-10 shrink-0 tabular-nums text-gray-400">{goal.timeInPeriod ?? ''}</span>
-                          <span className="w-9 shrink-0 font-bold text-brand-blue">{team}</span>
-                          <span className="text-gray-900 dark:text-gray-100">
-                            <span className="font-semibold">{scorer}</span>
-                            {assists.length > 0 && (
-                              <span className="text-gray-500 dark:text-gray-400"> ({assists.join(', ')})</span>
-                            )}
-                            {goal.strength && goal.strength !== 'ev' && (
-                              <span className="ml-1 text-xs uppercase text-brand-red">{goal.strength}</span>
-                            )}
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
     </div>
   );
 }

@@ -121,51 +121,53 @@ export default async function MlbMatchPage({
   const totals = ls.teams ?? {};
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-6">
-      <Link href="/" className="mb-4 inline-block text-sm text-gray-500 hover:text-brand-blue dark:text-gray-400">
-        ← {isFr ? 'Accueil' : 'Home'}
-      </Link>
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-2xl px-4 py-6">
+        <Link href="/" className="mb-4 inline-block text-sm text-gray-500 hover:text-brand-blue dark:text-gray-400">
+          ← {isFr ? 'Accueil' : 'Home'}
+        </Link>
 
-      {/* Scoreboard header */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#1e1e1e]">
-        <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-brand-red">
-          {statusText}
-        </p>
-        <div className="flex items-center justify-center gap-6">
-          <TeamHead team={away} />
-          <div className="flex items-center gap-3 text-4xl font-extrabold tabular-nums text-gray-900 dark:text-gray-100">
-            <span>{started ? away.score ?? 0 : '–'}</span>
-            <span className="text-gray-300 dark:text-gray-600">:</span>
-            <span>{started ? home.score ?? 0 : '–'}</span>
+        {/* Scoreboard header */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-[#1e1e1e]">
+          <p className="mb-3 text-center text-xs font-bold uppercase tracking-wide text-brand-red">
+            {statusText}
+          </p>
+          <div className="flex items-center justify-center gap-6">
+            <TeamHead team={away} />
+            <div className="flex items-center gap-3 text-4xl font-extrabold tabular-nums text-gray-900 dark:text-gray-100">
+              <span>{started ? away.score ?? 0 : '–'}</span>
+              <span className="text-gray-300 dark:text-gray-600">:</span>
+              <span>{started ? home.score ?? 0 : '–'}</span>
+            </div>
+            <TeamHead team={home} />
           </div>
-          <TeamHead team={home} />
         </div>
+
+        {/* Linescore by inning + R/H/E */}
+        {innings.length > 0 && (
+          <div className="mt-6 overflow-x-auto">
+            <table className="w-full min-w-[420px] border-collapse text-sm">
+              <thead>
+                <tr className="text-gray-400">
+                  <th className="px-2 py-1 text-left font-medium"></th>
+                  {innings.map((p) => (
+                    <th key={p.num} className="px-2 py-1 text-center font-medium">{p.num}</th>
+                  ))}
+                  <th className="px-2 py-1 text-center font-bold">R</th>
+                  <th className="px-2 py-1 text-center font-medium">H</th>
+                  <th className="px-2 py-1 text-center font-medium">E</th>
+                </tr>
+              </thead>
+              <tbody>
+                <LineRow label={away.team?.abbreviation ?? ''} innings={innings} totals={totals.away} side="away" />
+                <LineRow label={home.team?.abbreviation ?? ''} innings={innings} totals={totals.home} side="home" />
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
       </div>
-
-      {/* Linescore by inning + R/H/E */}
-      {innings.length > 0 && (
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[420px] border-collapse text-sm">
-            <thead>
-              <tr className="text-gray-400">
-                <th className="px-2 py-1 text-left font-medium"></th>
-                {innings.map((p) => (
-                  <th key={p.num} className="px-2 py-1 text-center font-medium">{p.num}</th>
-                ))}
-                <th className="px-2 py-1 text-center font-bold">R</th>
-                <th className="px-2 py-1 text-center font-medium">H</th>
-                <th className="px-2 py-1 text-center font-medium">E</th>
-              </tr>
-            </thead>
-            <tbody>
-              <LineRow label={away.team?.abbreviation ?? ''} innings={innings} totals={totals.away} side="away" />
-              <LineRow label={home.team?.abbreviation ?? ''} innings={innings} totals={totals.home} side="home" />
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      <AdSlot slotId="home-mid-banner" format="leaderboard" className="mx-auto mt-8" />
     </div>
   );
 }

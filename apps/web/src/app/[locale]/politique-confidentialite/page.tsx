@@ -55,7 +55,7 @@ export default async function PolitiqueConfidentialite({ params }: { params: Pro
   const lastUpdated = isFr ? 'Dernière mise à jour : 24 septembre 2026' : 'Last updated: September 24, 2026';
 
   return (
-    <div className="flex flex-1 min-h-0 flex-col px-4 py-8 md:py-12">
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-4 py-8 md:py-12">
       <div className="mx-auto w-full max-w-3xl">
         <h1 className="mb-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-100 md:text-4xl">
           {isFr ? 'Politique de confidentialité' : 'Privacy Policy'}
