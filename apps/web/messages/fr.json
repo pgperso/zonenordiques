@@ -653,6 +653,9 @@
       "starsRequiredTrade": "Tu dois choisir une nouvelle vedette pour le poste libéré par ton échange.",
       "starsHint": "Désigne un attaquant vedette et un défenseur vedette — leurs points comptent en double. Une fois la saison commencée, ils sont figés (sauf si tu échanges une vedette).",
       "trade": "Échanger",
+      "tradeLockedGames": "Échangeable après {required} matchs ({played}/{required})",
+      "tradeLockedHint": "Un joueur doit disputer {required} matchs pour ton équipe avant d’être échangé — sauf s’il manque un match de son club.",
+      "tradeOutHint": "N’a pas joué le dernier match de son club — échangeable dès maintenant.",
       "tradesRemaining": "Échanges restants",
       "replace": "Remplacer {name}",
       "tradeDone": "Échange effectué"

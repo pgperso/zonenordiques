@@ -647,6 +647,9 @@
       "starsRequiredTrade": "You must pick a new star for the position your trade freed.",
       "starsHint": "Designate a star forward and a star defenseman — their points count double. Once the season starts they're locked (unless you trade a star).",
       "trade": "Trade",
+      "tradeLockedGames": "Tradeable after {required} games ({played}/{required})",
+      "tradeLockedHint": "A player must dress for {required} games on your roster before he can be traded — unless he misses one of his club’s games.",
+      "tradeOutHint": "Did not play his club’s last game — tradeable right now.",
       "tradesRemaining": "Trades left",
       "replace": "Replace {name}",
       "tradeDone": "Trade completed"

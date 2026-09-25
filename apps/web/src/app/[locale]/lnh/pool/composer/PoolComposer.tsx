@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Virtuoso } from 'react-virtuoso';
 import { toast } from 'sonner';
@@ -12,8 +12,8 @@ import { fmtMoney } from '@/components/pool/format';
 import { TeamGoalies } from '@/components/pool/TeamGoalies';
 import { PoolNav } from '../PoolNav';
 import {
-  saveRoster, setTeam, setStars, confirmEntry, makeTransaction,
-  type PoolPlayer, type SlotPick, type PoolPosition, type NhlTeamChoice,
+  saveRoster, setTeam, setStars, confirmEntry, makeTransaction, getTradeEligibility,
+  type PoolPlayer, type SlotPick, type PoolPosition, type NhlTeamChoice, type TradeEligibility,
 } from '@/services/poolService';
 
 type Picker = PoolPosition | 'team' | null;
@@ -59,6 +59,19 @@ export function PoolComposer({
   const [busy, setBusy] = useState(false);
 
   const remainingTrades = transactionsEnabled ? Math.max(0, maxTransactions - tradesUsed) : 0;
+
+  // Who may be traded, and why not (00115). Only meaningful once trades are
+  // open. A player missing from this map is treated as tradeable: the server
+  // enforces the rule either way, and a failed fetch must not lock the roster.
+  const [eligibility, setEligibility] = useState<Map<number, TradeEligibility>>(new Map());
+  useEffect(() => {
+    if (!locked || !transactionsEnabled) return;
+    let cancelled = false;
+    void getTradeEligibility(createClient(), entryId)
+      .then((rows) => { if (!cancelled) setEligibility(new Map(rows.map((r) => [r.playerId, r]))); })
+      .catch(() => { /* server-enforced; the UI just loses its explanation */ });
+    return () => { cancelled = true; };
+  }, [locked, transactionsEnabled, entryId, picks]);
 
   const playerById = useMemo(() => new Map(players.map((p) => [p.playerId, p])), [players]);
   const chosen = useMemo(() => new Set(picks.map((p) => p.playerId)), [picks]);
@@ -223,14 +236,30 @@ export function PoolComposer({
                       {t('remove')}
                     </button>
                   )}
-                  {canTradeNow && (
-                    <button
-                      onClick={() => setTradeFor({ playerId: r.playerId, pos })}
-                      className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-[#252525]"
-                    >
-                      {t('trade')}
-                    </button>
-                  )}
+                  {canTradeNow && (() => {
+                    const el = eligibility.get(r.playerId);
+                    // Unknown = not loaded yet: show the button and let the
+                    // server answer, rather than blocking on a missing fetch.
+                    if (el && !el.canTrade) {
+                      return (
+                        <span
+                          className="text-xs text-gray-400"
+                          title={t('tradeLockedHint', { required: el.gamesRequired })}
+                        >
+                          {t('tradeLockedGames', { played: el.gamesPlayed, required: el.gamesRequired })}
+                        </span>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={() => setTradeFor({ playerId: r.playerId, pos })}
+                        className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-[#252525]"
+                      >
+                        {t('trade')}
+                        {el?.isOut && <span className="ml-1 text-amber-600" title={t('tradeOutHint')}>●</span>}
+                      </button>
+                    );
+                  })()}
                 </span>
               </li>
             );

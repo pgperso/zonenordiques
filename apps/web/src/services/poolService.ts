@@ -605,6 +605,41 @@ export async function confirmEntry(client: AnyClient, entryId: number): Promise<
   return { error: error?.message ?? null };
 }
 
+export interface TradeEligibility {
+  playerId: number;
+  /** Games dressed for since joining THIS roster. */
+  gamesPlayed: number;
+  gamesRequired: number;
+  /** Dressed for none of his club's last N games — the exception (00115). */
+  isOut: boolean;
+  canTrade: boolean;
+}
+
+/**
+ * Who on this roster may be traded, and why not.
+ *
+ * pool_make_transaction enforces the rule server-side regardless; this exists
+ * so the composer can grey a player out and say what is missing, instead of
+ * teaching the rule through a rejection after the fact.
+ */
+export async function getTradeEligibility(client: AnyClient, entryId: number): Promise<TradeEligibility[]> {
+  const db = client as unknown as Db;
+  const { data, error } = await db.rpc('pool_trade_eligibility' as never, {
+    p_entry_id: entryId,
+  } as never);
+  if (error) throw new Error(error.message);
+  return ((data ?? []) as Array<{
+    player_id: number; games_played: number; games_required: number;
+    is_out: boolean; can_trade: boolean;
+  }>).map((r) => ({
+    playerId: Number(r.player_id),
+    gamesPlayed: Number(r.games_played),
+    gamesRequired: Number(r.games_required),
+    isOut: Boolean(r.is_out),
+    canTrade: Boolean(r.can_trade),
+  }));
+}
+
 /** Make an in-season transaction: drop one player, add another (post-lock). */
 export async function makeTransaction(
   client: AnyClient,
