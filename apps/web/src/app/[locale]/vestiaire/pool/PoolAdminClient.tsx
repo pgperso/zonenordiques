@@ -43,6 +43,7 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
     teamBasePoints: season?.teamBasePoints ?? 5,
     teamGfCoef: season?.teamGfCoef ?? 0,
     teamGaCoef: season?.teamGaCoef ?? -1,
+    teamShutoutPoints: season?.teamShutoutPoints ?? 0,
     starsEnabled: season?.starsEnabled ?? false,
   }));
   const [saving, setSaving] = useState(false);
@@ -83,6 +84,7 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
           teamBasePoints: Number(form.teamBasePoints),
           teamGfCoef: Number(form.teamGfCoef),
           teamGaCoef: Number(form.teamGaCoef),
+          teamShutoutPoints: Number(form.teamShutoutPoints),
           starsEnabled: form.starsEnabled,
         },
         rules: SCORING_CATALOG.map((c) => ({
@@ -230,6 +232,11 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
             <label className={labelCls}>Points par but accordé</label>
             <input type="number" step="0.5" className={inputCls} value={form.teamGaCoef} onChange={(e) => upd('teamGaCoef', Number(e.target.value))} />
             <p className="mt-1 text-xs text-gray-400">Ex. −1 : une équipe qui accorde 3 buts perd 3 pts ce soir-là.</p>
+          </div>
+          <div>
+            <label className={labelCls}>Bonus jeu blanc</label>
+            <input type="number" step="0.5" className={inputCls} value={form.teamShutoutPoints} onChange={(e) => upd('teamShutoutPoints', Number(e.target.value))} />
+            <p className="mt-1 text-xs text-gray-400">Accordé quand l&apos;équipe n&apos;accorde aucun but. 0 = désactivé. Distinct du blanchissage du gardien, qui récompense le gardien repêché.</p>
           </div>
         </div>
       </section>

@@ -32,6 +32,8 @@ export interface PoolSeason {
   teamBasePoints: number;
   teamGfCoef: number;
   teamGaCoef: number;
+  /** Bonus when the chosen club allows zero goals (00116). 0 = off. */
+  teamShutoutPoints: number;
   starsEnabled: boolean;
 }
 
@@ -54,6 +56,8 @@ export const SCORING_CATALOG: Array<{ key: string; appliesTo: 'skater' | 'goalie
   { key: 'blocked_shots', appliesTo: 'skater', label: 'Tir bloqué' },
   { key: 'takeaways', appliesTo: 'skater', label: 'Revirement provoqué' },
   { key: 'giveaways', appliesTo: 'skater', label: 'Revirement causé' },
+  // Awarded once for a 3+ goal game, not once per goal past two.
+  { key: 'hat_trick', appliesTo: 'skater', label: 'Tour du chapeau (3 buts et +)' },
   { key: 'win', appliesTo: 'goalie', label: 'Victoire' },
   { key: 'loss', appliesTo: 'goalie', label: 'Défaite' },
   { key: 'ot_loss', appliesTo: 'goalie', label: 'Défaite en prolongation' },
@@ -140,13 +144,14 @@ type SeasonRow = {
   team_base_points: number;
   team_gf_coef: number;
   team_ga_coef: number;
+  team_shutout_points: number;
   stars_enabled: boolean;
 };
 
 const SEASON_COLS =
   'id, nhl_season, name, budget_cents, roster_f, roster_d, roster_g, roster_teams, lock_at, status, ' +
   'transactions_enabled, max_transactions, transaction_deadline, tiebreaker, is_public, timezone, ' +
-  'team_base_points, team_gf_coef, team_ga_coef, stars_enabled';
+  'team_base_points, team_gf_coef, team_ga_coef, team_shutout_points, stars_enabled';
 
 function mapSeason(r: SeasonRow): PoolSeason {
   return {
@@ -169,6 +174,7 @@ function mapSeason(r: SeasonRow): PoolSeason {
     teamBasePoints: Number(r.team_base_points),
     teamGfCoef: Number(r.team_gf_coef),
     teamGaCoef: Number(r.team_ga_coef),
+    teamShutoutPoints: Number(r.team_shutout_points),
     starsEnabled: Boolean(r.stars_enabled),
   };
 }
