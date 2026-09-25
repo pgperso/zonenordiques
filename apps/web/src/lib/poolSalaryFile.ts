@@ -138,8 +138,16 @@ const NAME_HEADERS = ['nom', 'name', 'player', 'joueur', 'prenom', 'firstname'];
 const LAST_HEADERS = ['nom', 'prenomnom', 'lastname', 'nomdefamille', 'surname'];
 const TEAM_HEADERS = ['equ', 'equipe', 'team', 'tm', 'eq', 'club'];
 const CAP_HEADERS = ['caph', 'caphit', 'cap', 'salary', 'salaire', 'masse', 'capfriendly'];
+/** Headers that can only mean the cap hit, never this year's pay. */
+const CAP_HIT_HEADERS = ['caph', 'caphit', 'capfriendly', 'massesalariale'];
 const POS_HEADERS = ['pos', 'position'];
 const PROJ_HEADERS = ['pts', 'points', 'proj', 'projection', 'projpts'];
+// A draft-kit export bands its columns under group titles one row above the
+// real header: "Saison dernière | Projections | Salaires". PJ, B, P, Pts and
+// PPP then appear TWICE, and taking the first match silently reads last
+// season's points as the projection.
+const PROJ_GROUPS = ['projection', 'projections', 'proj', 'prevision', 'previsions', 'forecast'];
+const PAST_GROUPS = ['saisonderniere', 'derniere', 'saisonpassee', 'passee', 'lastseason', 'saison'];
 
 /**
  * Decide what the salary column is denominated in.
@@ -210,16 +218,54 @@ export function parseSalaryFile(text: string): SalaryFileParse {
   };
 
   const allLines = text.replace(/^﻿/, '').split(/\r?\n/);
-  const headerIdx = allLines.findIndex((l) => l.trim() !== '');
-  if (headerIdx === -1) return empty;
+  const firstFilled = allLines.findIndex((l) => l.trim() !== '');
+  if (firstFilled === -1) return empty;
+
+  const sepOf = (line: string) =>
+    splitCsvLine(line, ';').length > splitCsvLine(line, ',').length ? ';' : ',';
+
+  // Find the row that actually names the columns, rather than assuming it is
+  // the first filled one. A draft-kit export opens with a title row and a band
+  // of group titles, so the old rule read "Trousse de repêchage NHL 2026-2027"
+  // as the header and reported "aucune colonne de nom trouvée".
+  const SCAN_LINES = 20;
+  let headerIdx = -1;
+  for (let i = firstFilled; i < Math.min(allLines.length, firstFilled + SCAN_LINES); i++) {
+    if (allLines[i].trim() === '') continue;
+    const k = splitCsvLine(allLines[i], sepOf(allLines[i])).map(headerKey);
+    if (k.some((x) => NAME_HEADERS.includes(x)) && k.some((x) => CAP_HEADERS.includes(x))) {
+      headerIdx = i;
+      break;
+    }
+  }
+  // Fall back to the old rule, so a file whose header this scan does not
+  // recognise still parses and still reports its missing columns as before.
+  if (headerIdx === -1) headerIdx = firstFilled;
 
   // Sniff the delimiter from the header: whichever separator yields more
   // columns is the real one.
-  const sep = splitCsvLine(allLines[headerIdx], ';').length >
-              splitCsvLine(allLines[headerIdx], ',').length ? ';' : ',';
+  const sep = sepOf(allLines[headerIdx]);
   const header = splitCsvLine(allLines[headerIdx], sep);
   const keys = header.map(headerKey);
   const find = (candidates: string[]) => keys.findIndex((k) => k !== '' && candidates.includes(k));
+
+  // The group band, when there is one: the nearest non-empty row above the
+  // header. Its labels are sparse — one cell per band, blanks in between — so
+  // a band runs from its label to the next labelled cell.
+  const groupIdx = (() => {
+    for (let i = headerIdx - 1; i >= 0 && i >= headerIdx - 3; i--) {
+      if (allLines[i]?.trim()) return i;
+    }
+    return -1;
+  })();
+  const groupKeys = groupIdx === -1 ? [] : splitCsvLine(allLines[groupIdx], sep).map(headerKey);
+  /** [start, end) of the band whose title matches, or null. */
+  const bandOf = (titles: string[]): [number, number] | null => {
+    const start = groupKeys.findIndex((k) => k !== '' && titles.includes(k));
+    if (start === -1) return null;
+    const next = groupKeys.findIndex((k, i) => i > start && k !== '');
+    return [start, next === -1 ? keys.length : next];
+  };
 
   const nameIdx = find(NAME_HEADERS);
   if (nameIdx === -1) {
@@ -233,9 +279,31 @@ export function parseSalaryFile(text: string): SalaryFileParse {
   if (lastIdx === -1 && keys[nameIdx + 1] === '') lastIdx = nameIdx + 1;
 
   const teamIdx = find(TEAM_HEADERS);
-  const capIdx = find(CAP_HEADERS);
+
+  // A draft kit carries BOTH "Sal" (what the player is paid this year) and
+  // "CapH" (his cap hit). The pool runs on the cap hit, so an unambiguous
+  // cap-hit header always wins over a generic salary one — otherwise a file
+  // that happens to put "Salaire" first would price McDavid at 14.25 instead
+  // of 12.50, with nothing on screen to say which column was read.
+  let capIdx = find(CAP_HIT_HEADERS);
+  if (capIdx === -1) capIdx = find(CAP_HEADERS);
   const posIdx = find(POS_HEADERS);
-  const projIdx = find(PROJ_HEADERS);
+
+  // Projected points, not last season's. When the file bands its columns, take
+  // the Pts inside the "Projections" band; failing that, take one OUTSIDE the
+  // "Saison dernière" band. Only with no band at all does the first match win
+  // — which is what the single-header file wants.
+  const projBand = bandOf(PROJ_GROUPS);
+  const pastBand = bandOf(PAST_GROUPS);
+  const inBand = (i: number, b: [number, number] | null) => b !== null && i >= b[0] && i < b[1];
+  let projIdx = -1;
+  if (projBand) {
+    projIdx = keys.findIndex((k, i) => inBand(i, projBand) && PROJ_HEADERS.includes(k));
+  }
+  if (projIdx === -1 && pastBand) {
+    projIdx = keys.findIndex((k, i) => !inBand(i, pastBand) && k !== '' && PROJ_HEADERS.includes(k));
+  }
+  if (projIdx === -1) projIdx = find(PROJ_HEADERS);
 
   // First pass: collect raw values so the unit can be decided from the whole
   // column rather than from whichever row happens to come first.
@@ -297,7 +365,18 @@ export function parseSalaryFile(text: string): SalaryFileParse {
       teamHeader: teamIdx >= 0 ? (header[teamIdx]?.trim() || '(sans titre)') : '—',
       capHeader: capIdx >= 0 ? (header[capIdx]?.trim() || '(sans titre)') : '—',
       positionHeader: posIdx >= 0 ? (header[posIdx]?.trim() || '(sans titre)') : null,
-      projHeader: projIdx >= 0 ? (header[projIdx]?.trim() || '(sans titre)') : null,
+      // Says which band the projection came from: two columns are both called
+      // "Pts" and only the operator can tell whether the right one was read.
+      projHeader: projIdx >= 0
+        ? `${header[projIdx]?.trim() || '(sans titre)'}${
+            groupIdx >= 0 && groupKeys.length > 0
+              ? ` — section « ${(() => {
+                  for (let i = projIdx; i >= 0; i--) if (groupKeys[i]) return splitCsvLine(allLines[groupIdx], sep)[i]?.trim();
+                  return '?';
+                })()} »`
+              : ''
+          }`
+        : null,
       capUnit: unit,
       capUnitReason: reason,
     },

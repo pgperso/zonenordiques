@@ -215,3 +215,48 @@ describe('parseSalaryFile — other real-world layouts', () => {
     expect(parsed.rows[0].name).toBe('Connor McDavid');
   });
 });
+
+/**
+ * The "Trousse de repêchage" draft kit: a title row, a band row grouping the
+ * columns under "Saison dernière | Projections | Salaires", then the real
+ * header. PJ, B, P, Pts and PPP each appear twice, and the salary appears as
+ * both "Sal" (this year's pay) and "CapH" (the cap hit).
+ */
+const DRAFT_KIT = [
+  ',,,,,,,,,,,,,,,,,,,,,,,,,,,',
+  'Trousse de repêchage NHL 2026-2027,,,,,,,,,,,,,,,,,,,,,,,,,,,',
+  ',,,,,,Saison dernière,,,,,,Projections,,,,,,Salaires,',
+  '#,Nom,,Âge,Équ.,Pos,PJ,B,P,Pts,PPP,+/-,PJ,B,P,Pts,PPP,+/-,Sal,CapH',
+  '1,Connor,McDavid,29,Edm,C,82,48,90,138,1.68,17,82,44,91,135,1.65,20,14.25,12.50',
+  '12,Evan,Bouchard,26,Edm,D,82,21,74,95,1.16,25,84,20,72,92,1.10,25,12.00,10.50',
+].join('\n');
+
+describe('parseSalaryFile — the banded draft kit', () => {
+  const parsed = parseSalaryFile(DRAFT_KIT);
+
+  it('finds the real header row under the title and the band row', () => {
+    expect(parsed.layout.nameHeader).toBe('Nom');
+    expect(parsed.layout.nameColumns).toBe('split');
+    expect(parsed.layout.teamHeader).toBe('Équ.');
+    expect(parsed.missingColumns).toEqual([]);
+    expect(parsed.rows.map((r) => r.name)).toEqual(['Connor McDavid', 'Evan Bouchard']);
+  });
+
+  it('reads the cap hit, not this year’s pay', () => {
+    // McDavid: Sal 14.25, CapH 12.50. The pool runs on the cap hit.
+    expect(parsed.layout.capHeader).toBe('CapH');
+    expect(parsed.rows[0].capHitCents).toBe(1_250_000_000); // 12.50 M$ in cents
+    expect(parsed.rows[1].capHitCents).toBe(1_050_000_000); // 10.50 M$
+  });
+
+  it('reads the PROJECTED points, not last season’s', () => {
+    // McDavid: 138 last season, 135 projected. Both columns are called "Pts".
+    expect(parsed.rows[0].projPoints).toBe(135);
+    expect(parsed.rows[1].projPoints).toBe(92);
+    expect(parsed.layout.projHeader).toContain('Projections');
+  });
+
+  it('keeps the position, so defencemen are not filed as forwards', () => {
+    expect(parsed.rows.map((r) => r.position)).toEqual(['C', 'D']);
+  });
+});
