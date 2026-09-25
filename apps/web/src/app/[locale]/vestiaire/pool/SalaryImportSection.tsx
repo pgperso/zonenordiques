@@ -568,9 +568,14 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
               </p>
               {unverified > 0 && (
                 <p className="mt-1 text-red-700">
-                  <strong>{unverified} d’entre eux sont sur un prix jamais importé</strong> —
-                  un chiffre dérivé au démarrage, pas un vrai plafond. Donne-leur un salaire
-                  dans le chiffrier avant l’ouverture du repêchage.
+                  <strong>
+                    {unverified === 1
+                      ? 'L’un d’eux est sur un prix jamais importé'
+                      : `${unverified} d’entre eux sont sur un prix jamais importé`}
+                  </strong>{' '}
+                  — un chiffre dérivé au démarrage, pas un vrai plafond.{' '}
+                  {unverified === 1 ? 'Donne-lui' : 'Donne-leur'} un salaire dans le chiffrier
+                  avant l’ouverture du repêchage.
                 </p>
               )}
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
