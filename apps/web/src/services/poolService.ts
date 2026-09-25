@@ -788,10 +788,36 @@ export interface SalaryCsvRow {
    *  over parsing `capHit` here: '12.50' means 12.5 MILLION in the real file,
    *  and parseMoneyCents would read it as twelve dollars fifty. */
   capHitCents?: number | null;
+  /** The salary cell verbatim, for reporting a row that could not be priced.
+   *  Never parsed — see the note on `capHit`. */
+  capHitRaw?: string;
   /** Projected points from the same spreadsheet, when present. */
   projPoints?: number | null;
+  /** The file's own position cell. The last resort for telling apart two
+   *  players who share a name AND a team — the two Elias Petterssons are both
+   *  on Vancouver and only the C/D differs. */
+  position?: string | null;
   /** 1-based line in the source file, for error messages. */
   line?: number;
+}
+
+/**
+ * The file's position cell as F/D/G, or null when it says nothing usable.
+ *
+ * Deliberately NOT poolPosition(), which answers 'F' for every input it does
+ * not recognise — including an empty cell. Here an unreadable cell must
+ * disqualify itself rather than vote for the forward.
+ */
+function csvPoolPosition(raw: string | null | undefined): PoolPosition | null {
+  const v = (raw ?? '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toUpperCase().replace(/[^A-Z]/g, '');
+  if (!v) return null;
+  if (['D', 'DEF', 'DEFENSE', 'DEFENSEMAN', 'DEFENSEUR'].includes(v)) return 'D';
+  if (['G', 'GK', 'GOALIE', 'GOALTENDER', 'GARDIEN'].includes(v)) return 'G';
+  if (['C', 'CEN', 'CENTRE', 'CENTER', 'L', 'LW', 'AG', 'R', 'RW', 'AD', 'W', 'AIL', 'AILIER',
+       'F', 'FORWARD', 'A', 'ATT', 'ATTAQUANT'].includes(v)) return 'F';
+  return null;
 }
 
 /** Parse CSV text into rows. Accepts headers: name/player, team, cap_hit/salary. */
@@ -877,6 +903,18 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
       candidates = byLastTeam.get(`${last}|${team}`) ?? [];
     }
 
+    // Same name AND same team still happens: both Elias Petterssons play for
+    // Vancouver. The file's own position cell is then the only thing left that
+    // separates them — and only when it is readable, so an empty cell reports
+    // the homonym instead of silently picking one.
+    if (candidates.length > 1) {
+      const rowPos = csvPoolPosition(row.position);
+      if (rowPos) {
+        const byPos = candidates.filter((c) => poolPosition(c.position) === rowPos);
+        if (byPos.length === 1) candidates = byPos;
+      }
+    }
+
     if (candidates.length === 1) {
       const p = candidates[0];
       res.matched.push({
@@ -958,9 +996,15 @@ export async function importSalaries(
   const rows: SalaryCsvRow[] = parsed.rows.map((r) => ({
     name: r.name,
     team: r.team,
+    // capHit stays empty on purpose: matchSalaryRows falls back to parsing it
+    // when capHitCents is null, and that generic parser does not know the
+    // file's unit — it would read a rejected "12.50" as twelve dollars fifty.
+    // The raw cell travels in capHitRaw, for display only.
     capHit: '',
+    capHitRaw: r.capHitRaw,
     capHitCents: r.capHitCents,
     projPoints: r.projPoints,
+    position: r.position,
     line: r.line,
   }));
 

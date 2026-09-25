@@ -31,6 +31,10 @@ export interface SalaryFileRow {
   teamRaw: string;
   /** Salary in cents, already scaled by the detected unit. */
   capHitCents: number | null;
+  /** The salary cell exactly as it appeared. Kept so a row the reader had to
+   *  reject can show WHAT it rejected — an empty cell, an em-dash and a typo
+   *  are three different things to fix in the spreadsheet. */
+  capHitRaw: string;
   /** Position as written in the file (C/LW/RW/D/G), when present. */
   position: string | null;
   /** Projected points, when the file carries a projection column. */
@@ -278,6 +282,7 @@ export function parseSalaryFile(text: string): SalaryFileParse {
       team,
       teamRaw,
       capHitCents,
+      capHitRaw: capIdx >= 0 ? (r.cells[capIdx] ?? '').trim() : '',
       position: posIdx >= 0 ? ((r.cells[posIdx] ?? '').trim() || null) : null,
       projPoints: projIdx >= 0 ? num(r.cells[projIdx] ?? '') : null,
       line: r.line,

@@ -464,6 +464,7 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             Colonnes détectées : nom «&nbsp;{report.layout.nameHeader}&nbsp;»
             {report.layout.nameColumns === 'split' && ' + colonne suivante (nom de famille)'}
             , équipe «&nbsp;{report.layout.teamHeader}&nbsp;», salaire «&nbsp;{report.layout.capHeader}&nbsp;»
+            {report.layout.positionHeader && `, position « ${report.layout.positionHeader} »`}
             {report.layout.projHeader && `, projection « ${report.layout.projHeader} »`}.
             <br />
             {report.layout.capUnitReason}
@@ -550,8 +551,28 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             </div>
           )}
 
+          {/* Named, not counted: these players keep whatever price they had,
+              so the operator has to be able to see WHO is about to be left on
+              a stale figure — and a blank cell, a dash and a typo call for
+              different fixes in the spreadsheet. */}
           {report.invalidPrice.length > 0 && (
-            <p className="mt-3 text-orange-700">{report.invalidPrice.length} ligne(s) sans salaire lisible.</p>
+            <div className="mt-3">
+              <p className="font-medium text-orange-700">
+                {report.invalidPrice.length} ligne(s) sans salaire lisible — ces joueurs gardent
+                leur prix actuel :
+              </p>
+              <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
+                {report.invalidPrice.map((r, i) => (
+                  <li key={`${r.name}-${i}`}>
+                    ligne {r.line ?? '?'} · {r.name || '(sans nom)'} {r.team && `(${r.team})`}
+                    {' — '}
+                    <span className="text-gray-500">
+                      {r.capHitRaw ? `cellule « ${r.capHitRaw} »` : 'cellule vide'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
 
           {report.skippedLines.length > 0 && (
