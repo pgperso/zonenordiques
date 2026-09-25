@@ -262,6 +262,11 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const problems = report
     ? report.unmatched.length + report.ambiguous.length + report.invalidPrice.length
     : 0;
+  // Kept prices that no import ever confirmed: the ones that look real in the
+  // composer and are not.
+  const unverified = report
+    ? report.keptPrices.filter((k) => k.priceCents !== null && !k.importedAt && k.draftable).length
+    : 0;
   const applyDisabled = busy || !report || !upToDate || report.dryRun === false;
 
   return (
@@ -551,24 +556,42 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
             </div>
           )}
 
-          {/* Named, not counted: these players keep whatever price they had,
-              so the operator has to be able to see WHO is about to be left on
-              a stale figure — and a blank cell, a dash and a typo call for
-              different fixes in the spreadsheet. */}
-          {report.invalidPrice.length > 0 && (
+          {/* "Keep the last known salary" is the rule. It is only safe if the
+              operator can see WHICH price is kept and whether it was ever a
+              real cap hit — an unstamped price is seedPoolSeason's invention,
+              and it would sit in the pool looking exactly like the rest. */}
+          {report.keptPrices.length > 0 && (
             <div className="mt-3">
               <p className="font-medium text-orange-700">
-                {report.invalidPrice.length} ligne(s) sans salaire lisible — ces joueurs gardent
+                {report.keptPrices.length} joueur(s) sans salaire dans le fichier — ils gardent
                 leur prix actuel :
               </p>
+              {unverified > 0 && (
+                <p className="mt-1 text-red-700">
+                  <strong>{unverified} d’entre eux sont sur un prix jamais importé</strong> —
+                  un chiffre dérivé au démarrage, pas un vrai plafond. Donne-leur un salaire
+                  dans le chiffrier avant l’ouverture du repêchage.
+                </p>
+              )}
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
-                {report.invalidPrice.map((r, i) => (
-                  <li key={`${r.name}-${i}`}>
-                    ligne {r.line ?? '?'} · {r.name || '(sans nom)'} {r.team && `(${r.team})`}
-                    {' — '}
-                    <span className="text-gray-500">
-                      {r.capHitRaw ? `cellule « ${r.capHitRaw} »` : 'cellule vide'}
-                    </span>
+                {report.keptPrices.map((k, i) => (
+                  <li key={`${k.name}-${i}`}>
+                    ligne {k.line ?? '?'} · {k.name || '(sans nom)'} —{' '}
+                    {k.priceCents === null ? (
+                      <span className="text-gray-500">aucun prix (non repêchable)</span>
+                    ) : (
+                      <>
+                        <strong>{fmtMoney(k.priceCents)}</strong>{' '}
+                        {k.importedAt ? (
+                          <span className="text-gray-500">
+                            (importé le {new Date(k.importedAt).toLocaleDateString('fr-CA')})
+                          </span>
+                        ) : (
+                          <span className="text-red-700">(prix dérivé, jamais vérifié)</span>
+                        )}
+                        {!k.draftable && <span className="text-gray-500"> · non repêchable</span>}
+                      </>
+                    )}
                   </li>
                 ))}
               </ul>

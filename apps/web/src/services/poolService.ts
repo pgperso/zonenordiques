@@ -846,14 +846,17 @@ export interface SalaryMatchResult {
   matched: Array<{ playerId: number; priceCents: number; position: PoolPosition; name: string; projPoints: number | null }>;
   unmatched: SalaryCsvRow[];
   ambiguous: Array<{ row: SalaryCsvRow; candidates: number }>;
-  invalidPrice: SalaryCsvRow[];
+  /** Rows the file left without a readable salary. The player is resolved
+   *  anyway — the price they keep is what the operator has to be told, and
+   *  that cannot be looked up without an id. */
+  invalidPrice: Array<{ row: SalaryCsvRow; playerId: number | null }>;
 }
 
 /**
  * Match CSV salary rows to NHL players. Pure + unit-testable. Strategy, in
  * order: exact normalized full name (unique) → full name disambiguated by
- * team → unique last-name + team. Anything still unresolved is reported,
- * never guessed.
+ * team → unique last-name + team, with the file's position as a last-resort
+ * tiebreak. Anything still unresolved is reported, never guessed.
  */
 export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]): SalaryMatchResult {
   const byFull = new Map<string, MatchablePlayer[]>();
@@ -883,13 +886,6 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
   for (const r of rows) nameCount.set(normOf(r.name), (nameCount.get(normOf(r.name)) ?? 0) + 1);
 
   for (const row of rows) {
-    // The file reader already scaled by the detected unit; fall back to
-    // parsing the raw string only for callers that did not go through it.
-    const priceCents = row.capHitCents ?? parseMoneyCents(row.capHit);
-    if (priceCents === null || priceCents <= 0) {
-      res.invalidPrice.push(row);
-      continue;
-    }
     const norm = normOf(row.name);
     const team = normalizeTeamAbbrev(row.team);
     const isHomonym = (nameCount.get(norm) ?? 0) > 1 || (byFull.get(norm)?.length ?? 0) > 1;
@@ -915,6 +911,18 @@ export function matchSalaryRows(players: MatchablePlayer[], rows: SalaryCsvRow[]
       }
     }
 
+    // The price is checked only now: a row with no salary still has to name
+    // its player, because "keep the last known salary" is only auditable if
+    // the report can say WHICH price is being kept.
+    const priceCents = row.capHitCents ?? parseMoneyCents(row.capHit);
+    if (priceCents === null || priceCents <= 0) {
+      res.invalidPrice.push({
+        row,
+        playerId: candidates.length === 1 ? candidates[0].playerId : null,
+      });
+      continue;
+    }
+
     if (candidates.length === 1) {
       const p = candidates[0];
       res.matched.push({
@@ -938,7 +946,18 @@ export interface SalaryImportReport {
   matched: number;
   unmatched: SalaryCsvRow[];
   ambiguous: Array<{ row: SalaryCsvRow; candidates: number }>;
-  invalidPrice: SalaryCsvRow[];
+  invalidPrice: Array<{ row: SalaryCsvRow; playerId: number | null }>;
+  /** One entry per row the file left without a salary: the price that player
+   *  therefore keeps, and whether it was ever a real cap hit. `importedAt`
+   *  null with a price means a derived placeholder — a number nobody
+   *  verified, in a pool where every other price is real. */
+  keptPrices: Array<{
+    name: string;
+    line?: number;
+    priceCents: number | null;
+    importedAt: string | null;
+    draftable: boolean;
+  }>;
   budgetCents: number | null;
   /** What the reader detected: which columns, and the salary unit. */
   layout: SalaryFileLayout;
@@ -1052,6 +1071,7 @@ export async function importSalaries(
   for (const m of result.matched) byPlayer.set(m.playerId, m);
   const deduped = [...byPlayer.values()];
 
+  const stampedAt = new Date().toISOString();
   if (deduped.length > 0 && !opts.dryRun) {
     const priceRows = deduped.map((m) => ({
       season_id: seasonId,
@@ -1064,11 +1084,46 @@ export async function importSalaries(
       // on one row sends NULL for that row and 400s the entire upsert. A
       // single blank Pts cell (a goalie, an em-dash) was enough.
       proj_points: m.projPoints ?? 0,
+      // Provenance. A price with no stamp was never a real cap hit — it is
+      // seedPoolSeason's derivation, and the report has to be able to say so.
+      imported_at: stampedAt,
     }));
     const { error } = await db.from('pool_player_prices').upsert(priceRows, { onConflict: 'season_id,player_id' });
     if (error) throw new Error(`upsert prices: ${error.message}`);
   }
 
+
+  // What the rows with no salary end up keeping. Read in every mode: the
+  // preview is where the operator decides whether "keep the last known
+  // salary" is acceptable, and that turns on whether the kept price is real.
+  const keptPrices: SalaryImportReport['keptPrices'] = [];
+  if (result.invalidPrice.length > 0) {
+    const ids = [...new Set(result.invalidPrice.map((x) => x.playerId).filter((id): id is number => id !== null))];
+    const known = new Map<number, { price_cents: number; imported_at: string | null; is_draftable: boolean }>();
+    for (let i = 0; i < ids.length; i += PAGE) {
+      const { data, error } = await db
+        .from('pool_player_prices')
+        .select('player_id, price_cents, imported_at, is_draftable')
+        .eq('season_id', seasonId)
+        .in('player_id', ids.slice(i, i + PAGE));
+      if (error) throw new Error(`lecture des prix conservés : ${error.message}`);
+      for (const r of (data ?? []) as Array<{
+        player_id: number; price_cents: number; imported_at: string | null; is_draftable: boolean;
+      }>) {
+        known.set(r.player_id, { price_cents: r.price_cents, imported_at: r.imported_at, is_draftable: r.is_draftable });
+      }
+    }
+    for (const x of result.invalidPrice) {
+      const k = x.playerId === null ? undefined : known.get(x.playerId);
+      keptPrices.push({
+        name: x.row.name,
+        line: x.row.line,
+        priceCents: k?.price_cents ?? null,
+        importedAt: k?.imported_at ?? null,
+        draftable: k?.is_draftable ?? false,
+      });
+    }
+  }
 
   // What a full snapshot would retire — computed in every mode, because the
   // preview has to be able to show the cost of the destructive option BEFORE
@@ -1169,6 +1224,7 @@ export async function importSalaries(
     unmatched: result.unmatched,
     ambiguous: result.ambiguous,
     invalidPrice: result.invalidPrice,
+    keptPrices,
     budgetCents: opts.budgetCents ?? null,
     layout: parsed.layout,
     unknownTeams: parsed.unknownTeams,

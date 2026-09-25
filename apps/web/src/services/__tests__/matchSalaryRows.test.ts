@@ -57,6 +57,29 @@ describe('matchSalaryRows — homonyms on the same team', () => {
     expect(res.matched.map((m) => m.playerId).sort()).toEqual([1, 2]);
   });
 
+  it('still names the player when the salary cell is empty', () => {
+    // The file marks pending free agents with "°" and leaves CapH blank. The
+    // rule is that they keep their last known salary — which can only be
+    // reported, or audited, if the row resolves to a player id.
+    const res = matchSalaryRows(
+      [{ playerId: 8482124, fullName: 'Adam Fantilli', teamAbbrev: 'CBJ', position: 'C' }],
+      [{ name: 'Adam Fantilli', team: 'Cbj', capHit: '', capHitCents: null, position: 'C', line: 107 }],
+    );
+    expect(res.matched).toHaveLength(0);
+    expect(res.invalidPrice).toHaveLength(1);
+    expect(res.invalidPrice[0].playerId).toBe(8482124);
+    expect(res.invalidPrice[0].row.line).toBe(107);
+  });
+
+  it('reports a nameless unpriced row without inventing a player', () => {
+    const res = matchSalaryRows(
+      [{ playerId: 1, fullName: 'Connor McDavid', teamAbbrev: 'EDM', position: 'C' }],
+      [{ name: 'Personne Inconnue', team: 'XXX', capHit: '', capHitCents: null }],
+    );
+    expect(res.invalidPrice).toHaveLength(1);
+    expect(res.invalidPrice[0].playerId).toBeNull();
+  });
+
   it('leaves a single-candidate match alone whatever the position says', () => {
     // A stale or wrong position cell must not un-match a name that is already
     // unique — the position is a tiebreak, not a validator.
