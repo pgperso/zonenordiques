@@ -725,7 +725,13 @@
       "expand": "Show the pool leaders",
       "collapse": "Collapse",
       "overall": "#{rank} overall",
-      "fullStandings": "Full standings"
+      "fullStandings": "Full standings",
+      "joinTitle": "NHL pool — entries are open",
+      "joinCount": "{count, plural, =1 {1 team already in} other {# teams already in}}",
+      "joinFirst": "Be the first to build a team",
+      "joinDeadline": "draft open until {date}",
+      "joinCta": "Build my team",
+      "joinButton": "NHL pool"
     }
   }
 }

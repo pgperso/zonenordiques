@@ -731,7 +731,13 @@
       "expand": "Afficher les meneurs du pool",
       "collapse": "Réduire",
       "overall": "{rank}e gén.",
-      "fullStandings": "Classement complet"
+      "fullStandings": "Classement complet",
+      "joinTitle": "Pool LNH — inscription ouverte",
+      "joinCount": "{count, plural, =1 {1 équipe déjà inscrite} other {# équipes déjà inscrites}}",
+      "joinFirst": "Sois le premier à bâtir ton équipe",
+      "joinDeadline": "repêchage jusqu’au {date}",
+      "joinCta": "Bâtir mon équipe",
+      "joinButton": "Pool LNH"
     }
   }
 }

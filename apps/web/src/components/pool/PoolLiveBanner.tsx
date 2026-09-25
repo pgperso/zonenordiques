@@ -29,11 +29,19 @@ interface Row {
   rankTotal: number;
 }
 
+interface Signup {
+  confirmed: number;
+  status: string;
+  lockAt: string | null;
+}
+
 interface Payload {
   rows: Row[];
   gameDay: string | null;
   gamesLive: number;
   gamesTotal: number;
+  /** Present instead of rows before the first game: the recruiting state. */
+  signup: Signup | null;
 }
 
 function fmtPts(n: number): string {
@@ -94,12 +102,13 @@ export function PoolLiveBanner() {
     try { localStorage.setItem(STORAGE_KEY, next ? '1' : '0'); } catch { /* private browsing */ }
   }
 
-  // Stay invisible until there is genuinely something to show: while the
-  // preference is still unknown, while the first fetch is in flight, and all
-  // season long before the first puck drop. Rendering a "loading" frame that
-  // then vanishes on an empty answer is a flash of furniture for nothing —
-  // and before the season that would be every single page load.
-  if (open === null || data === null || data.rows.length === 0) return null;
+  // Stay invisible while the preference is unknown and while the first fetch
+  // is in flight — a frame that appears then vanishes is furniture for
+  // nothing. After that there are two things worth showing: tonight's points
+  // once games exist, and before that an invitation to join.
+  if (open === null || data === null) return null;
+  const recruiting = data.rows.length === 0;
+  if (recruiting && !data.signup) return null;
 
   if (!open) {
     return (
@@ -115,9 +124,44 @@ export function PoolLiveBanner() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
           </span>
         )}
-        {t('buttonLabel')}
-        <span className="tabular-nums opacity-70">{fmtPts(data.rows[0].pointsToday)}</span>
+        {recruiting ? t('joinButton') : t('buttonLabel')}
+        {!recruiting && (
+          <span className="tabular-nums opacity-70">{fmtPts(data.rows[0].pointsToday)}</span>
+        )}
       </button>
+    );
+  }
+
+  // ── Before the season: recruit ──────────────────────────────────────────
+  if (recruiting) {
+    const s = data.signup!;
+    return (
+      <section
+        aria-label={t('joinTitle')}
+        className="mx-4 mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-[#252525]"
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t('joinTitle')}</p>
+          <p className="text-xs text-gray-500">
+            {s.confirmed > 0 ? t('joinCount', { count: s.confirmed }) : t('joinFirst')}
+            {s.lockAt && ` · ${t('joinDeadline', { date: new Date(s.lockAt).toLocaleDateString('fr-CA') })}`}
+          </p>
+        </div>
+        <Link
+          href="/lnh/pool"
+          className="shrink-0 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
+        >
+          {t('joinCta')}
+        </Link>
+        <button
+          type="button"
+          onClick={() => choose(false)}
+          aria-label={t('collapse')}
+          className="shrink-0 rounded px-1.5 text-gray-400 transition hover:text-gray-700 dark:hover:text-gray-200"
+        >
+          ✕
+        </button>
+      </section>
     );
   }
 

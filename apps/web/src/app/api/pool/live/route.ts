@@ -41,12 +41,14 @@ export async function GET() {
 
   const { data: seasonRow } = await db
     .from('pool_seasons')
-    .select('id, nhl_season, status')
+    .select('id, nhl_season, status, lock_at, is_public')
     .order('nhl_season', { ascending: false })
     .limit(1)
     .maybeSingle();
-  const season = seasonRow as { id: number } | null;
-  if (!season) return NextResponse.json({ rows: [], live: false, refreshedAt: null });
+  const season = seasonRow as {
+    id: number; status: string; lock_at: string | null; is_public: boolean;
+  } | null;
+  if (!season) return NextResponse.json({ rows: [], gamesLive: 0, gamesTotal: 0 });
 
   // Is there anything in progress, and how long since we last read it? Both
   // answers come from nhl_games, so the throttle needs no extra table and no
@@ -97,12 +99,27 @@ export async function GET() {
     rankTotal: Number(r.rank_total),
   }));
 
+  // Before the first puck drop there are no points to rank, but that is
+  // exactly when the pool most needs members. The banner recruits instead of
+  // hiding, so it carries how many teams are already in and whether the draft
+  // is still open. Counts only — nothing here identifies anybody.
+  let signup: { confirmed: number; status: string; lockAt: string | null } | null = null;
+  if (rows.length === 0 && season.is_public) {
+    const { count } = await db
+      .from('pool_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('season_id', season.id)
+      .eq('is_confirmed', true);
+    signup = { confirmed: count ?? 0, status: season.status, lockAt: season.lock_at };
+  }
+
   const first = (data as Array<{ game_day: string; games_live: number; games_total: number }> | null)?.[0];
   return NextResponse.json({
     rows,
     gameDay: first?.game_day ?? null,
     gamesLive: Number(first?.games_live ?? 0),
     gamesTotal: Number(first?.games_total ?? 0),
+    signup,
     refreshed,
   });
 }
