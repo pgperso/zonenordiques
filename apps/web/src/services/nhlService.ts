@@ -226,6 +226,11 @@ function isFinal(gameState: string): boolean {
   return gameState === 'OFF' || gameState === 'FINAL';
 }
 
+/** A game currently being played. CRIT is the NHL's "close late game" state. */
+function isLive(gameState: string): boolean {
+  return gameState === 'LIVE' || gameState === 'CRIT';
+}
+
 // ---------------------------------------------------------------------------
 // Ingestion — write NHL data into Supabase. Caller passes a service-role
 // client (RLS-bypassing); these functions never run with a user client.
@@ -371,6 +376,7 @@ export interface SyncResult {
 export async function syncDate(
   admin: AnyClient,
   date: string | 'now' = 'now',
+  opts: { includeLive?: boolean } = {},
 ): Promise<SyncResult> {
   const db = admin as unknown as SupabaseClient;
   const score = await fetchScore(date);
@@ -417,11 +423,15 @@ export async function syncDate(
     if (error) throw new Error(`upsert games: ${error.message}`);
   }
 
-  // 3. Per-player stats for final games only. Each game is isolated: one bad
-  //    boxscore must not kill the rest of the slate (it's logged and the next
-  //    run retries it). Per game we replace its stat rows so a corrected
-  //    boxscore that drops a player can't leave a stale row behind.
-  const finalGames = games.filter((g) => isFinal(g.gameState));
+  // 3. Per-player stats. Each game is isolated: one bad boxscore must not
+  //    kill the rest of the slate (it's logged and the next run retries it).
+  //    Per game we replace its stat rows, so a corrected boxscore that drops a
+  //    player can't leave a stale row behind — and that same wholesale replace
+  //    is what lets a game in progress be re-read every few minutes and
+  //    converge on its final numbers.
+  const finalGames = games.filter(
+    (g) => isFinal(g.gameState) || (opts.includeLive === true && isLive(g.gameState)),
+  );
   let statRows = 0;
   const failedGames: number[] = [];
 

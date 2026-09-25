@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { FeedContainer } from '@/components/feed/FeedContainer';
 import { PressContentCard } from '@/components/press/PressContentCard';
 import { AdSidebar } from '@/components/ads/AdSidebar';
+import { PoolLiveBanner } from '@/components/pool/PoolLiveBanner';
 import { AdAnchor } from '@/components/ads/AdAnchor';
 import { AdSlot } from '@/components/ads/AdSlot';
 import { useSupabase } from '@/hooks/useSupabase';
@@ -108,6 +109,9 @@ export function CommunityPageClient({
               {t('pool.tagline')} <span className="underline">{t('pool.cta')}</span>
             </Link>
           )}
+          {/* Tonight's pool leaderboard. Collapsed it is a floating button, so
+              it never pushes the conversation down the page. */}
+          {community.slug === 'lnh' && SITE.showPool && <PoolLiveBanner />}
           {/* 3-column layout: [Ad left] | [Feed] | [Ad right] */}
           <div className="flex flex-1 overflow-hidden border-t border-gray-200 dark:border-gray-700">
             {/* Left ad sidebar - xl+ only */}
