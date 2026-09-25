@@ -94,10 +94,12 @@ export function PoolLiveBanner() {
     try { localStorage.setItem(STORAGE_KEY, next ? '1' : '0'); } catch { /* private browsing */ }
   }
 
-  // Nothing to show before the first game of the season, and nothing to show
-  // while the preference is still unknown.
-  if (open === null) return null;
-  if (data !== null && data.rows.length === 0) return null;
+  // Stay invisible until there is genuinely something to show: while the
+  // preference is still unknown, while the first fetch is in flight, and all
+  // season long before the first puck drop. Rendering a "loading" frame that
+  // then vanishes on an empty answer is a flash of furniture for nothing —
+  // and before the season that would be every single page load.
+  if (open === null || data === null || data.rows.length === 0) return null;
 
   if (!open) {
     return (
@@ -107,21 +109,19 @@ export function PoolLiveBanner() {
         aria-label={t('expand')}
         className="fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:bg-gray-800 dark:bg-white dark:text-gray-900"
       >
-        {data && data.gamesLive > 0 && (
+        {data.gamesLive > 0 && (
           <span className="relative flex h-2 w-2" aria-hidden>
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
           </span>
         )}
         {t('buttonLabel')}
-        {data && data.rows.length > 0 && (
-          <span className="tabular-nums opacity-70">{fmtPts(data.rows[0].pointsToday)}</span>
-        )}
+        <span className="tabular-nums opacity-70">{fmtPts(data.rows[0].pointsToday)}</span>
       </button>
     );
   }
 
-  const top = (data?.rows ?? []).slice(0, 5);
+  const top = data.rows.slice(0, 5);
 
   return (
     <section
@@ -130,7 +130,7 @@ export function PoolLiveBanner() {
     >
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-          {data && data.gamesLive > 0 ? (
+          {data.gamesLive > 0 ? (
             <span className="flex items-center gap-1.5 text-red-600">
               <span className="relative flex h-2 w-2" aria-hidden>
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
@@ -152,37 +152,32 @@ export function PoolLiveBanner() {
         </button>
       </div>
 
-      {data === null ? (
-        <p className="mt-2 text-sm text-gray-400">{t('loading')}</p>
-      ) : (
-        <>
-          <ol className="mt-2 space-y-1">
-            {top.map((r) => (
-              <li key={r.entryId} className="flex items-baseline gap-2 text-sm">
-                <span className="w-5 shrink-0 tabular-nums text-gray-400">{r.rankToday}</span>
-                <Link
-                  href={`/lnh/pool/equipe/${r.entryId}`}
-                  className="min-w-0 flex-1 truncate text-gray-900 hover:underline dark:text-gray-100"
-                >
-                  {r.teamName}
-                </Link>
-                <span className="shrink-0 font-semibold tabular-nums text-gray-900 dark:text-gray-100">
-                  {fmtPts(r.pointsToday)}
-                </span>
-                <span className="w-12 shrink-0 text-right text-xs tabular-nums text-gray-400">
-                  {t('overall', { rank: r.rankTotal })}
-                </span>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-            <span>{data.gameDay ?? ''}</span>
-            <Link href="/lnh/pool/classement" className="hover:text-gray-600 hover:underline dark:hover:text-gray-300">
-              {t('fullStandings')}
+      <ol className="mt-2 space-y-1">
+        {top.map((r) => (
+          <li key={r.entryId} className="flex items-baseline gap-2 text-sm">
+            <span className="w-5 shrink-0 tabular-nums text-gray-400">{r.rankToday}</span>
+            <Link
+              href={`/lnh/pool/equipe/${r.entryId}`}
+              className="min-w-0 flex-1 truncate text-gray-900 hover:underline dark:text-gray-100"
+            >
+              {r.teamName}
             </Link>
-          </div>
-        </>
-      )}
+            <span className="shrink-0 font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+              {fmtPts(r.pointsToday)}
+            </span>
+            <span className="w-12 shrink-0 text-right text-xs tabular-nums text-gray-400">
+              {t('overall', { rank: r.rankTotal })}
+            </span>
+          </li>
+        ))}
+      </ol>
+
+      <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+        <span>{data.gameDay ?? ''}</span>
+        <Link href="/lnh/pool/classement" className="hover:text-gray-600 hover:underline dark:hover:text-gray-300">
+          {t('fullStandings')}
+        </Link>
+      </div>
     </section>
   );
 }

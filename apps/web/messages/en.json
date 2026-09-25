@@ -724,7 +724,6 @@
       "buttonLabel": "Pool tonight",
       "expand": "Show the pool leaders",
       "collapse": "Collapse",
-      "loading": "Loading…",
       "overall": "#{rank} overall",
       "fullStandings": "Full standings"
     }

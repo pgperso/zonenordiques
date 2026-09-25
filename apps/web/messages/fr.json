@@ -730,7 +730,6 @@
       "buttonLabel": "Pool ce soir",
       "expand": "Afficher les meneurs du pool",
       "collapse": "Réduire",
-      "loading": "Chargement…",
       "overall": "{rank}e gén.",
       "fullStandings": "Classement complet"
     }
