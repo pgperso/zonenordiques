@@ -446,12 +446,22 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 report.overBudgetEntries ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-white'
               }`}
             >
+              {/* A re-run of the same file changes nothing, which is the point
+                  — but "0 équipes mises à jour" beside "une équipe dépasse le
+                  plafond" reads as a contradiction. The first is what moved
+                  just now; the second is the standing state. */}
               <p className="text-gray-700">
-                Masses salariales recalculées : <strong>{report.repricedEntries}</strong>{' '}
-                {report.repricedEntries === 1
-                  ? 'équipe non verrouillée mise à jour'
-                  : 'équipes non verrouillées mises à jour'}{' '}
-                au prix du jour.
+                {report.repricedEntries === 0 ? (
+                  <>Aucune masse salariale à recalculer — les prix n’ont pas bougé.</>
+                ) : (
+                  <>
+                    Masses salariales recalculées : <strong>{report.repricedEntries}</strong>{' '}
+                    {report.repricedEntries === 1
+                      ? 'équipe non verrouillée mise à jour'
+                      : 'équipes non verrouillées mises à jour'}{' '}
+                    au prix du jour.
+                  </>
+                )}
               </p>
               {report.overBudgetEntries ? (
                 <p className="mt-1 text-amber-800">
