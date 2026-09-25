@@ -611,6 +611,103 @@ export async function confirmEntry(client: AnyClient, entryId: number): Promise<
   return { error: error?.message ?? null };
 }
 
+export interface UnpricedPlayer {
+  playerId: number;
+  fullName: string;
+  teamAbbrev: string | null;
+  position: PoolPosition;
+  /** 0 when the file gave no salary; > 0 means a derived figure nobody verified. */
+  priceCents: number;
+  projPoints: number;
+  reason: 'derived' | 'missing';
+}
+
+/**
+ * Every player still waiting for a real salary: the ones a file named without
+ * a cap hit, and the ones left on seedPoolSeason's derivation. None of them is
+ * draftable — 00117 makes that structural — so this is the list that has to be
+ * emptied before a draft opens.
+ */
+export async function getPlayersToPrice(client: AnyClient, seasonId: number): Promise<UnpricedPlayer[]> {
+  const db = client as unknown as Db;
+  const { data, error } = await db
+    .from('pool_players_to_price')
+    .select('player_id, full_name, team_abbrev, position, price_cents, proj_points, reason')
+    .eq('season_id', seasonId)
+    .order('full_name', { ascending: true });
+  if (error) throw new Error(`lecture des joueurs à prixer : ${error.message}`);
+  return ((data ?? []) as Array<{
+    player_id: number; full_name: string; team_abbrev: string | null;
+    position: PoolPosition; price_cents: number; proj_points: number; reason: 'derived' | 'missing';
+  }>).map((r) => ({
+    playerId: Number(r.player_id),
+    fullName: r.full_name,
+    teamAbbrev: r.team_abbrev,
+    position: r.position,
+    priceCents: Number(r.price_cents),
+    projPoints: Number(r.proj_points),
+    reason: r.reason,
+  }));
+}
+
+/**
+ * Set salaries by hand and make those players draftable.
+ *
+ * Stamped with imported_at like any other real price: the column means "this
+ * figure came from a human source, not the derivation", and a salary the owner
+ * typed in qualifies. Without the stamp the 00117 CHECK would refuse to make
+ * the player draftable at all.
+ *
+ * A price of 0 puts the player back on the waiting list rather than pricing
+ * him at nothing — that is how the owner undoes a mistake.
+ */
+export async function setManualPrices(
+  client: AnyClient,
+  seasonId: number,
+  entries: Array<{ playerId: number; priceCents: number }>,
+): Promise<number> {
+  const db = client as unknown as Db;
+  if (entries.length === 0) return 0;
+
+  // Position and projection are re-read here rather than trusted from the
+  // caller: position decides which roster slot a player can fill.
+  const ids = entries.map((e) => e.playerId);
+  const { data, error: readErr } = await db
+    .from('pool_player_prices')
+    .select('player_id, position, proj_points')
+    .eq('season_id', seasonId)
+    .in('player_id', ids);
+  if (readErr) throw new Error(`lecture des prix : ${readErr.message}`);
+  const existing = new Map(
+    ((data ?? []) as Array<{ player_id: number; position: string; proj_points: number }>)
+      .map((r) => [Number(r.player_id), r]),
+  );
+
+  const now = new Date().toISOString();
+  const rows = entries
+    .filter((e) => existing.has(e.playerId))
+    .map((e) => {
+      const cur = existing.get(e.playerId)!;
+      const price = Math.round(e.priceCents);
+      return {
+        season_id: seasonId,
+        player_id: e.playerId,
+        price_cents: Math.max(0, price),
+        position: cur.position,
+        proj_points: cur.proj_points,
+        is_draftable: price > 0,
+        imported_at: price > 0 ? now : null,
+      };
+    });
+  if (rows.length === 0) return 0;
+
+  const { error } = await db
+    .from('pool_player_prices')
+    .upsert(rows, { onConflict: 'season_id,player_id' });
+  if (error) throw new Error(`enregistrement des salaires : ${error.message}`);
+  return rows.length;
+}
+
 export interface TradeEligibility {
   playerId: number;
   /** Games dressed for since joining THIS roster. */
@@ -1133,10 +1230,11 @@ export async function importSalaries(
     if (error) throw new Error(`upsert prices: ${error.message}`);
   }
 
-
-  // What the rows with no salary end up keeping. Read in every mode: the
-  // preview is where the operator decides whether "keep the last known
-  // salary" is acceptable, and that turns on whether the kept price is real.
+  // What the rows with no salary end up keeping, and — when this is a real
+  // run — a placeholder row for the ones that had nothing at all, so the owner
+  // has a list to price by hand (00117). Read in every mode: the preview is
+  // where the operator decides whether that is acceptable, and that turns on
+  // whether the kept price is real.
   const keptPrices: SalaryImportReport['keptPrices'] = [];
   if (result.invalidPrice.length > 0) {
     const ids = [...new Set(result.invalidPrice.map((x) => x.playerId).filter((id): id is number => id !== null))];
@@ -1154,6 +1252,34 @@ export async function importSalaries(
         known.set(r.player_id, { price_cents: r.price_cents, imported_at: r.imported_at, is_draftable: r.is_draftable });
       }
     }
+
+    // INSERT, never upsert: a player already carrying a real salary must not
+    // be reset to 0 because a later file happened to leave his cell blank.
+    if (!opts.dryRun) {
+      const pricedNow = new Set(deduped.map((m) => m.playerId));
+      const byId = new Map(players.map((p) => [p.playerId, p]));
+      const newRows: Array<Record<string, unknown>> = [];
+      const seen = new Set<number>();
+      for (const x of result.invalidPrice) {
+        const id = x.playerId;
+        if (id === null || seen.has(id) || known.has(id) || pricedNow.has(id)) continue;
+        seen.add(id);
+        newRows.push({
+          season_id: seasonId,
+          player_id: id,
+          price_cents: 0,
+          position: csvPoolPosition(x.row.position) ?? poolPosition(byId.get(id)?.position ?? 'C'),
+          proj_points: x.row.projPoints ?? 0,
+          is_draftable: false,
+        });
+        known.set(id, { price_cents: 0, imported_at: null, is_draftable: false });
+      }
+      if (newRows.length > 0) {
+        const { error } = await db.from('pool_player_prices').insert(newRows);
+        if (error) throw new Error(`joueurs sans salaire : ${error.message}`);
+      }
+    }
+
     for (const x of result.invalidPrice) {
       const k = x.playerId === null ? undefined : known.get(x.playerId);
       keptPrices.push({

@@ -262,16 +262,11 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
   const problems = report
     ? report.unmatched.length + report.ambiguous.length + report.invalidPrice.length
     : 0;
-  // Kept prices that no import ever confirmed: the ones that look real in the
-  // composer and are not. Named, not counted — the list below scrolls, so an
-  // aggregate warning points at players the operator cannot see.
-  const unverified = report
-    ? report.keptPrices.filter((k) => k.priceCents !== null && !k.importedAt && k.draftable)
-    : [];
-  // Those same players first: they are the only actionable rows in the list.
+  // Players still carrying an invented figure first: they are the ones worth
+  // a manual salary, ahead of those who simply have none.
   const keptSorted = report
     ? [...report.keptPrices].sort(
-        (a, b) => Number(b.priceCents !== null && !b.importedAt) - Number(a.priceCents !== null && !a.importedAt),
+        (a, b) => Number((b.priceCents ?? 0) > 0 && !b.importedAt) - Number((a.priceCents ?? 0) > 0 && !a.importedAt),
       )
     : [];
   const applyDisabled = busy || !report || !upToDate || report.dryRun === false;
@@ -593,24 +588,17 @@ export function SalaryImportSection({ seasonId, cardCls }: { seasonId: number; c
                 {report.keptPrices.length} joueur(s) sans salaire dans le fichier — ils gardent
                 leur prix actuel :
               </p>
-              {unverified.length > 0 && (
-                <p className="mt-1 text-red-700">
-                  <strong>
-                    {unverified.map((k) => k.name).join(', ')}
-                  </strong>{' '}
-                  {unverified.length === 1 ? 'est repêchable' : 'sont repêchables'} à un prix
-                  jamais importé — un chiffre dérivé au démarrage, pas un vrai plafond. Ajoute
-                  {unverified.length === 1 ? '-lui' : '-leur'} un salaire dans ton fichier Excel
-                  avant l’ouverture du repêchage. Les autres, sans prix du tout, ne sont pas
-                  repêchables : rien à faire de ce côté.
-                </p>
-              )}
+              <p className="mt-1 text-gray-600">
+                Aucun d’eux n’est repêchable tant qu’il n’a pas de salaire. Donne-leur un montant
+                dans «&nbsp;Joueurs sans salaire&nbsp;» ci-dessous, ou laisse-les de côté — ils
+                resteront simplement hors du repêchage.
+              </p>
               <ul className="mt-1 max-h-40 overflow-y-auto text-gray-600">
                 {keptSorted.map((k, i) => (
                   <li key={`${k.name}-${i}`}>
                     ligne {k.line ?? '?'} · {k.name || '(sans nom)'} —{' '}
-                    {k.priceCents === null ? (
-                      <span className="text-gray-500">aucun prix (non repêchable)</span>
+                    {k.priceCents === null || k.priceCents === 0 ? (
+                      <span className="text-gray-500">aucun salaire — non repêchable</span>
                     ) : (
                       <>
                         <strong>{fmtMoney(k.priceCents)}</strong>{' '}

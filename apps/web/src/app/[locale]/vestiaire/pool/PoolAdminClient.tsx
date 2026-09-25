@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { SCORING_CATALOG, type PoolSeason, type ScoringRule } from '@/services/poolService';
 import { SalaryImportSection } from './SalaryImportSection';
+import { UnpricedPlayersSection } from './UnpricedPlayersSection';
 
 const M = 100_000_000; // cents per 1 M$
 
@@ -135,6 +136,8 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
       </div>
 
       <SalaryImportSection seasonId={season.id} cardCls={cardCls} />
+
+      <UnpricedPlayersSection seasonId={season.id} cardCls={cardCls} />
 
       {/* Season config */}
       <section className={cardCls}>

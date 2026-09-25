@@ -580,10 +580,27 @@ export async function seedPoolSeason(
     for (const g of stats.goalies) priorPoints.set(g.playerId, priorGoaliePoints(g));
   }
 
-  // Price every currently-rostered player.
+  // Price every currently-rostered player — as a PLACEHOLDER. A derived figure
+  // is not a cap hit, so it leaves imported_at null and the player stays
+  // undraftable until a real salary arrives, by import or by hand (00117).
+  // The CHECK added there would reject is_draftable on an unverified price
+  // anyway; this states the intent rather than tripping over it.
   const { data: playersData } = await db.from('nhl_players').select('player_id, position');
   const players = (playersData ?? []) as Array<{ player_id: number; position: string }>;
-  const priceRows = players.map((p) => {
+
+  // Never overwrite a real salary. Re-running the seed used to silently replace
+  // every imported cap hit with a derivation, which is unrecoverable without
+  // the original spreadsheet.
+  const { data: verifiedData } = await db
+    .from('pool_player_prices')
+    .select('player_id')
+    .eq('season_id', seasonId)
+    .not('imported_at', 'is', null);
+  const verified = new Set(
+    ((verifiedData ?? []) as Array<{ player_id: number }>).map((r) => Number(r.player_id)),
+  );
+
+  const priceRows = players.filter((p) => !verified.has(p.player_id)).map((p) => {
     const proj = Math.max(0, priorPoints.get(p.player_id) ?? 0);
     return {
       season_id: seasonId,
@@ -591,7 +608,7 @@ export async function seedPoolSeason(
       price_cents: derivePriceCents(proj),
       position: poolPosition(p.position),
       proj_points: Number(proj.toFixed(2)),
-      is_draftable: true,
+      is_draftable: false,
     };
   });
   if (priceRows.length > 0) {
