@@ -57,7 +57,7 @@ BEGIN
     v_log := v_log || format('  échanges : %s · max %s · règle des matchs ABSENTE (00115 non passée)',
                              v_season.transactions_enabled, v_season.max_transactions);
   END IF;
-  v_log := v_log || '';
+  v_log := v_log || ''::text;
 
   -- Draftable inventory. A pool that cannot fill one roster is not playable,
   -- and that is exactly what the unpriced defencemen caused earlier.
@@ -78,7 +78,7 @@ BEGIN
    WHERE season_id = v_season.id AND is_draftable AND imported_at IS NULL;
   v_log := v_log || format('            repêchables sans vrai salaire : %s → %s',
                            v_n, CASE WHEN v_n = 0 THEN 'ok' ELSE 'INATTENDU (00117 devrait l''interdire)' END);
-  v_log := v_log || '';
+  v_log := v_log || ''::text;
 
   -- The team pick must be free (00114).
   SELECT abbrev INTO v_team FROM public.nhl_teams ORDER BY abbrev LIMIT 1;
@@ -86,7 +86,7 @@ BEGIN
                            round(public.pool_team_price(v_season.id, v_team)/1e8, 2),
                            CASE WHEN public.pool_team_price(v_season.id, v_team) = 0
                                 THEN 'ok' ELSE 'INATTENDU (00114 non passée)' END);
-  v_log := v_log || '';
+  v_log := v_log || ''::text;
 
   BEGIN
     PERFORM set_config('pool.privileged', '1', true);
@@ -117,7 +117,7 @@ BEGIN
     ) q;
     BEGIN
       PERFORM public.pool_save_roster(v_entry, v_picks);
-      v_log := v_log || 'BUDGET       alignement le plus cher ACCEPTÉ → INATTENDU, le plafond ne bloque rien';
+      v_log := v_log || 'BUDGET       alignement le plus cher ACCEPTÉ → INATTENDU, le plafond ne bloque rien'::text;
     EXCEPTION WHEN OTHERS THEN
       v_log := v_log || format('BUDGET       alignement le plus cher refusé → ok (%s)', SQLERRM);
     END;
@@ -129,7 +129,7 @@ BEGIN
              ORDER BY price_cents ASC LIMIT v_season.roster_f + 1) q;
     BEGIN
       PERFORM public.pool_save_roster(v_entry, v_picks);
-      v_log := v_log || 'EFFECTIF     un attaquant de trop ACCEPTÉ → INATTENDU';
+      v_log := v_log || 'EFFECTIF     un attaquant de trop ACCEPTÉ → INATTENDU'::text;
     EXCEPTION WHEN OTHERS THEN
       v_log := v_log || format('EFFECTIF     un attaquant de trop refusé → ok (%s)', SQLERRM);
     END;
@@ -171,7 +171,7 @@ BEGIN
     -- ── He confirms ────────────────────────────────────────────────────────
     BEGIN
       PERFORM public.pool_confirm_entry(v_entry);
-      v_log := v_log || 'CONFIRMATION acceptée → ok';
+      v_log := v_log || 'CONFIRMATION acceptée → ok'::text;
     EXCEPTION WHEN OTHERS THEN
       v_log := v_log || format('CONFIRMATION refusée → %s', SQLERRM);
     END;
@@ -179,16 +179,16 @@ BEGIN
     -- ── The draft closes ───────────────────────────────────────────────────
     BEGIN
       PERFORM public.pool_lock_entry(v_entry);
-      v_log := v_log || 'VERROUILLAGE accepté → ok';
+      v_log := v_log || 'VERROUILLAGE accepté → ok'::text;
     EXCEPTION WHEN OTHERS THEN
       v_log := v_log || format('VERROUILLAGE refusé → %s', SQLERRM);
     END;
 
     -- ── He tries to trade a player who has not played for him yet ─────────
     IF NOT v_season.transactions_enabled THEN
-      v_log := v_log || 'ÉCHANGE      désactivé pour la saison — règle des 5 matchs non testable';
+      v_log := v_log || 'ÉCHANGE      désactivé pour la saison — règle des 5 matchs non testable'::text;
     ELSIF v_season.max_transactions = 0 THEN
-      v_log := v_log || 'ÉCHANGE      max_transactions = 0 — règle des 5 matchs non testable';
+      v_log := v_log || 'ÉCHANGE      max_transactions = 0 — règle des 5 matchs non testable'::text;
     ELSE
       BEGIN
         PERFORM public.pool_make_transaction(
@@ -200,7 +200,7 @@ BEGIN
               AND NOT EXISTS (SELECT 1 FROM public.pool_roster_slots rs
                                WHERE rs.entry_id = v_entry AND rs.player_id = pp.player_id)
             ORDER BY pp.price_cents ASC LIMIT 1));
-        v_log := v_log || 'ÉCHANGE      accepté alors que le joueur n''a disputé aucun match → INATTENDU si 00115 est passée';
+        v_log := v_log || 'ÉCHANGE      accepté alors que le joueur n''a disputé aucun match → INATTENDU si 00115 est passée'::text;
       EXCEPTION WHEN OTHERS THEN
         v_log := v_log || format('ÉCHANGE      refusé → %s', SQLERRM);
       END;
@@ -222,7 +222,7 @@ BEGIN
     END IF;
   END;
 
-  v_log := v_log || '';
-  v_log := v_log || '(tout a été annulé — aucune inscription de test ne subsiste)';
+  v_log := v_log || ''::text;
+  v_log := v_log || '(tout a été annulé — aucune inscription de test ne subsiste)'::text;
   RAISE EXCEPTION E'\n%', array_to_string(v_log, E'\n');
 END $$;
