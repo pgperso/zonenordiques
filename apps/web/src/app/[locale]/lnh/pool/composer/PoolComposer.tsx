@@ -68,9 +68,11 @@ export function PoolComposer({
     return c;
   }, [picks]);
   const teamObj = useMemo(() => teams.find((tm) => tm.abbrev === teamPick) ?? null, [teams, teamPick]);
-  const playersSpent = useMemo(() => picks.reduce((s, p) => s + (playerById.get(p.playerId)?.priceCents ?? 0), 0), [picks, playerById]);
-  // The chosen NHL team costs its two goalies' cap hits and counts in the cap.
-  const spent = playersSpent + (teamObj?.priceCents ?? 0);
+  // The NHL team pick is free (00114): only players count against the cap.
+  const spent = useMemo(
+    () => picks.reduce((s, p) => s + (playerById.get(p.playerId)?.priceCents ?? 0), 0),
+    [picks, playerById],
+  );
   const remaining = budgetCents - spent;
 
   const sectionDone = (pos: PoolPosition) => counts[pos] === need[pos];
@@ -271,7 +273,6 @@ export function PoolComposer({
             <span className="font-medium text-gray-900 dark:text-gray-100">{teamObj.name}</span>
             <span className="flex items-center gap-3 text-xs tabular-nums text-gray-500">
               <span>{teamObj.gp} {t('statGp')} · {teamObj.wins}-{teamObj.losses} · {t('statFor')} {teamObj.gf} / {t('statAgainst')} {teamObj.ga}</span>
-              <span className="font-semibold text-gray-900 dark:text-gray-100">{fmtMoney(teamObj.priceCents, locale)}</span>
             </span>
           </div>
           <TeamGoalies goalies={teamObj.goalies} locale={locale} t={(k) => tRoster(k)} title={tRoot('goaliesTitle')} />
@@ -395,7 +396,6 @@ export function PoolComposer({
         <TeamPicker
           teams={teams}
           selected={teamPick}
-          budgetLeft={budgetCents - playersSpent}
           onSelect={(abbrev) => { setTeamPick(abbrev); setConfirmed(false); setPicker(null); }}
           onClose={() => setPicker(null)}
         />
@@ -495,24 +495,22 @@ function PlayerPicker({
   );
 }
 
-// ── Team picker modal (price + season stats, no logo) ───────────────────────
+// ── Team picker modal (season stats, no price, no logo) ────────────────────
+// The pick is free (00114), so there is nothing to sort by price and nothing
+// to price out of reach: every club is always available.
 function TeamPicker({
-  teams, selected, budgetLeft, onSelect, onClose,
+  teams, selected, onSelect, onClose,
 }: {
   teams: NhlTeamChoice[];
   selected: string | null;
-  budgetLeft: number; // budget minus players already drafted
   onSelect: (abbrev: string | null) => void;
   onClose: () => void;
 }) {
   const t = useTranslations('pool.composer');
   const locale = useLocale();
-  const [sort, setSort] = useState<'name' | 'price' | 'points'>('name');
+  const [sort, setSort] = useState<'name' | 'points'>('name');
   const list = useMemo(() => {
-    const key =
-      sort === 'price' ? (tm: NhlTeamChoice) => -tm.priceCents
-      : sort === 'points' ? (tm: NhlTeamChoice) => tm.teamPoints
-      : null;
+    const key = sort === 'points' ? (tm: NhlTeamChoice) => tm.teamPoints : null;
     const l = [...teams];
     return key ? l.sort((a, b) => key(b) - key(a)) : l.sort((a, b) => a.name.localeCompare(b.name));
   }, [teams, sort]);
@@ -523,7 +521,7 @@ function TeamPicker({
         onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {t('chooseTeamTitle')} <span className="text-gray-400">{fmtMoney(budgetLeft, locale)} {t('left')}</span>
+            {t('chooseTeamTitle')} <span className="text-gray-400">{t('teamFree')}</span>
           </h3>
           <button onClick={onClose} className="rounded-md bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">{t('done')}</button>
         </div>
@@ -531,14 +529,12 @@ function TeamPicker({
           <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}
             className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
             <option value="name">{t('sortName')}</option>
-            <option value="price">{t('sortPrice')}</option>
             <option value="points">{t('sortPoints')}</option>
           </select>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">
           {list.map((tm) => {
             const isSel = selected === tm.abbrev;
-            const affordable = isSel || tm.priceCents <= budgetLeft;
             return (
               <div key={tm.abbrev} className="flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
                 <div className="min-w-0 flex-1">
@@ -547,13 +543,10 @@ function TeamPicker({
                     {tm.gp} {t('statGp')} · {tm.wins}-{tm.losses} · {t('statFor')} {tm.gf} / {t('statAgainst')} {tm.ga} · {tm.teamPoints.toLocaleString(locale === 'fr' ? 'fr-CA' : 'en-CA', { maximumFractionDigits: 0 })} {t('ptsShort')}
                   </div>
                 </div>
-                <div className="w-20 text-right text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">{fmtMoney(tm.priceCents, locale)}</div>
                 {isSel ? (
                   <button onClick={() => onSelect(null)} className="w-20 rounded-md border border-red-300 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50">{t('remove')}</button>
-                ) : affordable ? (
-                  <button onClick={() => onSelect(tm.abbrev)} className="w-20 rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">{t('choose')}</button>
                 ) : (
-                  <span className="w-20 text-center text-xs font-medium text-gray-400">{t('tooExpensive')}</span>
+                  <button onClick={() => onSelect(tm.abbrev)} className="w-20 rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white hover:bg-gray-800 dark:bg-white dark:text-gray-900">{t('choose')}</button>
                 )}
               </div>
             );

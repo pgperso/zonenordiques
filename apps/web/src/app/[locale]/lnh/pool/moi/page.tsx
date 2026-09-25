@@ -119,8 +119,9 @@ export default async function MyTeamPage({ params }: { params: Promise<{ locale:
           {teamPickInfo ? (
             <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                {/* No price: the team pick is free and does not count against
+                    the cap (00114). */}
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{teamPickInfo.name}</span>
-                <span className="text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">{fmtMoney(teamPickInfo.priceCents, locale)}</span>
               </div>
               <div className="mt-2 grid grid-cols-3 gap-2 text-center sm:grid-cols-6">
                 {[
