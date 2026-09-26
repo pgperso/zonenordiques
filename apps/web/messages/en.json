@@ -681,7 +681,11 @@
       "teamFilter": "Filter by team",
       "allTeams": "All teams",
       "starDouble": "(Points doubled)",
-      "unavailable": "Unavailable — remove him"
+      "unavailable": "Unavailable — remove him",
+      "starsRequiredF": "You must designate a star forward.",
+      "starsRequiredD": "You must designate a star defenseman.",
+      "starsRequiredBoth": "You must designate a star forward and a star defenseman.",
+      "starsRequiredHow": "Press “★ Star” next to the player you choose — his points will count double."
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

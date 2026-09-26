@@ -687,7 +687,11 @@
       "teamFilter": "Filtrer par équipe",
       "allTeams": "Toutes les équipes",
       "starDouble": "(Points multipliés par 2)",
-      "unavailable": "Non disponible — retire-le"
+      "unavailable": "Non disponible — retire-le",
+      "starsRequiredF": "Tu dois désigner un attaquant vedette.",
+      "starsRequiredD": "Tu dois désigner un défenseur vedette.",
+      "starsRequiredBoth": "Tu dois désigner un attaquant vedette et un défenseur vedette.",
+      "starsRequiredHow": "Clique sur « ★ Star » à côté du joueur choisi — ses points compteront en double."
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",

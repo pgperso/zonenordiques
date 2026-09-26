@@ -93,8 +93,12 @@ export function PoolComposer({
   // A star must be chosen for any position that exists this season.
   const starsDone = !starsEnabled || ((need.F === 0 || starFwd !== null) && (need.D === 0 || starDef !== null));
   // As soon as a position has players, leaving its star slot empty is not allowed.
-  const starsMissing = starsEnabled &&
-    ((need.F > 0 && counts.F > 0 && starFwd === null) || (need.D > 0 && counts.D > 0 && starDef === null));
+  // Named separately: "you must designate a star" leaves a member hunting
+  // through two sections to find which one. Only asked for once a position
+  // has players — there is no ★ button to press on an empty section.
+  const missingStarF = starsEnabled && need.F > 0 && counts.F > 0 && starFwd === null;
+  const missingStarD = starsEnabled && need.D > 0 && counts.D > 0 && starDef === null;
+  const starsMissing = missingStarF || missingStarD;
   const complete =
     (['F', 'D', 'G'] as PoolPosition[]).every((p) => need[p] === 0 || sectionDone(p)) && teamDone && starsDone;
 
@@ -372,7 +376,20 @@ export function PoolComposer({
                 </button>
               </div>
               {starsMissing && (
-                <p className="mt-2 text-xs font-medium text-amber-700 dark:text-amber-400">★ {t('starsRequired')}</p>
+                <p
+                  role="alert"
+                  className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200"
+                >
+                  <span aria-hidden className="text-base leading-none">★</span>
+                  <span>
+                    {missingStarF && missingStarD
+                      ? t('starsRequiredBoth')
+                      : missingStarF
+                        ? t('starsRequiredF')
+                        : t('starsRequiredD')}{' '}
+                    <span className="font-normal">{t('starsRequiredHow')}</span>
+                  </span>
+                </p>
               )}
             </>
           )}
