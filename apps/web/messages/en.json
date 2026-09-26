@@ -680,7 +680,8 @@
       "tradeDone": "Trade completed",
       "teamFilter": "Filter by team",
       "allTeams": "All teams",
-      "starDouble": "(Points doubled)"
+      "starDouble": "(Points doubled)",
+      "unavailable": "Unavailable — remove him"
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

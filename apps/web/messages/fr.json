@@ -686,7 +686,8 @@
       "tradeDone": "Échange effectué",
       "teamFilter": "Filtrer par équipe",
       "allTeams": "Toutes les équipes",
-      "starDouble": "(Points multipliés par 2)"
+      "starDouble": "(Points multipliés par 2)",
+      "unavailable": "Non disponible — retire-le"
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",

@@ -206,6 +206,15 @@ export function PoolComposer({
                 <span className="flex min-w-0 items-center gap-1.5 truncate text-gray-900 dark:text-gray-100">
                   {starId === r.playerId && <span className="text-amber-500" aria-hidden>★</span>}
                   {p.fullName} <span className="text-xs text-gray-400">{p.teamAbbrev}</span>
+                  {!p.draftable && (
+                    /* He is on the roster but the pool has retired him, so
+                       saving will be refused until he is removed. Said here,
+                       on his row, instead of as a player id in a toast after
+                       the member presses Save. */
+                    <span className="shrink-0 whitespace-nowrap rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-300">
+                      {t('unavailable')}
+                    </span>
+                  )}
                   {starId === r.playerId && (
                     /* Spelled out rather than left to the star icon: doubling
                        is the whole reason to designate one, and a member who
