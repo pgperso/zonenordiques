@@ -110,7 +110,7 @@ export function CommunityPageClient({
               without a single error anywhere. */}
           {SITE.showPool && (
             <Link
-              href="/lnh/pool"
+              href={poolTop3.length > 0 ? '/lnh/pool/classement' : '/lnh/pool'}
               className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-gray-200 bg-brand-blue-dark px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-brand-blue dark:border-gray-700"
             >
               {poolTop3.length > 0 ? (
@@ -130,7 +130,7 @@ export function CommunityPageClient({
                       <span className="tabular-nums opacity-80">{r.points}</span>
                     </span>
                   ))}
-                  <span className="underline">{t('pool.cta')}</span>
+                  <span className="underline">{t('pool.standings')}</span>
                 </>
               ) : (
                 /* No confirmed entry yet — nothing to rank, so recruit. */
