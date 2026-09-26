@@ -737,7 +737,8 @@
       "joinFirst": "Sois le premier à bâtir ton équipe",
       "joinDeadline": "repêchage jusqu’au {date}",
       "joinCta": "Bâtir mon équipe",
-      "joinButton": "Pool LNH"
+      "joinButton": "Pool LNH",
+      "notStarted": "Pool LNH — la saison n’est pas commencée"
     }
   }
 }

@@ -124,8 +124,8 @@ export function PoolLiveBanner() {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
           </span>
         )}
-        {recruiting ? t('joinButton') : t('buttonLabel')}
-        {!recruiting && (
+        {recruiting || !data.gameDay ? t('joinButton') : t('buttonLabel')}
+        {!recruiting && data.gameDay && (
           <span className="tabular-nums opacity-70">{fmtPts(data.rows[0].pointsToday)}</span>
         )}
       </button>
@@ -182,8 +182,11 @@ export function PoolLiveBanner() {
               </span>
               {t('liveNow', { count: data.gamesLive })}
             </span>
-          ) : (
+          ) : data.gameDay ? (
             t('title')
+          ) : (
+            /* Everyone on zero: calling that "tonight's leaders" would be a lie. */
+            t('notStarted')
           )}
         </h2>
         <button
@@ -216,10 +219,13 @@ export function PoolLiveBanner() {
         ))}
       </ol>
 
-      <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+      <div className="mt-2 flex items-center justify-between gap-3 text-xs text-gray-400">
         <span>{data.gameDay ?? ''}</span>
-        <Link href="/lnh/pool/classement" className="hover:text-gray-600 hover:underline dark:hover:text-gray-300">
-          {t('fullStandings')}
+        <Link
+          href={data.gameDay ? '/lnh/pool/classement' : '/lnh/pool'}
+          className="hover:text-gray-600 hover:underline dark:hover:text-gray-300"
+        >
+          {data.gameDay ? t('fullStandings') : t('joinCta')}
         </Link>
       </div>
     </section>
