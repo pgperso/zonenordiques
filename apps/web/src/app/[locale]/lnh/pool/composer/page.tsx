@@ -49,15 +49,28 @@ export default async function ComposerPage({ params }: { params: Promise<{ local
     const username = (member as { username: string } | null)?.username;
     const tPool = await getTranslations('pool');
     const teamName = username ? tPool('defaultTeamName', { username }) : tPool('defaultTeamNameFallback');
-    const { data: created } = await db
-      .from('pool_entries')
-      .insert({ season_id: season.id, member_id: user.id, team_name: teamName })
-      .select(ENTRY_COLS)
-      .single();
+    // Team names are unique per season (00122), so the default can collide —
+    // with another member who has no username, or with someone who happened to
+    // name their team exactly this. Without the second attempt that insert
+    // fails, the fallback read below finds nothing, and the member is bounced
+    // back to /lnh/pool with no way in and nothing explaining why.
+    type EntryRow = {
+      id: number; is_locked: boolean; team_pick: string | null; is_confirmed: boolean;
+      transactions_used: number; star_forward_id: number | null; star_defense_id: number | null;
+    };
+    let created: EntryRow | null = null;
+    for (const name of [teamName, `${teamName} ${user.id.slice(0, 4)}`]) {
+      const { data } = await db
+        .from('pool_entries')
+        .insert({ season_id: season.id, member_id: user.id, team_name: name })
+        .select(ENTRY_COLS)
+        .single();
+      if (data) { created = data as unknown as EntryRow; break; }
+    }
     // If the insert lost a race on the UNIQUE(season_id, member_id) constraint
     // (e.g. two tabs), fall back to reading the row that won.
     if (created) {
-      entry = created;
+      entry = created as unknown as typeof entry;
     } else {
       const { data: existing } = await db
         .from('pool_entries')
