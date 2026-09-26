@@ -449,7 +449,7 @@
     "menuLink": "NHL Pool",
     "title": "NHL Pool",
     "tagline": "Build your team and join the upcoming season",
-    "top3": "Pool top 3",
+    "top3": "Top 3",
     "cta": "Join",
     "teamsRegistered": "{count, plural, =1 {# team registered} other {# teams registered}}",
     "bannerTitle": "<b>LA ZONE</b> hockey pool",

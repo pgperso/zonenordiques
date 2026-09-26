@@ -455,7 +455,7 @@
     "menuLink": "Pool LNH",
     "title": "Pool LNH",
     "tagline": "Compose ton équipe et participe à la prochaine saison",
-    "top3": "Top 3 du pool",
+    "top3": "Top 3",
     "cta": "Participer",
     "teamsRegistered": "{count, plural, =1 {# équipe inscrite} other {# équipes inscrites}}",
     "bannerTitle": "Pool de hockey <b>LA ZONE</b>",

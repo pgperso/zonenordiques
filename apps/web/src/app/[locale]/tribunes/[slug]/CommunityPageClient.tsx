@@ -116,6 +116,7 @@ export function CommunityPageClient({
               {poolTop3.length > 0 ? (
                 <>
                   <span className="opacity-75">{t('pool.top3')}</span>
+                  <span className="opacity-40" aria-hidden>|</span>
                   {poolTop3.map((r, i) => (
                     <span
                       key={r.teamName}
