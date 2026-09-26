@@ -717,22 +717,6 @@
       "saving": "Saving…",
       "saveNameLogo": "Save name and logo",
       "cancel": "Cancel"
-    },
-    "live": {
-      "title": "Tonight's pool leaders",
-      "liveNow": "{count, plural, =1 {1 game live} other {# games live}}",
-      "buttonLabel": "Pool tonight",
-      "expand": "Show the pool leaders",
-      "collapse": "Collapse",
-      "overall": "#{rank} overall",
-      "fullStandings": "Full standings",
-      "joinTitle": "NHL pool — entries are open",
-      "joinCount": "{count, plural, =1 {1 team already in} other {# teams already in}}",
-      "joinFirst": "Be the first to build a team",
-      "joinDeadline": "draft open until {date}",
-      "joinCta": "Build my team",
-      "joinButton": "NHL pool",
-      "notStarted": "NHL pool — the season hasn’t started"
     }
   }
 }
