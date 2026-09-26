@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getTranslations } from 'next-intl/server';
-import { getActiveSeason, getPlayerPool, getTeamChoices, type SlotPick, type PoolPosition } from '@/services/poolService';
+import { getActiveSeason, getEntryRosterPlayers, getPlayerPool, getTeamChoices, type SlotPick, type PoolPosition } from '@/services/poolService';
 import { PoolComposer } from './PoolComposer';
 import { BRAND } from '@/lib/brand';
 
@@ -84,10 +84,18 @@ export default async function ComposerPage({ params }: { params: Promise<{ local
   if (!entry) redirect('/lnh/pool');
   const entryRow = entry as unknown as { id: number; is_locked: boolean; team_pick: string | null; is_confirmed: boolean; transactions_used: number; star_forward_id: number | null; star_defense_id: number | null };
 
-  const [players, teams] = await Promise.all([
+  const [poolPlayers, rosterPlayers, teams] = await Promise.all([
     getPlayerPool(supabase, season.id),
+    getEntryRosterPlayers(supabase, season.id, entryRow.id),
     getTeamChoices(supabase, season.id),
   ]);
+
+  // A player the member already has must appear even if he is no longer
+  // draftable, or his row renders nothing while still filling one of his
+  // owner's slots. The pool entry wins on duplicates: it is the same row.
+  const byId = new Map(poolPlayers.map((p) => [p.playerId, p]));
+  for (const p of rosterPlayers) if (!byId.has(p.playerId)) byId.set(p.playerId, p);
+  const players = [...byId.values()];
 
   const { data: slots } = await db
     .from('pool_roster_slots')

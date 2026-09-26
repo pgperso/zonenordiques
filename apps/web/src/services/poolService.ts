@@ -75,6 +75,11 @@ export interface PoolPlayer {
   projPoints: number;
   /** Projected points per million $ — the default "bargain" sort. */
   value: number;
+  /** False for a player still on someone's roster who may no longer be
+   *  picked up — 00117 retires anyone without a verified salary. The
+   *  composer must show him so his owner can see and remove him, but the
+   *  picker must not offer him to anyone. */
+  draftable: boolean;
 }
 
 export interface StandingRow {
@@ -235,6 +240,58 @@ export async function getPlayerPool(client: AnyClient, seasonId: number): Promis
     priceCents: r.price_cents,
     projPoints: r.proj_points,
     value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
+    draftable: true,
+  }));
+}
+
+/**
+ * The players on one entry's active roster, whether or not they are still
+ * draftable.
+ *
+ * getPlayerPool returns draftable players only, so a rostered player who lost
+ * that status — 00117 retires anyone without a verified salary — vanished from
+ * the composer: his row hit `if (!p) return null` and rendered nothing, while
+ * still counting against the position. The section then read "5/6" with three
+ * players listed, and his owner could neither see him nor remove him.
+ */
+export async function getEntryRosterPlayers(
+  client: AnyClient,
+  seasonId: number,
+  entryId: number,
+): Promise<PoolPlayer[]> {
+  const db = client as unknown as Db;
+  const { data: slots } = await db
+    .from('pool_roster_slots')
+    .select('player_id')
+    .eq('entry_id', entryId)
+    .is('effective_to', null);
+  const ids = ((slots ?? []) as Array<{ player_id: number }>).map((r) => Number(r.player_id));
+  if (ids.length === 0) return [];
+
+  const { data } = await db
+    .from('pool_player_prices')
+    .select('player_id, price_cents, position, proj_points, is_draftable, nhl_players!inner(full_name, team_abbrev)')
+    .eq('season_id', seasonId)
+    .in('player_id', ids);
+
+  const rows = (data ?? []) as unknown as Array<{
+    player_id: number;
+    price_cents: number;
+    position: PoolPosition;
+    proj_points: number;
+    is_draftable: boolean;
+    nhl_players: { full_name: string; team_abbrev: string | null };
+  }>;
+
+  return rows.map((r) => ({
+    playerId: r.player_id,
+    fullName: r.nhl_players.full_name,
+    position: r.position,
+    teamAbbrev: r.nhl_players.team_abbrev,
+    priceCents: r.price_cents,
+    projPoints: r.proj_points,
+    value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
+    draftable: r.is_draftable,
   }));
 }
 

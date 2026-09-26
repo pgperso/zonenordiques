@@ -474,7 +474,7 @@ function PlayerPicker({
   const teamOptions = useMemo(() => {
     const seen = new Set<string>();
     for (const p of players) {
-      if (p.position === pos && !chosen.has(p.playerId) && p.teamAbbrev) seen.add(p.teamAbbrev);
+      if (p.position === pos && p.draftable && !chosen.has(p.playerId) && p.teamAbbrev) seen.add(p.teamAbbrev);
     }
     return [...seen].sort();
   }, [players, pos, chosen]);
@@ -482,7 +482,9 @@ function PlayerPicker({
   const list = useMemo(() => {
     const q = search.trim().toLowerCase();
     // Always hide players already on the roster — you can't pick them again.
-    let l = players.filter((p) => p.position === pos && !chosen.has(p.playerId));
+    // draftable === false means he is on someone's roster but retired from
+    // the pool: shown where he already sits, never offered to anyone.
+    let l = players.filter((p) => p.position === pos && p.draftable && !chosen.has(p.playerId));
     if (team) l = l.filter((p) => p.teamAbbrev === team);
     if (affordableOnly) l = l.filter((p) => canPick(p));
     if (q) l = l.filter((p) => p.fullName.toLowerCase().includes(q));
