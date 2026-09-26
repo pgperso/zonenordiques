@@ -60,6 +60,34 @@ export async function getBrandCommunityIds(
  * is the current case. Scoping those by category, not by brand id, keeps
  * them working if a sport ever gets a second site.
  */
+/**
+ * This brand's flagship tribune — where a site-wide announcement belongs.
+ *
+ * Looked up by category and busiest-first, never by a literal slug. The pool
+ * bot used to post into the tribune whose slug was 'lnh'; that tribune was
+ * renamed to 'zone-nordiques' and every announcement silently stopped, because
+ * a `.eq('slug', 'lnh')` that matches nothing is not an error — it is just a
+ * null that the calling code skips over.
+ */
+export async function getBrandMainCommunityId(
+  supabase: SupabaseClient<Database>,
+): Promise<number | null> {
+  const categoryId = await getBrandCategoryId(supabase);
+  if (categoryId == null) return null;
+
+  const { data } = await supabase
+    .from('communities')
+    .select('id')
+    .eq('category_id', categoryId)
+    .eq('is_active', true)
+    .order('member_count', { ascending: false })
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  return (data as { id: number } | null)?.id ?? null;
+}
+
 export async function getBrandCategoryId(
   supabase: SupabaseClient<Database>,
 ): Promise<number | null> {

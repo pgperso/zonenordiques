@@ -100,8 +100,12 @@ export function CommunityPageClient({
     <div className="flex flex-1 min-h-0 flex-col">
       {isMember ? (
         <>
-          {/* Pool LNH entry point — only on the LNH tribune. */}
-          {community.slug === 'lnh' && SITE.showPool && (
+          {/* Pool entry point. Gated on the brand alone: it used to also
+              require the tribune slug 'lnh', which was renamed to
+              'zone-nordiques' — and since a slug that matches nothing simply
+              renders nothing, this bar and the board below it disappeared
+              without a single error anywhere. */}
+          {SITE.showPool && (
             <Link
               href="/lnh/pool"
               className="flex items-center justify-center gap-2 border-t border-gray-200 bg-brand-blue-dark px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-brand-blue dark:border-gray-700"
@@ -111,7 +115,7 @@ export function CommunityPageClient({
           )}
           {/* Tonight's pool leaderboard. Collapsed it is a floating button, so
               it never pushes the conversation down the page. */}
-          {community.slug === 'lnh' && SITE.showPool && <PoolLiveBanner />}
+          {SITE.showPool && <PoolLiveBanner />}
           {/* 3-column layout: [Ad left] | [Feed] | [Ad right] */}
           <div className="flex flex-1 overflow-hidden border-t border-gray-200 dark:border-gray-700">
             {/* Left ad sidebar - xl+ only */}

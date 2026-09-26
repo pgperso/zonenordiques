@@ -5,6 +5,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { syncDate } from '@/services/nhlService';
 import { announcePoolLeader } from '@/services/botService';
+import { getBrandMainCommunityId } from '@/lib/brandScope';
 
 // Boxscore fan-out over a full slate (up to ~16 games), each with retry
 // backoff, can run long; give it headroom (Vercel Pro allows up to 300s).
@@ -110,8 +111,7 @@ async function handleSync(request: Request) {
           .maybeSingle();
         const leader = top as { fantasy_points: number; pool_entries: { team_name: string } } | null;
         if (leader) {
-          const { data: lnh } = await admin.from('communities').select('id').eq('slug', 'lnh').single();
-          const communityId = (lnh as { id: number } | null)?.id;
+          const communityId = await getBrandMainCommunityId(admin);
           if (communityId) {
             const pts = Number(leader.fantasy_points).toLocaleString('fr-CA', { maximumFractionDigits: 1 });
             await announcePoolLeader(admin, communityId, leader.pool_entries.team_name, pts).catch(() => {});

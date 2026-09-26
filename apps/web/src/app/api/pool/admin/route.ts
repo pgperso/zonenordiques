@@ -3,6 +3,7 @@ import { isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { announcePoolOpen } from '@/services/botService';
+import { getBrandMainCommunityId } from '@/lib/brandScope';
 
 export const maxDuration = 30;
 
@@ -104,8 +105,7 @@ export async function POST(request: Request) {
 
   // Bot announcement in the LNH tribune when the pool first opens.
   if (season.status === 'open' && prevStatus !== 'open') {
-    const { data: lnh } = await admin.from('communities').select('id').eq('slug', 'lnh').single();
-    const communityId = (lnh as { id: number } | null)?.id;
+    const communityId = await getBrandMainCommunityId(admin);
     if (communityId) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await announcePoolOpen(admin as any, communityId).catch(() => {});
