@@ -494,6 +494,15 @@ function PlayerPicker({
   const [affordableOnly, setAffordableOnly] = useState(false);
   const [team, setTeam] = useState('');
 
+  // What is left to spend, per slot still to fill — across ALL positions, not
+  // just this one: the cap is shared, so twelve dollars spent on a forward are
+  // twelve dollars a defenceman will not have. Without it a member reads
+  // "$11.9M left" beside an $11.6M player and takes him, then cannot fill the
+  // four slots behind.
+  const slotsLeft = (['F', 'D', 'G'] as PoolPosition[])
+    .reduce((n, q) => n + Math.max(0, need[q] - counts[q]), 0);
+  const perPick = slotsLeft > 0 ? Math.floor(remaining / slotsLeft) : null;
+
   // Only the clubs that actually have a player at this position left to pick:
   // a dropdown offering all 32 when six of them have nothing to show is a
   // list of dead ends.
@@ -528,7 +537,14 @@ function PlayerPicker({
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
           <h3 className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
             {mode === 'trade' ? t('replace', { name: dropName ?? '' }) : t('chooseTitle', { pos: tPos(pos) })}{' '}
-            <span className="text-gray-400">{counts[pos]}/{need[pos]} · {fmtMoney(remaining, locale)} {t('left')}</span>
+            <span className="text-gray-400">
+              {counts[pos]}/{need[pos]} · {fmtMoney(remaining, locale)} {t('left')}
+              {perPick !== null && (
+                <> · <span className={perPick <= 0 ? 'font-semibold text-red-600' : undefined}>
+                  {t('perPick', { amount: fmtMoney(perPick, locale), count: slotsLeft })}
+                </span></>
+              )}
+            </span>
           </h3>
           <button onClick={onClose} className="ml-2 shrink-0 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">{t('done')}</button>
         </div>

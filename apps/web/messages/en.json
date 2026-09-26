@@ -685,7 +685,8 @@
       "starsRequiredF": "You must designate a star forward.",
       "starsRequiredD": "You must designate a star defenseman.",
       "starsRequiredBoth": "You must designate a star forward and a star defenseman.",
-      "starsRequiredHow": "Press “★ Star” next to the player you choose — his points will count double."
+      "starsRequiredHow": "Press “★ Star” next to the player you choose — his points will count double.",
+      "perPick": "{amount} per pick ({count} left)"
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

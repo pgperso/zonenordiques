@@ -691,7 +691,8 @@
       "starsRequiredF": "Tu dois désigner un attaquant vedette.",
       "starsRequiredD": "Tu dois désigner un défenseur vedette.",
       "starsRequiredBoth": "Tu dois désigner un attaquant vedette et un défenseur vedette.",
-      "starsRequiredHow": "Clique sur « ★ Star » à côté du joueur choisi — ses points compteront en double."
+      "starsRequiredHow": "Clique sur « ★ Star » à côté du joueur choisi — ses points compteront en double.",
+      "perPick": "{amount} par choix ({count} restants)"
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",
