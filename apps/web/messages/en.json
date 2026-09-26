@@ -679,7 +679,8 @@
       "replace": "Replace {name}",
       "tradeDone": "Trade completed",
       "teamFilter": "Filter by team",
-      "allTeams": "All teams"
+      "allTeams": "All teams",
+      "starDouble": "(Points doubled)"
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

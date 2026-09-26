@@ -685,7 +685,8 @@
       "replace": "Remplacer {name}",
       "tradeDone": "Échange effectué",
       "teamFilter": "Filtrer par équipe",
-      "allTeams": "Toutes les équipes"
+      "allTeams": "Toutes les équipes",
+      "starDouble": "(Points multipliés par 2)"
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",

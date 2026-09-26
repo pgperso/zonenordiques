@@ -206,6 +206,16 @@ export function PoolComposer({
                 <span className="flex min-w-0 items-center gap-1.5 truncate text-gray-900 dark:text-gray-100">
                   {starId === r.playerId && <span className="text-amber-500" aria-hidden>★</span>}
                   {p.fullName} <span className="text-xs text-gray-400">{p.teamAbbrev}</span>
+                  {starId === r.playerId && (
+                    /* Spelled out rather than left to the star icon: doubling
+                       is the whole reason to designate one, and a member who
+                       has not read the rules cannot infer it from a ★.
+                       Hidden on a phone, where the row has no space for it and
+                       the orange badge already marks the player. */
+                    <span className="hidden shrink-0 whitespace-nowrap text-xs font-medium text-amber-600 sm:inline dark:text-amber-400">
+                      {t('starDouble')}
+                    </span>
+                  )}
                 </span>
                 <span className="flex shrink-0 items-center gap-3">
                   {starrable && !locked && (
