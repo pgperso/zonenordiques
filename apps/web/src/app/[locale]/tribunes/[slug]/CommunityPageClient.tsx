@@ -36,6 +36,9 @@ interface CommunityPageClientProps {
   staffRoles: Record<string, string>;
   hubArticles: PressGalleryItem[];
   hubPodcasts: PressGalleryItem[];
+  /** The pool's leading three, read on the server (page.tsx). Empty when the
+   *  brand has no pool or no entry is confirmed yet. */
+  poolTop3: Array<{ rank: number; teamName: string; points: number }>;
 }
 
 export function CommunityPageClient({
@@ -51,6 +54,7 @@ export function CommunityPageClient({
   userId,
   hubArticles,
   hubPodcasts,
+  poolTop3,
 }: CommunityPageClientProps) {
   const router = useRouter();
   const supabase = useSupabase();
@@ -107,9 +111,32 @@ export function CommunityPageClient({
           {SITE.showPool && (
             <Link
               href="/lnh/pool"
-              className="flex items-center justify-center gap-2 border-t border-gray-200 bg-brand-blue-dark px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-brand-blue dark:border-gray-700"
+              className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-gray-200 bg-brand-blue-dark px-4 py-2 text-center text-sm font-semibold text-white transition hover:bg-brand-blue dark:border-gray-700"
             >
-              {t('pool.tagline')} <span className="underline">{t('pool.cta')}</span>
+              {poolTop3.length > 0 ? (
+                <>
+                  <span className="opacity-75">{t('pool.top3')}</span>
+                  {poolTop3.map((r, i) => (
+                    <span
+                      key={r.teamName}
+                      /* Past the leader, the entries fold away on a phone
+                         rather than wrapping the bar onto three lines above
+                         the conversation. */
+                      className={i === 0 ? 'flex items-center gap-1.5' : 'hidden items-center gap-1.5 sm:flex'}
+                    >
+                      <span className="opacity-60 tabular-nums">{r.rank}.</span>
+                      <span className="max-w-[12rem] truncate">{r.teamName}</span>
+                      <span className="tabular-nums opacity-80">{r.points}</span>
+                    </span>
+                  ))}
+                  <span className="underline">{t('pool.cta')}</span>
+                </>
+              ) : (
+                /* No confirmed entry yet — nothing to rank, so recruit. */
+                <>
+                  {t('pool.tagline')} <span className="underline">{t('pool.cta')}</span>
+                </>
+              )}
             </Link>
           )}
           {/* 3-column layout: [Ad left] | [Feed] | [Ad right] */}

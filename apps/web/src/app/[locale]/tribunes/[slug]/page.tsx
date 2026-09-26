@@ -8,6 +8,8 @@ import { displayCommunityName, displayCommunityDescription } from '@arena/shared
 import { BRAND } from '@/lib/brand';
 import { fetchPressGalleryItems } from '@/services/pressGalleryService';
 import { CommunityPageClient } from './CommunityPageClient';
+import { SITE } from '@/lib/siteConfig';
+import { getActiveSeason, getStandings } from '@/services/poolService';
 import type { Database } from '@arena/supabase-client';
 
 type CommunityRow = Database['public']['Tables']['communities']['Row'];
@@ -127,6 +129,22 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
 
   const hubArticles = hubResult.items;
   const hubPodcasts = hubPodcastsResult.items;
+
+  // The pool's top 3, for the bar above the chat. Read here rather than in the
+  // client: the page already revalidates every 5 minutes, which is far more
+  // often than a standings table that refreshes once a night — so a browser
+  // fetch would buy nothing and cost a round trip on every visit.
+  let poolTop3: Array<{ rank: number; teamName: string; points: number }> = [];
+  if (SITE.showPool) {
+    const season = await getActiveSeason(supabase);
+    if (season) {
+      poolTop3 = (await getStandings(supabase, season.id)).slice(0, 3).map((r) => ({
+        rank: r.rank ?? 0,
+        teamName: r.teamName,
+        points: r.fantasyPoints,
+      }));
+    }
+  }
 
   let isMember = false;
   let canModerate = false;
@@ -262,6 +280,7 @@ export default async function CommunityPage({ params }: CommunityPageProps) {
       />
       <CommunityPageClient
         key={`${community.id}-${isMember}`}
+        poolTop3={poolTop3}
         community={community}
         displayName={displayName}
         displayDescription={displayDescription}
