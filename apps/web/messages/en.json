@@ -677,7 +677,9 @@
       "tradeOutHint": "Did not play his club’s last game — tradeable right now.",
       "tradesRemaining": "Trades left",
       "replace": "Replace {name}",
-      "tradeDone": "Trade completed"
+      "tradeDone": "Trade completed",
+      "teamFilter": "Filter by team",
+      "allTeams": "All teams"
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

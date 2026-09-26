@@ -683,7 +683,9 @@
       "tradeOutHint": "N’a pas joué le dernier match de son club — échangeable dès maintenant.",
       "tradesRemaining": "Échanges restants",
       "replace": "Remplacer {name}",
-      "tradeDone": "Échange effectué"
+      "tradeDone": "Échange effectué",
+      "teamFilter": "Filtrer par équipe",
+      "allTeams": "Toutes les équipes"
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",

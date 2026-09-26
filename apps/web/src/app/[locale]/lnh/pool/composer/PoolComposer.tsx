@@ -456,10 +456,24 @@ function PlayerPicker({
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'priceDesc' | 'priceAsc' | 'proj'>('priceDesc');
   const [affordableOnly, setAffordableOnly] = useState(false);
+  const [team, setTeam] = useState('');
+
+  // Only the clubs that actually have a player at this position left to pick:
+  // a dropdown offering all 32 when six of them have nothing to show is a
+  // list of dead ends.
+  const teamOptions = useMemo(() => {
+    const seen = new Set<string>();
+    for (const p of players) {
+      if (p.position === pos && !chosen.has(p.playerId) && p.teamAbbrev) seen.add(p.teamAbbrev);
+    }
+    return [...seen].sort();
+  }, [players, pos, chosen]);
+
   const list = useMemo(() => {
     const q = search.trim().toLowerCase();
     // Always hide players already on the roster — you can't pick them again.
     let l = players.filter((p) => p.position === pos && !chosen.has(p.playerId));
+    if (team) l = l.filter((p) => p.teamAbbrev === team);
     if (affordableOnly) l = l.filter((p) => canPick(p));
     if (q) l = l.filter((p) => p.fullName.toLowerCase().includes(q));
     const key =
@@ -467,7 +481,7 @@ function PlayerPicker({
       : sort === 'proj' ? (p: PoolPlayer) => p.projPoints
       : (p: PoolPlayer) => p.priceCents; // priceDesc (default)
     return [...l].sort((a, b) => key(b) - key(a));
-  }, [players, pos, search, sort, chosen, affordableOnly, canPick]);
+  }, [players, pos, search, sort, chosen, affordableOnly, canPick, team]);
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-black/40" onClick={onClose}>
@@ -483,6 +497,13 @@ function PlayerPicker({
         <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('searchPlaceholder')}
             className="min-w-[120px] flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]" />
+          <select value={team} onChange={(e) => setTeam(e.target.value)} aria-label={t('teamFilter')}
+            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
+            <option value="">{t('allTeams')}</option>
+            {teamOptions.map((abbrev) => (
+              <option key={abbrev} value={abbrev}>{abbrev}</option>
+            ))}
+          </select>
           <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}
             className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
             <option value="priceDesc">{t('sortPriceDesc')}</option>
