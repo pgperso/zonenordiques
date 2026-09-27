@@ -122,7 +122,7 @@ export function CommunityPageClient({
                   <span className="opacity-75 sm:hidden">{t('pool.shortTitle')}</span>
                   <span className="hidden opacity-75 sm:inline">{t('pool.top3')}</span>
                   <span className="opacity-40" aria-hidden>|</span>
-                  {poolTop3.map((r, i) => (
+                  {poolTop3.map((r) => (
                     <span
                       key={r.teamName}
                       /* Past the leader, the entries fold away on a phone
