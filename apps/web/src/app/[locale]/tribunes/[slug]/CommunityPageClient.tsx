@@ -115,7 +115,12 @@ export function CommunityPageClient({
             >
               {poolTop3.length > 0 ? (
                 <>
-                  <span className="opacity-75">{t('pool.top3')}</span>
+                  {/* A phone has room for a label and a destination, not a
+                      leaderboard: one truncated team name is worse than none.
+                      It names the pool instead, so the bar still says what it
+                      leads to. */}
+                  <span className="opacity-75 sm:hidden">{t('pool.shortTitle')}</span>
+                  <span className="hidden opacity-75 sm:inline">{t('pool.top3')}</span>
                   <span className="opacity-40" aria-hidden>|</span>
                   {poolTop3.map((r, i) => (
                     <span
@@ -123,7 +128,7 @@ export function CommunityPageClient({
                       /* Past the leader, the entries fold away on a phone
                          rather than wrapping the bar onto three lines above
                          the conversation. */
-                      className={i === 0 ? 'flex items-center gap-1.5' : 'hidden items-center gap-1.5 sm:flex'}
+                      className="hidden items-center gap-1.5 sm:flex"
                     >
                       <span className="opacity-60 tabular-nums">{r.rank}.</span>
                       <span className="max-w-[12rem] truncate">{r.teamName}</span>

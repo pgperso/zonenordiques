@@ -450,6 +450,7 @@
     "title": "NHL Pool",
     "tagline": "Build your team and join the upcoming season",
     "top3": "Top 3",
+    "shortTitle": "La Zone Pool",
     "cta": "Join",
     "teamsRegistered": "{count, plural, =1 {# team registered} other {# teams registered}}",
     "bannerTitle": "<b>LA ZONE</b> hockey pool",
