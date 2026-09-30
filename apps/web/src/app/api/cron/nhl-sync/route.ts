@@ -3,7 +3,7 @@ import { SITE } from '@/lib/siteConfig';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import { syncDate } from '@/services/nhlService';
+import { syncDate, type SyncResult } from '@/services/nhlService';
 import { announcePoolLeader } from '@/services/botService';
 import { getBrandMainCommunityId } from '@/lib/brandScope';
 
@@ -85,7 +85,32 @@ async function handleSync(request: Request) {
   const runId = (runRow as { id: number } | null)?.id;
 
   try {
+    // The league's /score/now returns ONLY the current day. Run at 5am the
+    // cron therefore saw a slate that had not been played yet, and last
+    // night's finals — the only games with boxscores — were never ingested.
+    // Every pool standing stayed at zero, with no error anywhere.
+    //
+    // So a scheduled run syncs yesterday as well as today. The day before is
+    // taken from the league's own currentDate rather than from our clock, so
+    // no timezone has to be guessed. Yesterday brings in the finals; today
+    // keeps the schedule rows fresh and catches a game that ended early.
+    // An explicit ?date= still syncs that one day, for backfilling.
     const result = await syncDate(admin, date);
+    const extra: SyncResult[] = [];
+    if (date === 'now' && result.targetDate) {
+      const d = new Date(`${result.targetDate}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() - 1);
+      const yesterday = d.toISOString().slice(0, 10);
+      try {
+        extra.push(await syncDate(admin, yesterday));
+      } catch {
+        // One bad day must not lose the run: today's sync already landed and
+        // the next run retries yesterday anyway.
+      }
+    }
+
+    const days: SyncResult[] = [result, ...extra];
+    const failed = days.flatMap((d) => d.failedGames);
 
     // Recompute pool standings from the freshly-synced stats. Idempotent —
     // a pure REPLACE, so re-running never double-counts.
@@ -126,17 +151,20 @@ async function handleSync(request: Request) {
         .update({
           status: 'ok',
           finished_at: new Date().toISOString(),
+          // Totals across every day this run touched. Logging today's
+          // numbers alone is what let "0 stat rows, every night" look
+          // healthy while last night's games were never read.
           target_date: result.targetDate,
-          games_seen: result.gamesSeen,
-          games_finalized: result.gamesFinalized,
-          stat_rows: result.statRows,
+          games_seen: days.reduce((n, d) => n + d.gamesSeen, 0),
+          games_finalized: days.reduce((n, d) => n + d.gamesFinalized, 0),
+          stat_rows: days.reduce((n, d) => n + d.statRows, 0),
           // Surface partial failures without failing the whole run.
-          error: result.failedGames.length ? `failed games: ${result.failedGames.join(', ')}` : null,
+          error: failed.length ? `failed games: ${failed.join(', ')}` : null,
         })
         .eq('id', runId);
     }
 
-    return NextResponse.json({ ok: true, ...result });
+    return NextResponse.json({ ok: true, ...result, days });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur inconnue';
     if (runId) {
