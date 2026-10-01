@@ -5,6 +5,7 @@ import { createClient as createServiceClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { syncDate, type SyncResult } from '@/services/nhlService';
 import { announcePoolLeader } from '@/services/botService';
+import { postDailyPoolAnalysis } from '@/services/poolAnalystService';
 import { getBrandMainCommunityId } from '@/lib/brandScope';
 
 // Boxscore fan-out over a full slate (up to ~16 games), each with retry
@@ -110,6 +111,9 @@ async function handleSync(request: Request) {
     }
 
     const days: SyncResult[] = [result, ...extra];
+    let analysis: { posted: boolean; reason?: string; gameDay?: string } = {
+      posted: false, reason: 'non tenté',
+    };
     const failed = days.flatMap((d) => d.failedGames);
 
     // Recompute pool standings from the freshly-synced stats. Idempotent —
@@ -125,8 +129,9 @@ async function handleSync(request: Request) {
       await admin.rpc('pool_refresh_standings', { p_season_id: seasonId });
 
       // Daily-return hook: announce the leader in the LNH tribune, but only on
-      // nights where games were actually scored (no spam on off-days).
-      if (result.statRows > 0) {
+      // nights where games were actually scored (no spam on off-days). The
+      // totals across both days, since the finals come from yesterday.
+      if (days.reduce((n, d) => n + d.statRows, 0) > 0) {
         const { data: top } = await admin
           .from('pool_standings')
           .select('fantasy_points, pool_entries!inner(team_name)')
@@ -140,6 +145,12 @@ async function handleSync(request: Request) {
           if (communityId) {
             const pts = Number(leader.fantasy_points).toLocaleString('fr-CA', { maximumFractionDigits: 1 });
             await announcePoolLeader(admin, communityId, leader.pool_entries.team_name, pts).catch(() => {});
+
+            // The armchair GM's read on the night. Claims the night before
+            // spending anything, so a re-run or a stat correction does not
+            // post a second analysis — and never fails the sync.
+            analysis = await postDailyPoolAnalysis(admin, seasonId, communityId)
+              .catch((e) => ({ posted: false, reason: e instanceof Error ? e.message : 'erreur' }));
           }
         }
       }
@@ -164,7 +175,7 @@ async function handleSync(request: Request) {
         .eq('id', runId);
     }
 
-    return NextResponse.json({ ok: true, ...result, days });
+    return NextResponse.json({ ok: true, ...result, days, analysis });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Erreur inconnue';
     if (runId) {
