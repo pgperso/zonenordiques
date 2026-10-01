@@ -26,6 +26,16 @@ function PlayerName({ p, badge, t }: { p: RosterPlayerStats; badge: Badge; t: T 
     <span className="block">
       <span className="flex items-center gap-1.5">
         <Link href={`/lnh/pool/joueur/${p.playerId}`} className="truncate hover:underline">{p.fullName}</Link>
+        {p.isOut && (
+          /* "Did not dress", not "injured": no injury feed exists, so this is
+             what the boxscores actually prove. Same rule the trade gate uses. */
+          <span
+            title={t('ttOut')}
+            className="whitespace-nowrap rounded bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700 dark:bg-orange-900/40 dark:text-orange-300"
+          >
+            {t('out')}
+          </span>
+        )}
         {p.isStar && (
           <span className="whitespace-nowrap rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">{t('star')}</span>
         )}

@@ -532,6 +532,11 @@ export interface RosterPlayerStats {
   fantasyPoints: number;
   /** True if the pooler designated this player as their star (points count double). */
   isStar: boolean;
+  /** Dressed for none of his club's last games (00115/00125). "Did not play",
+   *  not "injured" — no injury feed exists — so it also covers scratches and
+   *  minor-league assignments. Same definition the trade rule uses, so the
+   *  badge and the trade it unlocks always agree. */
+  isOut: boolean;
 }
 
 /** An entry's active roster with each player's season stats, for the stat tables. */
@@ -573,6 +578,17 @@ export async function getRosterWithStats(
     ((statData ?? []) as Array<Record<string, number>>).map((r) => [r.player_id as number, r]),
   );
 
+  // One call for the whole roster rather than one per player.
+  const outIds = new Set<number>();
+  {
+    const { data: outData } = await db.rpc('pool_players_out' as never, {
+      p_season_id: seasonId, p_player_ids: ids,
+    } as never);
+    for (const r of (outData ?? []) as Array<{ player_id: number }>) {
+      outIds.add(Number(r.player_id));
+    }
+  }
+
   const n = (v: unknown) => Number(v ?? 0);
   return slots.map((s) => {
     const st = statMap.get(s.player_id);
@@ -602,6 +618,7 @@ export async function getRosterWithStats(
       goalsAgainst: n(st?.goals_against),
       fantasyPoints: n(st?.fantasy_points),
       isStar: starIds.has(s.player_id),
+      isOut: outIds.has(s.player_id),
     };
   });
 }

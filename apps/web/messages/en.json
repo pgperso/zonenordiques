@@ -626,7 +626,9 @@
       "svpct": "SV%",
       "ttSvpct": "Save percentage",
       "so": "SO",
-      "ttSo": "Shutouts"
+      "ttSo": "Shutouts",
+      "out": "OUT",
+      "ttOut": "Did not dress for his club’s last game — injury, scratch or a minor-league assignment. He becomes tradeable right away."
     },
     "composer": {
       "backToMyTeam": "My team",

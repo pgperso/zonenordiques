@@ -632,7 +632,9 @@
       "svpct": "%ARR",
       "ttSvpct": "Pourcentage d'arrêts",
       "so": "BL",
-      "ttSo": "Blanchissages"
+      "ttSo": "Blanchissages",
+      "out": "ABSENT",
+      "ttOut": "N’était pas dans l’alignement au dernier match de son club — blessure, retrait ou renvoi dans les mineures. Il devient échangeable immédiatement."
     },
     "composer": {
       "backToMyTeam": "Mon équipe",
