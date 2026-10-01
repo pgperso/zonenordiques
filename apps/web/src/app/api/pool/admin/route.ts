@@ -41,6 +41,7 @@ interface SeasonPatch {
   teamGfCoef?: number;
   teamGaCoef?: number;
   teamShutoutPoints?: number;
+  defensePointValue?: number;
   starsEnabled?: boolean;
 }
 interface SaveBody {
@@ -94,6 +95,7 @@ export async function POST(request: Request) {
   set('team_gf_coef', season.teamGfCoef);
   set('team_ga_coef', season.teamGaCoef);
   set('team_shutout_points', season.teamShutoutPoints);
+  set('defense_point_value', season.defensePointValue);
   set('stars_enabled', season.starsEnabled);
 
   // Detect a draft/locked → open transition so we announce the pool once.

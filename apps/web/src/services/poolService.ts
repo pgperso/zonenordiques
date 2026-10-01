@@ -34,6 +34,8 @@ export interface PoolSeason {
   teamGaCoef: number;
   /** Bonus when the chosen club allows zero goals (00116). 0 = off. */
   teamShutoutPoints: number;
+  /** Pool points per real point for a defenceman (00126). 0 = off. */
+  defensePointValue: number;
   starsEnabled: boolean;
 }
 
@@ -150,13 +152,14 @@ type SeasonRow = {
   team_gf_coef: number;
   team_ga_coef: number;
   team_shutout_points: number;
+  defense_point_value: number;
   stars_enabled: boolean;
 };
 
 const SEASON_COLS =
   'id, nhl_season, name, budget_cents, roster_f, roster_d, roster_g, roster_teams, lock_at, status, ' +
   'transactions_enabled, max_transactions, transaction_deadline, tiebreaker, is_public, timezone, ' +
-  'team_base_points, team_gf_coef, team_ga_coef, team_shutout_points, stars_enabled';
+  'team_base_points, team_gf_coef, team_ga_coef, team_shutout_points, defense_point_value, stars_enabled';
 
 function mapSeason(r: SeasonRow): PoolSeason {
   return {
@@ -180,6 +183,7 @@ function mapSeason(r: SeasonRow): PoolSeason {
     teamGfCoef: Number(r.team_gf_coef),
     teamGaCoef: Number(r.team_ga_coef),
     teamShutoutPoints: Number(r.team_shutout_points),
+    defensePointValue: Number(r.defense_point_value),
     starsEnabled: Boolean(r.stars_enabled),
   };
 }

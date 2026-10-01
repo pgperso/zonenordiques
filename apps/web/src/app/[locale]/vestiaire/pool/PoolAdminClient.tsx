@@ -45,6 +45,7 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
     teamGfCoef: season?.teamGfCoef ?? 0,
     teamGaCoef: season?.teamGaCoef ?? -1,
     teamShutoutPoints: season?.teamShutoutPoints ?? 0,
+    defensePointValue: season?.defensePointValue ?? 0,
     starsEnabled: season?.starsEnabled ?? false,
   }));
   const [saving, setSaving] = useState(false);
@@ -86,6 +87,7 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
           teamGfCoef: Number(form.teamGfCoef),
           teamGaCoef: Number(form.teamGaCoef),
           teamShutoutPoints: Number(form.teamShutoutPoints),
+          defensePointValue: Number(form.defensePointValue),
           starsEnabled: form.starsEnabled,
         },
         rules: SCORING_CATALOG.map((c) => ({
@@ -258,6 +260,18 @@ export function PoolAdminClient({ season, rules }: { season: PoolSeason | null; 
       <section className={cardCls}>
         <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">Barème de pointage</h2>
         <p className="mb-4 text-xs text-gray-400">Points attribués par statistique. Laisse vide (ou 0) pour ne pas compter une stat.</p>
+
+        <div className="mb-4 rounded-md border border-gray-200 bg-gray-50 p-3">
+          <label className={labelCls}>Valeur d&apos;un point pour un défenseur</label>
+          <input type="number" step="0.5" className="mt-1 w-32 rounded-md border border-gray-300 px-3 py-2 text-sm"
+            value={form.defensePointValue} onChange={(e) => upd('defensePointValue', Number(e.target.value))} />
+          <p className="mt-1 text-xs text-gray-400">
+            Chaque point réel (but ou passe) d&apos;un défenseur vaut ce nombre, <strong>à la place</strong> de
+            «&nbsp;But&nbsp;» et «&nbsp;Passe&nbsp;» ci-dessous. 0 = désactivé, les défenseurs sont pointés comme
+            les attaquants. Le reste du barème s&apos;applique normalement, et une vedette double le tout —
+            un défenseur vedette à 1,5 vaut donc 3 points par point.
+          </p>
+        </div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <h3 className="mb-2 text-sm font-semibold text-gray-900">Patineurs</h3>
