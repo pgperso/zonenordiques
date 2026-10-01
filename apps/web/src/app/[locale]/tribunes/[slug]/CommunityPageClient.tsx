@@ -132,7 +132,6 @@ export function CommunityPageClient({
                     >
                       <span className="opacity-60 tabular-nums">{r.rank}.</span>
                       <span className="max-w-[12rem] truncate">{r.teamName}</span>
-                      <span className="tabular-nums opacity-80">{r.points}</span>
                     </span>
                   ))}
                   <span className="underline">{t('pool.standings')}</span>
