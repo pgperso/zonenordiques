@@ -736,6 +736,10 @@
       "saving": "Enregistrement…",
       "saveNameLogo": "Enregistrer le nom et le logo",
       "cancel": "Annuler"
-    }
+    },
+    "defenseNote": "Défenseurs : chaque point réel (but ou passe) vaut {value}, au lieu du barème « But / Passe » ci-dessous. Le reste du barème s’applique normalement.",
+    "teamShutout": "Jeu blanc (aucun but accordé)",
+    "teamFreeNote": "Le choix de l’équipe est gratuit : il ne compte pas dans la masse salariale.",
+    "txGamesNote": "Un joueur doit avoir disputé {games} matchs pour ton équipe avant d’être échangé — sauf s’il manque un match de son club."
   }
 }

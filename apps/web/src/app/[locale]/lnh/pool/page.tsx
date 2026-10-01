@@ -61,7 +61,8 @@ export default async function PoolHomePage({ params }: { params: Promise<{ local
     : null;
   const txNote =
     season?.transactionsEnabled && season.maxTransactions > 0
-      ? t('txNote', { count: season.maxTransactions })
+      ? t('txNote', { count: season.maxTransactions }) +
+        (season.tradeMinGames > 0 ? ' ' + t('txGamesNote', { games: season.tradeMinGames }) : '')
       : null;
 
   const {
@@ -198,6 +199,13 @@ export default async function PoolHomePage({ params }: { params: Promise<{ local
               <section className="mt-8">
                 <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-gray-500">{t('bareme')}</h2>
                 <p className="mb-3 text-xs text-gray-400">{t('baremeSub')}</p>
+                {season && season.defensePointValue > 0 && (
+                  /* Stated before the table, because the table's "But +2 /
+                     Passe +1" is simply not the rule for a defenceman. */
+                  <p className="mb-3 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-900 dark:bg-blue-900/10 dark:text-blue-200">
+                    {t('defenseNote', { value: fmtNum(season.defensePointValue, locale, 2) })}
+                  </p>
+                )}
                 {season?.starsEnabled && (
                   <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-900/10 dark:text-amber-300">{t('starsNote')}</p>
                 )}
@@ -236,6 +244,13 @@ export default async function PoolHomePage({ params }: { params: Promise<{ local
                             <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{fmtCoef(season.teamGaCoef)}</span>
                           </li>
                         )}
+                        {season.teamShutoutPoints !== 0 && (
+                          <li className="flex items-center justify-between px-3 py-1.5 text-sm">
+                            <span className="text-gray-700 dark:text-gray-300">{t('teamShutout')}</span>
+                            <span className="font-semibold tabular-nums text-gray-900 dark:text-gray-100">{fmtCoef(season.teamShutoutPoints)}</span>
+                          </li>
+                        )}
+                        <li className="px-3 py-1.5 text-xs text-gray-500">{t('teamFreeNote')}</li>
                       </ul>
                     </div>
                   )}

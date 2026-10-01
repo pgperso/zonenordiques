@@ -730,6 +730,10 @@
       "saving": "Saving…",
       "saveNameLogo": "Save name and logo",
       "cancel": "Cancel"
-    }
+    },
+    "defenseNote": "Defencemen: each real point (goal or assist) is worth {value}, instead of the Goal / Assist rates below. The rest of the scoring applies as usual.",
+    "teamShutout": "Shutout (no goals allowed)",
+    "teamFreeNote": "Picking a club is free — it does not count against the cap.",
+    "txGamesNote": "A player must have dressed for {games} games on your roster before he can be traded — unless he misses one of his club’s games."
   }
 }
