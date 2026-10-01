@@ -11,7 +11,11 @@ const gaa = (ga: number, sec: number) => (sec > 0 ? (ga / (sec / 3600)).toFixed(
 
 // Tailwind helpers shared by both tables.
 const wrap = 'overflow-x-auto overscroll-x-contain rounded-lg border border-gray-200 dark:border-gray-700';
-const thBase = 'px-3 py-2 text-right font-medium whitespace-nowrap';
+// A fixed width per stat column. Without it each table lays itself out from
+// its own content, so Forwards and Defensemen — two separate <table>s with
+// different longest names — ended up with their columns on different
+// verticals, one above the other on the same page.
+const thBase = 'w-16 px-3 py-2 text-right font-medium whitespace-nowrap';
 const tdNum = 'px-3 py-2 text-right tabular-nums text-gray-600 dark:text-gray-300';
 const stickyTh = 'sticky left-0 z-10 bg-gray-50 px-3 py-2 text-left font-medium dark:bg-[#252525]';
 const stickyTd =
@@ -56,7 +60,7 @@ function SkaterTable({ rows, badgeOf, t, locale }: { rows: RosterPlayerStats[]; 
   const totalPts = rows.reduce((a, r) => a + starPts(r), 0);
   return (
     <div className={wrap}>
-      <table className="w-full min-w-[680px] text-sm">
+      <table className="w-full min-w-[680px] table-fixed text-sm">
         <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-[#252525]">
           <tr>
             <th className={stickyTh}>{t('player')}</th>
@@ -69,7 +73,7 @@ function SkaterTable({ rows, badgeOf, t, locale }: { rows: RosterPlayerStats[]; 
             <th className={`${thBase} hidden lg:table-cell`} title={t('ttPun')}>{t('pun')}</th>
             <th className={`${thBase} hidden lg:table-cell`} title={t('ttShots')}>{t('shots')}</th>
             <th className={`${thBase} hidden lg:table-cell`} title={t('ttBan')}>{t('ban')}</th>
-            <th className={`${thBase}`}>{t('salary')}</th>
+            <th className={`${thBase} w-24`}>{t('salary')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -112,7 +116,7 @@ function SkaterTable({ rows, badgeOf, t, locale }: { rows: RosterPlayerStats[]; 
 function GoalieTable({ rows, badgeOf, t, locale }: { rows: RosterPlayerStats[]; badgeOf: (id: number) => Badge; t: T; locale: string }) {
   return (
     <div className={wrap}>
-      <table className="w-full min-w-[560px] text-sm">
+      <table className="w-full min-w-[560px] table-fixed text-sm">
         <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-[#252525]">
           <tr>
             <th className={stickyTh}>{t('goalie')}</th>
@@ -124,7 +128,7 @@ function GoalieTable({ rows, badgeOf, t, locale }: { rows: RosterPlayerStats[]; 
             <th className={`${thBase} hidden md:table-cell`} title={t('ttGaa')}>{t('gaa')}</th>
             <th className={`${thBase} hidden md:table-cell`} title={t('ttSvpct')}>{t('svpct')}</th>
             <th className={`${thBase} hidden lg:table-cell`} title={t('ttSo')}>{t('so')}</th>
-            <th className={`${thBase}`}>{t('salary')}</th>
+            <th className={`${thBase} w-24`}>{t('salary')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
