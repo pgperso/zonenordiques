@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { SITE } from '@/lib/siteConfig';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
@@ -128,23 +129,52 @@ async function handleSync(request: Request) {
     if (seasonId) {
       await admin.rpc('pool_refresh_standings', { p_season_id: seasonId });
 
+      // The standings just moved, so every page that renders them is stale.
+      // They are cached for 2 to 5 minutes, which is fine between game nights
+      // and wrong at exactly this moment: the bot posts "Reaper leads" into a
+      // chat whose own bar still shows last night's leader, from cache. The
+      // cron is the only thing that knows the numbers changed, so it is the
+      // only thing that can say when the cache is wrong.
+      for (const path of [
+        '/[locale]/tribunes/[slug]',          // the Top 3 bar above the chat
+        '/[locale]/lnh/pool',
+        '/[locale]/lnh/pool/classement',
+        '/[locale]/lnh/pool/equipe/[id]',
+        '/[locale]/lnh/pool/moi',
+      ]) {
+        try { revalidatePath(path, 'page'); } catch { /* never fail the sync over a cache */ }
+      }
+
       // Daily-return hook: announce the leader in the LNH tribune, but only on
       // nights where games were actually scored (no spam on off-days). The
       // totals across both days, since the finals come from yesterday.
       if (days.reduce((n, d) => n + d.statRows, 0) > 0) {
+        // Every team sharing first place, then the same tiebreak the
+        // standings page uses (name, A→Z). Taking limit(1) with no order
+        // named an arbitrary one of the tied leaders, so the bot could
+        // announce a different team than the one the chat bar showed first.
         const { data: top } = await admin
           .from('pool_standings')
           .select('fantasy_points, pool_entries!inner(team_name)')
           .eq('season_id', seasonId)
-          .eq('rank', 1)
-          .limit(1)
-          .maybeSingle();
-        const leader = top as { fantasy_points: number; pool_entries: { team_name: string } } | null;
+          .eq('rank', 1);
+        // The embed comes back as an array or an object depending on how
+        // PostgREST resolves the relation; normalise before sorting.
+        const tied = ((top ?? []) as unknown as Array<{
+          fantasy_points: number;
+          pool_entries: { team_name: string } | Array<{ team_name: string }>;
+        }>)
+          .map((r) => ({
+            fantasy_points: Number(r.fantasy_points),
+            team_name: (Array.isArray(r.pool_entries) ? r.pool_entries[0] : r.pool_entries)?.team_name ?? '',
+          }))
+          .sort((a, b) => a.team_name.localeCompare(b.team_name));
+        const leader = tied[0] ?? null;
         if (leader) {
           const communityId = await getBrandMainCommunityId(admin);
           if (communityId) {
             const pts = Number(leader.fantasy_points).toLocaleString('fr-CA', { maximumFractionDigits: 1 });
-            await announcePoolLeader(admin, communityId, leader.pool_entries.team_name, pts).catch(() => {});
+            await announcePoolLeader(admin, communityId, leader.team_name, pts).catch(() => {});
 
             // The armchair GM's read on the night. Claims the night before
             // spending anything, so a re-run or a stat correction does not
