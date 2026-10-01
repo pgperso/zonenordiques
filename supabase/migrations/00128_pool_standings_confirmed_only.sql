@@ -20,6 +20,13 @@
 --
 -- Idempotent.
 
+-- 00119 added a second overload (p_live) beside the original one-argument
+-- function instead of replacing it, so every one-argument call became
+-- ambiguous — and PostgREST, which names its arguments, kept resolving to the
+-- OLD function. The p_live guard has never actually run. Drop the old one so
+-- there is a single definition and a single behaviour.
+DROP FUNCTION IF EXISTS public.pool_refresh_standings(BIGINT);
+
 CREATE OR REPLACE FUNCTION public.pool_refresh_standings(p_season_id BIGINT, p_live BOOLEAN DEFAULT FALSE)
 RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE v_last_day DATE; v_stars BOOLEAN;
