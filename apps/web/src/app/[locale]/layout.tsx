@@ -9,6 +9,7 @@ import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { NhlScoreboard } from '@/components/layout/NhlScoreboard';
 import { MlbScoreboard } from '@/components/layout/MlbScoreboard';
 import { InstallPwaPrompt } from '@/components/layout/InstallPwaPrompt';
+import { PoolCompletionNudge } from '@/components/pool/PoolCompletionNudge';
 import { CookieConsent } from '@/components/ui/CookieConsent';
 import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
@@ -157,6 +158,10 @@ export default async function LocaleLayout({
               <Footer />
               <CookieConsent />
               <InstallPwaPrompt />
+              {/* Site-wide on purpose: the members it targets are precisely
+                  the ones not visiting the pool pages, where the problem is
+                  already visible. It self-hides for everyone else. */}
+              {SITE.showPool && <PoolCompletionNudge />}
             </div>
             <Toaster position="top-center" richColors closeButton />
           </TribuneProvider>
