@@ -176,6 +176,25 @@ export function PoolComposer({
     if (ok) { setConfirmed(false); toast.success(t('progressSaved')); }
   }
 
+  /**
+   * Re-confirm a roster the member never changed.
+   *
+   * Saving un-confirms (00073), so a member who pressed Enregistrer and then
+   * the pool started was left out of the standings with no way back in:
+   * handleConfirm runs persist() first, and pool_save_roster refuses once
+   * composition is closed. The roster in the database is still the valid one,
+   * so confirming it needs no save at all.
+   */
+  async function handleConfirmOnly() {
+    setBusy(true);
+    const { error } = await confirmEntry(createClient(), entryId);
+    setBusy(false);
+    if (error) { toast.error(error); return; }
+    setConfirmed(true);
+    toast.success(t('confirmedToast'));
+    router.push('/lnh/pool/moi');
+  }
+
   async function handleConfirm() {
     setBusy(true);
     if (!(await persist())) { setBusy(false); return; }
@@ -404,6 +423,18 @@ export function PoolComposer({
           {locked && (
             <>
               <p className="mt-3 text-sm font-medium text-amber-700 dark:text-amber-400">{t('draftClosed')}</p>
+              {/* An unconfirmed roster scores nothing. Past the deadline the
+                  only way back in is to confirm what is already saved — never
+                  through persist(), which the server now refuses. */}
+              {!confirmed && (
+                <div className="mt-3">
+                  <button onClick={handleConfirmOnly} disabled={busy}
+                    className="rounded-md bg-gray-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-gray-800 disabled:opacity-40 dark:bg-white dark:text-gray-900">
+                    {t('confirm')}
+                  </button>
+                  <p className="mt-1.5 text-xs text-gray-500">{t('confirmLockedHint')}</p>
+                </div>
+              )}
               {starsMissing && (
                 <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 dark:bg-amber-900/10 dark:text-amber-300">★ {t('starsRequiredTrade')}</p>
               )}

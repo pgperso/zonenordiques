@@ -701,7 +701,8 @@
       "sortSeasonPool": "Pts pool (saison)",
       "sortBy": "Trier",
       "poolPtsShort": "pts pool",
-      "projShort": "proj."
+      "projShort": "proj.",
+      "confirmLockedHint": "Confirme l'alignement déjà enregistré. Il n'est plus modifiable, sauf par échange."
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",
