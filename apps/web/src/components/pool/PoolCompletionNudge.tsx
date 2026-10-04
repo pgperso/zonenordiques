@@ -140,7 +140,8 @@ export function PoolCompletionNudge() {
 
       // Once the pool has started the composer is trade-only, so sending an
       // incomplete team there would promise something the server refuses.
-      const { data: closedRaw } = await db.rpc('pool_composition_closed', { p_season_id: season.id });
+      // An entry never confirmed once is exempt (00131) and can still finish.
+      const { data: closedRaw } = await db.rpc('pool_composition_closed_for', { p_entry_id: entry.id });
 
       setPending({
         entryId: entry.id,

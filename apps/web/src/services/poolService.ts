@@ -826,19 +826,22 @@ export async function getTradeEligibility(client: AnyClient, entryId: number): P
 }
 
 /**
- * Is free composition over? Derived from the schedule (00130), not from a
- * setting someone has to remember: lock_at when it is set, otherwise the
- * season's first game. Past it, the composer becomes trade-only.
+ * Is free composition over FOR THIS ENTRY? Derived from the schedule (00130)
+ * rather than a setting someone has to remember: lock_at when it is set,
+ * otherwise the season's first game. Past it the composer is trade-only.
  *
- * Returns null when the call fails, so the caller can fall back to the season
- * row it already holds rather than guessing — showing "compose" wrongly lets a
- * member build a roster the server then refuses, and showing "trade" wrongly
- * hides the builder before the season starts.
+ * An entry that has never been confirmed once stays open anyway (00131) — it
+ * never took part, so it gets one chance to finish.
+ *
+ * Returns null when the call fails, so the caller can fall back to what it
+ * already holds rather than guessing: showing "compose" wrongly lets a member
+ * build a roster the server then refuses, and showing "trade" wrongly hides
+ * the builder from someone entitled to it.
  */
-export async function isCompositionClosed(client: AnyClient, seasonId: number): Promise<boolean | null> {
+export async function isCompositionClosedFor(client: AnyClient, entryId: number): Promise<boolean | null> {
   const db = client as unknown as Db;
-  const { data, error } = await db.rpc('pool_composition_closed' as never, {
-    p_season_id: seasonId,
+  const { data, error } = await db.rpc('pool_composition_closed_for' as never, {
+    p_entry_id: entryId,
   } as never);
   if (error) return null;
   return Boolean(data);

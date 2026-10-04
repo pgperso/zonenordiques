@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getTranslations } from 'next-intl/server';
-import { getActiveSeason, getEntryRosterPlayers, getPlayerPool, getTeamChoices, isCompositionClosed, type SlotPick, type PoolPosition } from '@/services/poolService';
+import { getActiveSeason, getEntryRosterPlayers, getPlayerPool, getTeamChoices, isCompositionClosedFor, type SlotPick, type PoolPosition } from '@/services/poolService';
 import { PoolComposer } from './PoolComposer';
 import { BRAND } from '@/lib/brand';
 
@@ -88,13 +88,14 @@ export default async function ComposerPage({ params }: { params: Promise<{ local
     getPlayerPool(supabase, season.id),
     getEntryRosterPlayers(supabase, season.id, entryRow.id),
     getTeamChoices(supabase, season.id),
-    isCompositionClosed(supabase, season.id),
+    isCompositionClosedFor(supabase, entryRow.id),
   ]);
 
   // Free composition ends at the season's first game, or at lock_at when the
-  // commissioner set one (00130). Relying on lock_at alone is what let members
-  // swap players freely for five days of played hockey. If the call fails,
-  // fall back to the season row already in hand rather than guessing.
+  // commissioner set one (00130) — except for an entry never confirmed once,
+  // which keeps one chance to finish (00131). Relying on lock_at alone is what
+  // let members swap players freely for five days of played hockey. If the
+  // call fails, fall back to what we already hold rather than guessing.
   const closed =
     closedOrNull ?? Boolean(season.lockAt && new Date(season.lockAt) <= new Date());
 
