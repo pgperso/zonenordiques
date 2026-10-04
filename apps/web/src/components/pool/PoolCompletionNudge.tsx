@@ -79,24 +79,26 @@ export function PoolCompletionNudge() {
 
       const { data: seasonRow } = await db
         .from('pool_seasons')
-        .select('id, roster_f, roster_d, roster_g, roster_teams, budget_cents, stars_enabled')
+        .select('id, nhl_season, game_types, roster_f, roster_d, roster_g, roster_teams, budget_cents, stars_enabled')
         .order('nhl_season', { ascending: false })
         .limit(1)
         .maybeSingle();
       const season = seasonRow as {
-        id: number; roster_f: number; roster_d: number; roster_g: number;
+        id: number; nhl_season: number; game_types: number[] | null;
+        roster_f: number; roster_d: number; roster_g: number;
         roster_teams: number; budget_cents: number; stars_enabled: boolean;
       } | null;
       if (!season || cancelled) return;
 
       const { data: entryRow } = await db
         .from('pool_entries')
-        .select('id, team_name, is_confirmed, is_locked, team_pick, star_forward_id, star_defense_id')
+        .select('id, team_name, is_confirmed, confirmed_at, is_locked, team_pick, star_forward_id, star_defense_id')
         .eq('season_id', season.id)
         .eq('member_id', auth.user.id)
         .maybeSingle();
       const entry = entryRow as {
-        id: number; team_name: string; is_confirmed: boolean; is_locked: boolean;
+        id: number; team_name: string; is_confirmed: boolean; confirmed_at: string | null;
+        is_locked: boolean;
         team_pick: string | null; star_forward_id: number | null; star_defense_id: number | null;
       } | null;
 
@@ -139,9 +141,25 @@ export function PoolCompletionNudge() {
       });
 
       // Once the pool has started the composer is trade-only, so sending an
-      // incomplete team there would promise something the server refuses.
-      // An entry never confirmed once is exempt (00131) and can still finish.
-      const { data: closedRaw } = await db.rpc('pool_composition_closed_for', { p_entry_id: entry.id });
+      // incomplete team there would promise something the server refuses. An
+      // entry never confirmed once is exempt (00131) and can still finish.
+      //
+      // Read from the schedule rather than asked of a helper function: the
+      // modal must never offer a button the server will reject, and an RPC
+      // that does not exist yet answers "no" to everything.
+      let closed = false;
+      if (entry.confirmed_at !== null) {
+        const { data: firstGame } = await db
+          .from('nhl_games')
+          .select('start_time_utc')
+          .eq('season', season.nhl_season)
+          .in('game_type', season.game_types ?? [2])
+          .order('start_time_utc', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        const start = (firstGame as { start_time_utc: string } | null)?.start_time_utc ?? null;
+        closed = start !== null && new Date(start) <= new Date();
+      }
 
       setPending({
         entryId: entry.id,
@@ -150,7 +168,7 @@ export function PoolCompletionNudge() {
         blocked: checks.some((c) => !c.ok),
         starWarning:
           season.stars_enabled && (!entry.star_forward_id || !entry.star_defense_id),
-        closed: Boolean(closedRaw),
+        closed,
       });
     })();
 

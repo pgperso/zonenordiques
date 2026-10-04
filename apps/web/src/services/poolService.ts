@@ -36,6 +36,8 @@ export interface PoolSeason {
   teamShutoutPoints: number;
   /** Games a player must dress for before his owner may trade him (00115). */
   tradeMinGames: number;
+  /** NHL game types this pool counts (2 = regular season). */
+  gameTypes: number[];
   /** Pool points per real point for a defenceman (00126). 0 = off. */
   defensePointValue: number;
   starsEnabled: boolean;
@@ -163,13 +165,14 @@ type SeasonRow = {
   team_shutout_points: number;
   defense_point_value: number;
   trade_min_games: number;
+  game_types: number[] | null;
   stars_enabled: boolean;
 };
 
 const SEASON_COLS =
   'id, nhl_season, name, budget_cents, roster_f, roster_d, roster_g, roster_teams, lock_at, status, ' +
   'transactions_enabled, max_transactions, transaction_deadline, tiebreaker, is_public, timezone, ' +
-  'team_base_points, team_gf_coef, team_ga_coef, team_shutout_points, defense_point_value, trade_min_games, stars_enabled';
+  'team_base_points, team_gf_coef, team_ga_coef, team_shutout_points, defense_point_value, trade_min_games, game_types, stars_enabled';
 
 function mapSeason(r: SeasonRow): PoolSeason {
   return {
@@ -195,6 +198,7 @@ function mapSeason(r: SeasonRow): PoolSeason {
     teamShutoutPoints: Number(r.team_shutout_points),
     defensePointValue: Number(r.defense_point_value),
     tradeMinGames: Number(r.trade_min_games),
+    gameTypes: (r.game_types ?? [2]).map(Number),
     starsEnabled: Boolean(r.stars_enabled),
   };
 }
@@ -876,28 +880,6 @@ export async function getTradeEligibility(client: AnyClient, entryId: number): P
     isOut: Boolean(r.is_out),
     canTrade: Boolean(r.can_trade),
   }));
-}
-
-/**
- * Is free composition over FOR THIS ENTRY? Derived from the schedule (00130)
- * rather than a setting someone has to remember: lock_at when it is set,
- * otherwise the season's first game. Past it the composer is trade-only.
- *
- * An entry that has never been confirmed once stays open anyway (00131) — it
- * never took part, so it gets one chance to finish.
- *
- * Returns null when the call fails, so the caller can fall back to what it
- * already holds rather than guessing: showing "compose" wrongly lets a member
- * build a roster the server then refuses, and showing "trade" wrongly hides
- * the builder from someone entitled to it.
- */
-export async function isCompositionClosedFor(client: AnyClient, entryId: number): Promise<boolean | null> {
-  const db = client as unknown as Db;
-  const { data, error } = await db.rpc('pool_composition_closed_for' as never, {
-    p_entry_id: entryId,
-  } as never);
-  if (error) return null;
-  return Boolean(data);
 }
 
 /** Make an in-season transaction: drop one player, add another (post-lock). */
