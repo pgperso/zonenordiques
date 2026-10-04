@@ -825,6 +825,25 @@ export async function getTradeEligibility(client: AnyClient, entryId: number): P
   }));
 }
 
+/**
+ * Is free composition over? Derived from the schedule (00130), not from a
+ * setting someone has to remember: lock_at when it is set, otherwise the
+ * season's first game. Past it, the composer becomes trade-only.
+ *
+ * Returns null when the call fails, so the caller can fall back to the season
+ * row it already holds rather than guessing — showing "compose" wrongly lets a
+ * member build a roster the server then refuses, and showing "trade" wrongly
+ * hides the builder before the season starts.
+ */
+export async function isCompositionClosed(client: AnyClient, seasonId: number): Promise<boolean | null> {
+  const db = client as unknown as Db;
+  const { data, error } = await db.rpc('pool_composition_closed' as never, {
+    p_season_id: seasonId,
+  } as never);
+  if (error) return null;
+  return Boolean(data);
+}
+
 /** Make an in-season transaction: drop one player, add another (post-lock). */
 export async function makeTransaction(
   client: AnyClient,

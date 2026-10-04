@@ -45,6 +45,8 @@ interface Pending {
   checks: ChecklistItem[];
   blocked: boolean;
   starWarning: boolean;
+  /** Free composition is over (00130) — nothing can be added any more. */
+  closed: boolean;
 }
 
 export function PoolCompletionNudge() {
@@ -136,6 +138,10 @@ export function PoolCompletionNudge() {
         ok: spent <= season.budget_cents,
       });
 
+      // Once the pool has started the composer is trade-only, so sending an
+      // incomplete team there would promise something the server refuses.
+      const { data: closedRaw } = await db.rpc('pool_composition_closed', { p_season_id: season.id });
+
       setPending({
         entryId: entry.id,
         teamName: entry.team_name,
@@ -143,6 +149,7 @@ export function PoolCompletionNudge() {
         blocked: checks.some((c) => !c.ok),
         starWarning:
           season.stars_enabled && (!entry.star_forward_id || !entry.star_defense_id),
+        closed: Boolean(closedRaw),
       });
     })();
 
@@ -280,8 +287,16 @@ function NudgeDialog({
               </p>
             )}
 
+            {pending.closed && pending.blocked && (
+              <p className="mt-3 rounded-lg bg-gray-100 px-3 py-2 text-xs text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                {isFr
+                  ? 'Le pool est commencé : la composition est fermée et cette équipe ne peut plus être complétée. Écris au commissaire si tu crois que c’est une erreur.'
+                  : 'The pool has started: composition is closed and this team can no longer be completed. Contact the commissioner if you believe this is a mistake.'}
+              </p>
+            )}
+
             <div className="mt-4 flex items-center gap-2">
-              {pending.blocked || pending.starWarning ? (
+              {pending.closed && pending.blocked ? null : pending.blocked || pending.starWarning ? (
                 <button
                   onClick={() => { snooze(); router.push('/lnh/pool/composer'); }}
                   className="flex-1 rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
@@ -300,9 +315,14 @@ function NudgeDialog({
               )}
               <button
                 onClick={snooze}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800"
+                className={`rounded-lg px-3 py-2.5 text-sm font-medium text-gray-500 transition hover:bg-gray-100 dark:hover:bg-gray-800 ${
+                  pending.closed && pending.blocked ? 'flex-1' : ''
+                }`}
               >
-                {isFr ? 'Plus tard' : 'Later'}
+                {/* Nothing is actionable any more, so "later" would be a lie. */}
+                {pending.closed && pending.blocked
+                  ? (isFr ? 'Fermer' : 'Close')
+                  : (isFr ? 'Plus tard' : 'Later')}
               </button>
             </div>
           </>

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { getTranslations } from 'next-intl/server';
-import { getActiveSeason, getEntryRosterPlayers, getPlayerPool, getTeamChoices, type SlotPick, type PoolPosition } from '@/services/poolService';
+import { getActiveSeason, getEntryRosterPlayers, getPlayerPool, getTeamChoices, isCompositionClosed, type SlotPick, type PoolPosition } from '@/services/poolService';
 import { PoolComposer } from './PoolComposer';
 import { BRAND } from '@/lib/brand';
 
@@ -84,11 +84,19 @@ export default async function ComposerPage({ params }: { params: Promise<{ local
   if (!entry) redirect('/lnh/pool');
   const entryRow = entry as unknown as { id: number; is_locked: boolean; team_pick: string | null; is_confirmed: boolean; transactions_used: number; star_forward_id: number | null; star_defense_id: number | null };
 
-  const [poolPlayers, rosterPlayers, teams] = await Promise.all([
+  const [poolPlayers, rosterPlayers, teams, closedOrNull] = await Promise.all([
     getPlayerPool(supabase, season.id),
     getEntryRosterPlayers(supabase, season.id, entryRow.id),
     getTeamChoices(supabase, season.id),
+    isCompositionClosed(supabase, season.id),
   ]);
+
+  // Free composition ends at the season's first game, or at lock_at when the
+  // commissioner set one (00130). Relying on lock_at alone is what let members
+  // swap players freely for five days of played hockey. If the call fails,
+  // fall back to the season row already in hand rather than guessing.
+  const closed =
+    closedOrNull ?? Boolean(season.lockAt && new Date(season.lockAt) <= new Date());
 
   // A player the member already has must appear even if he is no longer
   // draftable, or his row renders nothing while still filling one of his
@@ -109,7 +117,7 @@ export default async function ComposerPage({ params }: { params: Promise<{ local
   return (
     <PoolComposer
       entryId={entryRow.id}
-      isLocked={Boolean(season.lockAt && new Date(season.lockAt) <= new Date())}
+      isLocked={closed}
       isConfirmed={entryRow.is_confirmed}
       budgetCents={season.budgetCents}
       need={{ F: season.rosterF, D: season.rosterD, G: season.rosterG }}
