@@ -695,7 +695,13 @@
       "starsRequiredD": "Tu dois désigner un défenseur vedette.",
       "starsRequiredBoth": "Tu dois désigner un attaquant vedette et un défenseur vedette.",
       "starsRequiredHow": "Clique sur « ★ Star » à côté du joueur choisi — ses points compteront en double.",
-      "perPick": "{amount} par choix ({count} restants)"
+      "perPick": "{amount} par choix ({count} restants)",
+      "tradeDisabled": "Les échanges ne sont pas ouverts pour cette saison.",
+      "tradeLimitReached": "Limite d'échanges atteinte ({max}).",
+      "sortSeasonPool": "Pts pool (saison)",
+      "sortBy": "Trier",
+      "poolPtsShort": "pts pool",
+      "projShort": "proj."
     },
     "myTeamPage": {
       "draftClosedSuffix": "repêchage terminé",

@@ -689,7 +689,13 @@
       "starsRequiredD": "You must designate a star defenseman.",
       "starsRequiredBoth": "You must designate a star forward and a star defenseman.",
       "starsRequiredHow": "Press “★ Star” next to the player you choose — his points will count double.",
-      "perPick": "{amount} per pick ({count} left)"
+      "perPick": "{amount} per pick ({count} left)",
+      "tradeDisabled": "Trades are not open this season.",
+      "tradeLimitReached": "Trade limit reached ({max}).",
+      "sortSeasonPool": "Pool pts (season)",
+      "sortBy": "Sort",
+      "poolPtsShort": "pool pts",
+      "projShort": "proj."
     },
     "myTeamPage": {
       "draftClosedSuffix": "draft closed",

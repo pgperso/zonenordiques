@@ -8,7 +8,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { AdAnchor } from '@/components/ads/AdAnchor';
-import { fmtMoney } from '@/components/pool/format';
+import { fmtMoney, fmtNum } from '@/components/pool/format';
 import { TeamGoalies } from '@/components/pool/TeamGoalies';
 import { PoolNav } from '../PoolNav';
 import {
@@ -65,7 +65,9 @@ export function PoolComposer({
   // enforces the rule either way, and a failed fetch must not lock the roster.
   const [eligibility, setEligibility] = useState<Map<number, TradeEligibility>>(new Map());
   useEffect(() => {
-    if (!locked || !transactionsEnabled) return;
+    // Fetched even when trades are switched off: the button is now always on
+    // screen, and "2/5 matchs" is a better disabled state than a bare grey.
+    if (!locked) return;
     let cancelled = false;
     void getTradeEligibility(createClient(), entryId)
       .then((rows) => { if (!cancelled) setEligibility(new Map(rows.map((r) => [r.playerId, r]))); })
@@ -190,7 +192,17 @@ export function PoolComposer({
     const rows = picks.filter((p) => p.slotPosition === pos);
     const done = sectionDone(pos);
     const emptyCount = Math.max(0, need[pos] - rows.length);
-    const canTradeNow = locked && transactionsEnabled && remainingTrades > 0;
+    // Why this player cannot be traded right now, or null when he can. The
+    // button is rendered either way: a control that disappears teaches
+    // nothing, while a disabled one with a reason teaches the rule.
+    const tradeBlockedBy = (playerId: number): string | null => {
+      if (!transactionsEnabled) return t('tradeDisabled');
+      if (remainingTrades <= 0) return t('tradeLimitReached', { max: maxTransactions });
+      const el = eligibility.get(playerId);
+      // Unknown = not loaded yet: let the server answer rather than blocking.
+      if (el && !el.canTrade) return t('tradeLockedHint', { required: el.gamesRequired });
+      return null;
+    };
     const starrable = starsEnabled && (pos === 'F' || pos === 'D');
     const starId = starIdFor(pos);
     return (
@@ -259,27 +271,23 @@ export function PoolComposer({
                       {t('remove')}
                     </button>
                   )}
-                  {canTradeNow && (() => {
+                  {locked && (() => {
                     const el = eligibility.get(r.playerId);
-                    // Unknown = not loaded yet: show the button and let the
-                    // server answer, rather than blocking on a missing fetch.
-                    if (el && !el.canTrade) {
-                      return (
-                        <span
-                          className="text-xs text-gray-400"
-                          title={t('tradeLockedHint', { required: el.gamesRequired })}
-                        >
-                          {t('tradeLockedGames', { played: el.gamesPlayed, required: el.gamesRequired })}
-                        </span>
-                      );
-                    }
+                    const blocked = tradeBlockedBy(r.playerId);
+                    const shortOfGames = el && !el.canTrade;
                     return (
                       <button
                         onClick={() => setTradeFor({ playerId: r.playerId, pos })}
-                        className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-[#252525]"
+                        disabled={blocked !== null}
+                        title={blocked ?? (el?.isOut ? t('tradeOutHint') : undefined)}
+                        className="rounded-md border border-gray-300 px-2 py-1 text-xs font-medium hover:bg-gray-50 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-transparent disabled:text-gray-400 disabled:hover:bg-transparent dark:border-gray-600 dark:hover:bg-[#252525] dark:disabled:border-gray-700"
                       >
                         {t('trade')}
-                        {el?.isOut && <span className="ml-1 text-amber-600" title={t('tradeOutHint')}>●</span>}
+                        {/* The count is the useful half of "you can't yet". */}
+                        {shortOfGames && (
+                          <span className="ml-1 tabular-nums">{el.gamesPlayed}/{el.gamesRequired}</span>
+                        )}
+                        {!blocked && el?.isOut && <span className="ml-1 text-amber-600">●</span>}
                       </button>
                     );
                   })()}
@@ -490,7 +498,7 @@ function PlayerPicker({
   const tPos = useTranslations('pool.positions');
   const locale = useLocale();
   const [search, setSearch] = useState('');
-  const [sort, setSort] = useState<'priceDesc' | 'priceAsc' | 'proj'>('priceDesc');
+  const [sort, setSort] = useState<'priceDesc' | 'priceAsc' | 'seasonPool' | 'proj'>('priceDesc');
   const [affordableOnly, setAffordableOnly] = useState(false);
   const [team, setTeam] = useState('');
 
@@ -525,6 +533,10 @@ function PlayerPicker({
     if (q) l = l.filter((p) => p.fullName.toLowerCase().includes(q));
     const key =
       sort === 'priceAsc' ? (p: PoolPlayer) => -p.priceCents
+      // Pool points, not raw points: a defenceman's are worth 1.5× here
+      // (00126), so sorting on the NHL total would rank them wrong for the
+      // decision the member is actually making.
+      : sort === 'seasonPool' ? (p: PoolPlayer) => p.seasonPoolPoints
       : sort === 'proj' ? (p: PoolPlayer) => p.projPoints
       : (p: PoolPlayer) => p.priceCents; // priceDesc (default)
     return [...l].sort((a, b) => key(b) - key(a));
@@ -534,37 +546,46 @@ function PlayerPicker({
     <div className="fixed inset-0 z-50 flex flex-col bg-black/40" onClick={onClose}>
       <div className="mt-auto flex h-[88vh] flex-col rounded-t-2xl bg-white dark:bg-[#1e1e1e] sm:mx-auto sm:mt-16 sm:mb-auto sm:h-[80vh] sm:w-full sm:max-w-2xl sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-700">
-          <h3 className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-            {mode === 'trade' ? t('replace', { name: dropName ?? '' }) : t('chooseTitle', { pos: tPos(pos) })}{' '}
-            <span className="text-gray-400">
-              {counts[pos]}/{need[pos]} · {fmtMoney(remaining, locale)} {t('left')}
-              {perPick !== null && (
-                <> · <span className={perPick <= 0 ? 'font-semibold text-red-600' : undefined}>
-                  {t('perPick', { amount: fmtMoney(perPick, locale), count: slotsLeft })}
-                </span></>
-              )}
-            </span>
-          </h3>
-          <button onClick={onClose} className="ml-2 shrink-0 rounded-md bg-gray-900 px-3 py-1.5 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">{t('done')}</button>
+        {/* Title and budget on two lines. Packed onto one, the budget was
+            competing with the filters for a width neither of them had, and on
+            a phone the selects were squeezed to a few characters. */}
+        <div className="border-b border-gray-200 px-4 py-2.5 dark:border-gray-700">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="min-w-0 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+              {mode === 'trade' ? t('replace', { name: dropName ?? '' }) : t('chooseTitle', { pos: tPos(pos) })}
+            </h3>
+            <button onClick={onClose} className="shrink-0 rounded-md bg-gray-900 px-3 py-1 text-sm font-semibold text-white dark:bg-white dark:text-gray-900">{t('done')}</button>
+          </div>
+          <p className="mt-0.5 text-xs tabular-nums text-gray-500">
+            {counts[pos]}/{need[pos]} · {fmtMoney(remaining, locale)} {t('left')}
+            {perPick !== null && (
+              <> · <span className={perPick <= 0 ? 'font-semibold text-red-600' : undefined}>
+                {t('perPick', { amount: fmtMoney(perPick, locale), count: slotsLeft })}
+              </span></>
+            )}
+          </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700">
+        {/* A grid, not a wrapping flex row: the search keeps a full line, the
+            two selects share the next one, and nothing collapses to an
+            unreadable width when a club filter is long. */}
+        <div className="grid grid-cols-2 gap-2 border-b border-gray-200 px-4 py-2 dark:border-gray-700 sm:grid-cols-[minmax(0,1fr)_auto_auto_auto] sm:items-center">
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t('searchPlaceholder')}
-            className="min-w-[120px] flex-1 rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]" />
+            className="col-span-2 rounded-md border border-gray-300 px-3 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525] sm:col-span-1" />
           <select value={team} onChange={(e) => setTeam(e.target.value)} aria-label={t('teamFilter')}
-            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
+            className="min-w-0 rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
             <option value="">{t('allTeams')}</option>
             {teamOptions.map((abbrev) => (
               <option key={abbrev} value={abbrev}>{abbrev}</option>
             ))}
           </select>
-          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)}
-            className="rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
+          <select value={sort} onChange={(e) => setSort(e.target.value as typeof sort)} aria-label={t('sortBy')}
+            className="min-w-0 rounded-md border border-gray-300 px-2 py-1.5 text-sm dark:border-gray-600 dark:bg-[#252525]">
             <option value="priceDesc">{t('sortPriceDesc')}</option>
             <option value="priceAsc">{t('sortPriceAsc')}</option>
+            <option value="seasonPool">{t('sortSeasonPool')}</option>
             <option value="proj">{t('sortProj')}</option>
           </select>
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
+          <label className="col-span-2 flex cursor-pointer items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300 sm:col-span-1">
             <input type="checkbox" checked={affordableOnly} onChange={(e) => setAffordableOnly(e.target.checked)} className="rounded border-gray-300" />
             {t('affordableOnly')}
           </label>
@@ -579,7 +600,16 @@ function PlayerPicker({
                 <div className="flex items-center gap-3 border-b border-gray-100 px-4 py-2 dark:border-gray-800">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-sm font-medium text-gray-900 dark:text-gray-100">{p.fullName}</div>
-                    <div className="text-xs text-gray-500" title={t('lastSeasonHint')}>{p.teamAbbrev ?? '—'} · {p.projPoints.toLocaleString(locale === 'fr' ? 'fr-CA' : 'en-CA', { maximumFractionDigits: 0 })} {t('ptsShort')}</div>
+                    {/* This season first — it is the live signal. The
+                        projection only ever set the placeholder price, so it
+                        goes last and explains itself on hover. */}
+                    <div className="truncate text-xs text-gray-500">
+                      {p.teamAbbrev ?? '—'}
+                      {' · '}{p.seasonGp} {t('statGp')}
+                      {' · '}{fmtNum(p.seasonPoints, locale)} {t('ptsShort')}
+                      {' · '}<span className="font-medium text-gray-600 dark:text-gray-400">{fmtNum(p.seasonPoolPoints, locale, 1)} {t('poolPtsShort')}</span>
+                      <span title={t('lastSeasonHint')}>{' · '}{t('projShort')} {fmtNum(p.projPoints, locale)}</span>
+                    </div>
                   </div>
                   <div className="w-20 text-right text-sm font-semibold tabular-nums text-gray-900 dark:text-gray-100">{fmtMoney(p.priceCents, locale)}</div>
                   {pickable ? (

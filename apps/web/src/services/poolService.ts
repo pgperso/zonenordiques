@@ -79,6 +79,13 @@ export interface PoolPlayer {
   projPoints: number;
   /** Projected points per million $ — the default "bargain" sort. */
   value: number;
+  /** Games played this season. 0 before he dresses. */
+  seasonGp: number;
+  /** Real NHL points this season (G+A) — what every other site shows. */
+  seasonPoints: number;
+  /** What those points are worth HERE: a defenceman's count 1.5× (00126),
+   *  and the bonuses apply. The star multiplier is per entry, so not here. */
+  seasonPoolPoints: number;
   /** False for a player still on someone's roster who may no longer be
    *  picked up — 00117 retires anyone without a verified salary. The
    *  composer must show him so his owner can see and remove him, but the
@@ -222,6 +229,36 @@ export async function getScoringRules(client: AnyClient, seasonId: number): Prom
  * The full list (~700 players) is small enough to ship to the client and
  * filter/sort there for an instant builder UX.
  */
+/**
+ * This season's totals, keyed by player.
+ *
+ * Kept separate from the price row so both player lists read the same numbers:
+ * before 00126 a defenceman's "points" meant something different depending on
+ * where you looked. `points` is the real NHL total, `fantasy_points` is what
+ * the pool pays for it.
+ */
+async function seasonStatsByPlayer(
+  db: Db,
+  seasonId: number,
+  ids?: number[],
+): Promise<Map<number, { gp: number; points: number; fantasyPoints: number }>> {
+  let q = db
+    .from('pool_player_season_stats')
+    .select('player_id, gp, points, fantasy_points')
+    .eq('pool_season_id', seasonId);
+  if (ids) q = q.in('player_id', ids);
+  const { data } = await q;
+  const out = new Map<number, { gp: number; points: number; fantasyPoints: number }>();
+  for (const r of (data ?? []) as Array<Record<string, unknown>>) {
+    out.set(Number(r.player_id), {
+      gp: Number(r.gp ?? 0),
+      points: Number(r.points ?? 0),
+      fantasyPoints: Number(r.fantasy_points ?? 0),
+    });
+  }
+  return out;
+}
+
 export async function getPlayerPool(client: AnyClient, seasonId: number): Promise<PoolPlayer[]> {
   const db = client as unknown as Db;
   const { data } = await db
@@ -240,16 +277,24 @@ export async function getPlayerPool(client: AnyClient, seasonId: number): Promis
     nhl_players: { full_name: string; team_abbrev: string | null };
   }>;
 
-  return rows.map((r) => ({
-    playerId: r.player_id,
-    fullName: r.nhl_players.full_name,
-    position: r.position,
-    teamAbbrev: r.nhl_players.team_abbrev,
-    priceCents: r.price_cents,
-    projPoints: r.proj_points,
-    value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
-    draftable: true,
-  }));
+  const stats = await seasonStatsByPlayer(db, seasonId);
+
+  return rows.map((r) => {
+    const s = stats.get(Number(r.player_id));
+    return {
+      playerId: r.player_id,
+      fullName: r.nhl_players.full_name,
+      position: r.position,
+      teamAbbrev: r.nhl_players.team_abbrev,
+      priceCents: r.price_cents,
+      projPoints: r.proj_points,
+      value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
+      seasonGp: s?.gp ?? 0,
+      seasonPoints: s?.points ?? 0,
+      seasonPoolPoints: s?.fantasyPoints ?? 0,
+      draftable: true,
+    };
+  });
 }
 
 /**
@@ -291,16 +336,24 @@ export async function getEntryRosterPlayers(
     nhl_players: { full_name: string; team_abbrev: string | null };
   }>;
 
-  return rows.map((r) => ({
-    playerId: r.player_id,
-    fullName: r.nhl_players.full_name,
-    position: r.position,
-    teamAbbrev: r.nhl_players.team_abbrev,
-    priceCents: r.price_cents,
-    projPoints: r.proj_points,
-    value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
-    draftable: r.is_draftable,
-  }));
+  const stats = await seasonStatsByPlayer(db, seasonId, ids);
+
+  return rows.map((r) => {
+    const s = stats.get(Number(r.player_id));
+    return {
+      playerId: r.player_id,
+      fullName: r.nhl_players.full_name,
+      position: r.position,
+      teamAbbrev: r.nhl_players.team_abbrev,
+      priceCents: r.price_cents,
+      projPoints: r.proj_points,
+      value: r.price_cents > 0 ? r.proj_points / (r.price_cents / 1_000_000_00) : 0,
+      seasonGp: s?.gp ?? 0,
+      seasonPoints: s?.points ?? 0,
+      seasonPoolPoints: s?.fantasyPoints ?? 0,
+      draftable: r.is_draftable,
+    };
+  });
 }
 
 /**
