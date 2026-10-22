@@ -100,8 +100,11 @@ for b in $BRANDS; do
   # <brand>.env: build-time, public values (the CI gate may read these).
   # <brand>.secrets.env: server-only secrets (runtime only, never leave here).
   for f in "$ROOT/env/$b.env" "$ROOT/env/$b.secrets.env"; do
-    touch "$f"
-    chown root:deploy "$f"
+    # Never follow a link or touch a non-file planted while deploy owned the dir.
+    [[ -L "$f" ]] && rm -f -- "$f"
+    [[ ! -e "$f" || -f "$f" ]] || { echo "$f is not a regular file — fix by hand" >&2; exit 1; }
+    [[ -e "$f" ]] || install -m 640 -o root -g deploy /dev/null "$f"
+    chown -h root:deploy "$f"
     chmod 640 "$f"
   done
   up="/etc/nginx/la-zone-upstreams/$b.conf"
