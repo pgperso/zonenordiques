@@ -28,7 +28,7 @@ step "System packages"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -q
 apt-get upgrade -y -q
-apt-get install -y -q curl ca-certificates gnupg nginx ufw unattended-upgrades openssl
+apt-get install -y -q curl ca-certificates gnupg nginx ufw unattended-upgrades openssl cron logrotate
 
 step "Automatic security updates (reboot at 08:00 UTC ≈ 3-4 h in Québec if needed)"
 cat > /etc/apt/apt.conf.d/20auto-upgrades <<'EOF'
@@ -140,6 +140,9 @@ install -m 644 "$HERE/nginx/la-zone.conf" /etc/nginx/sites-available/la-zone.con
 ln -sf /etc/nginx/sites-available/la-zone.conf /etc/nginx/sites-enabled/la-zone.conf
 rm -f /etc/nginx/sites-enabled/default
 sed -i 's/^\s*#\?\s*server_tokens .*/\tserver_tokens off;/' /etc/nginx/nginx.conf
+# Ubuntu's default still allows TLS 1.0/1.1; only Cloudflare connects, over 1.2+.
+sed -i 's/^\s*ssl_protocols .*/\tssl_protocols TLSv1.2 TLSv1.3;/' /etc/nginx/nginx.conf
+sed -i 's/^\s*ssl_prefer_server_ciphers .*/\tssl_prefer_server_ciphers off;/' /etc/nginx/nginx.conf
 
 step "Firewall"
 ufw default deny incoming >/dev/null

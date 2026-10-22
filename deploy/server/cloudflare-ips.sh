@@ -23,7 +23,7 @@ mv "$conf.new" "$conf"
 # Drop previous Cloudflare rules, then re-add the current ranges.
 while ufw status numbered | grep -q 'cloudflare'; do
   n=$(ufw status numbered | grep 'cloudflare' | head -n1 | sed -E 's/^\[ *([0-9]+)\].*/\1/')
-  yes | ufw delete "$n" >/dev/null
+  ufw --force delete "$n" >/dev/null
 done
 for r in $v4 $v6; do
   ufw allow proto tcp from "$r" to any port 80,443 comment 'cloudflare' >/dev/null
