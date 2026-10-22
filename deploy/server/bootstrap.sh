@@ -147,7 +147,7 @@ sed -i 's/^\s*ssl_prefer_server_ciphers .*/\tssl_prefer_server_ciphers off;/' /e
 step "Firewall"
 ufw default deny incoming >/dev/null
 ufw default allow outgoing >/dev/null
-ufw limit OpenSSH >/dev/null
+ufw allow OpenSSH >/dev/null   # key-only SSH; a rate limit would throttle CI deploys
 ufw --force enable >/dev/null
 bash "$HERE/cloudflare-ips.sh"   # realip conf + 80/443 from Cloudflare only
 nginx -t -q
