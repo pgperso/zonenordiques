@@ -16,9 +16,11 @@ on:
         default: all
         type: choice
         options: [all, zonenordiques, zoneexpos, cflquebec]
-  # Uncomment at DNS cutover so every push to main deploys, like Vercel did.
-  # push:
-  #   branches: [main]
+  # Every push to main deploys, like Vercel did. Docs-only changes skip.
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
 
 concurrency:
   group: deploy-vps-${{ github.ref }}
