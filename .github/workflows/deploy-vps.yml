@@ -84,7 +84,7 @@ jobs:
           umask 077
           ssh vps env ${{ matrix.brand }} > "$RUNNER_TEMP/brand.env"
           grep -q '^NEXT_PUBLIC_BRAND_ID=' "$RUNNER_TEMP/brand.env" || { echo "env file for ${{ matrix.brand }} is empty on the server"; exit 1; }
-          node --env-file="$RUNNER_TEMP/brand.env" ../../node_modules/next/dist/bin/next build
+          node ../../deploy/with-env.cjs "$RUNNER_TEMP/brand.env" :: ../../node_modules/next/dist/bin/next build
           rm -f "$RUNNER_TEMP/brand.env"
 
       - name: Package

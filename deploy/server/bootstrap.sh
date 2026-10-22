@@ -114,6 +114,8 @@ for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstrea
   install -m 755 -o root -g root "$HERE/$f" "$ROOT/bin/$f"
 done
 
+install -m 644 -o root -g root "$HERE/../with-env.cjs" "$ROOT/bin/with-env.cjs"
+
 step "PM2 at boot (as deploy)"
 env PATH="$PATH:/usr/bin" pm2 startup systemd -u deploy --hp /home/deploy >/dev/null
 systemctl enable pm2-deploy >/dev/null 2>&1 || true

@@ -26,12 +26,12 @@ echo "→ $brand: starting $release on slot $next (port $port)"
 pm2 delete "$app" >/dev/null 2>&1 || true
 # Variables already in the environment win over --env-file, so PORT and
 # HOSTNAME set here cannot be overridden by the brand's env file.
-PORT=$port HOSTNAME=127.0.0.1 NODE_ENV=production pm2 start "$dir/apps/web/server.js" \
+PORT=$port HOSTNAME=127.0.0.1 NODE_ENV=production pm2 start "$ROOT/bin/with-env.cjs" \
   --name "$app" \
   --cwd "$dir/apps/web" \
-  --node-args="--env-file=$ROOT/env/$brand.env --env-file=$ROOT/env/$brand.secrets.env" \
   --max-memory-restart 900M \
-  --time >/dev/null
+  --time \
+  -- "$ROOT/env/$brand.env" "$ROOT/env/$brand.secrets.env" :: server.js >/dev/null
 
 # Health check: the locale home must answer 200 within ~60 s.
 ok=0
