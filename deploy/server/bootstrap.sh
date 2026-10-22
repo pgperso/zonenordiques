@@ -102,7 +102,7 @@ for b in $BRANDS; do
   up="/etc/nginx/la-zone-upstreams/$b.conf"
   [[ -f "$up" ]] || printf 'upstream %s { server 127.0.0.1:%s; keepalive 16; }\n' "$b" "$(brand_port "$b" a)" > "$up"
 done
-for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstream.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
+for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstream.sh set-secrets.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
   install -m 755 -o root -g root "$HERE/$f" "$ROOT/bin/$f"
 done
 
