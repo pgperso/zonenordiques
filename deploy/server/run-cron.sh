@@ -14,7 +14,7 @@ is_brand "$brand" || { echo "unknown brand: $brand" >&2; exit 2; }
 slot=$(live_slot "$brand")
 [[ "$slot" == "a" || "$slot" == "b" ]] || exit 0   # brand not deployed yet
 
-secret=$(sed -n 's/^CRON_SECRET=//p' "$ROOT/env/$brand.env" | tail -n 1 | sed 's/^"\(.*\)"$/\1/')
+secret=$(sed -n 's/^CRON_SECRET=//p' "$ROOT/env/$brand.secrets.env" | tail -n 1 | sed 's/^"\(.*\)"$/\1/')
 [[ -n "$secret" ]] || { echo "CRON_SECRET missing for $brand" >&2; exit 1; }
 
 port=$(brand_port "$brand" "$slot")

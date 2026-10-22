@@ -9,7 +9,9 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
 
 - **Builds run on GitHub Actions**, not on the server ([.github/workflows/deploy-vps.yml](../.github/workflows/deploy-vps.yml)). The 4 GB of RAM is reserved for serving.
 - **Zero-downtime deploys.** Each brand has two slots (`a` and `b`). A deploy starts the new release on the idle slot, health-checks `/fr`, switches nginx, then stops the old slot. If the health check fails, the live site is untouched.
-- **Secrets live only on the server**, in `/srv/la-zone/env/<brand>.env` (mode 600, owner `deploy`). CI fetches the file for the build and deletes it afterwards.
+- **Two env files per brand**, both owned by root and readable by `deploy` (mode 640):
+  - `<brand>.env` holds the public build values (`NEXT_PUBLIC_*`, `SUPABASE_URL`). CI fetches only those lines for the build.
+  - `<brand>.secrets.env` holds the server-only secrets. It is loaded at runtime only and never leaves the server.
 - **Crons** ([server/crontab](server/crontab)) replace the `crons` block of `apps/web/vercel.json`. Times are in UTC.
 
 ## Users
@@ -25,7 +27,8 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
 ```
 /srv/la-zone/
   bin/                      scripts from deploy/server (root-owned)
-  env/<brand>.env           runtime + build env, one per brand
+  env/<brand>.env           public build values (CI may read)
+  env/<brand>.secrets.env   server-only secrets (runtime only)
   <brand>/releases/<id>/    unpacked standalone builds (last 5 kept)
   <brand>/live              a | b
   <brand>/live-release      release id currently served
@@ -56,7 +59,9 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
    command="/srv/la-zone/bin/deploy-gate.sh",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA... la-zone-ci
    ```
    Then set the GitHub secrets `VPS_HOST`, `VPS_SSH_KEY` (the private key) and `VPS_KNOWN_HOSTS` (`ssh-keyscan -t ed25519 <ip>`).
-5. **Fill `/srv/la-zone/env/<brand>.env`.** Copy every variable from the matching Vercel project, one `KEY="value"` per line. Always use double quotes: values contain spaces (`"LCF Québec"`) and `#` (hex colours). Do not set `PORT`, `HOSTNAME` or `VERCEL_ENV`.
+5. **Fill the env files.**
+   - Public values go in `<brand>.env`, as `NEXT_PUBLIC_*` plus `SUPABASE_URL`, one `KEY="value"` per line. Always use double quotes: values contain spaces (`"LCF Québec"`) and `#` (hex colours). Do not set `PORT`, `HOSTNAME` or `VERCEL_ENV`.
+   - Secrets are entered with `ssh -t pascal@<ip> sudo /srv/la-zone/bin/set-secrets.sh`. It prompts for the Supabase service-role, Anthropic and Resend keys, generates `CRON_SECRET` and `VIEW_HASH_SALT`, and writes `<brand>.secrets.env`.
 6. **Deploy.** Run *Actions → Deploy to VPS → Run workflow*. Test each brand through a tunnel before touching DNS:
    ```bash
    ssh -L 8080:127.0.0.1:3001 pascal@<ip>   # then open http://localhost:8080/fr
@@ -73,5 +78,5 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
 | App logs | `sudo -u deploy pm2 logs zonenordiques-a` (or `-b`; see `/srv/la-zone/zonenordiques/live`) |
 | Cron log | `tail -f /srv/la-zone/logs/cron.log` |
 | Roll back | `sudo -u deploy /srv/la-zone/bin/activate-release.sh <brand> <older-release-id>` (`ls /srv/la-zone/<brand>/releases`) |
-| Env change | Edit `/srv/la-zone/env/<brand>.env`, then redeploy. `NEXT_PUBLIC_*` values are baked in at build time. |
+| Env change | Public value: edit `<brand>.env` (as root), then redeploy, because `NEXT_PUBLIC_*` values are baked in at build time. Secret: re-run `set-secrets.sh`, then redeploy. |
 | Cloudflare IP refresh | `sudo /srv/la-zone/bin/cloudflare-ips.sh` |

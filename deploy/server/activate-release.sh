@@ -29,7 +29,7 @@ pm2 delete "$app" >/dev/null 2>&1 || true
 PORT=$port HOSTNAME=127.0.0.1 NODE_ENV=production pm2 start "$dir/apps/web/server.js" \
   --name "$app" \
   --cwd "$dir/apps/web" \
-  --node-args="--env-file=$ROOT/env/$brand.env" \
+  --node-args="--env-file=$ROOT/env/$brand.env --env-file=$ROOT/env/$brand.secrets.env" \
   --max-memory-restart 900M \
   --time >/dev/null
 

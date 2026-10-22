@@ -92,13 +92,18 @@ step "Directories and scripts"
 install -d -m 755 -o root -g root "$ROOT" "$ROOT/bin"          # deploy can run, not rewrite
 install -d -m 755 -o deploy -g deploy "$ROOT/logs"
 install -d -m 755 -o root -g root /etc/nginx/la-zone-upstreams   # root-only: nginx loads it
-install -d -m 700 -o deploy -g deploy "$ROOT/env"
+# root owns the env dir and files; deploy (PM2, CI gate) can only read them.
+install -d -m 750 -o root -g deploy "$ROOT/env"
 . "$HERE/brands.sh"
 for b in $BRANDS; do
   install -d -m 755 -o deploy -g deploy "$ROOT/$b" "$ROOT/$b/releases"
-  touch "$ROOT/env/$b.env"
-  chown deploy:deploy "$ROOT/env/$b.env"
-  chmod 600 "$ROOT/env/$b.env"
+  # <brand>.env: build-time, public values (the CI gate may read these).
+  # <brand>.secrets.env: server-only secrets (runtime only, never leave here).
+  for f in "$ROOT/env/$b.env" "$ROOT/env/$b.secrets.env"; do
+    touch "$f"
+    chown root:deploy "$f"
+    chmod 640 "$f"
+  done
   up="/etc/nginx/la-zone-upstreams/$b.conf"
   [[ -f "$up" ]] || printf 'upstream %s { server 127.0.0.1:%s; keepalive 16; }\n' "$b" "$(brand_port "$b" a)" > "$up"
 done

@@ -2,7 +2,8 @@
 # Forced command for the GitHub Actions deploy key (see authorized_keys).
 # The CI key never gets a shell: it can only run these three verbs.
 #
-#   env <brand>                 print the brand's env file (needed to build)
+#   env <brand>                 print the brand's PUBLIC build env (NEXT_PUBLIC_*,
+#                               SUPABASE_URL); server secrets never leave the box
 #   upload <brand> <release>    read a .tar.gz of the standalone build on stdin
 #   activate <brand> <release>  switch the brand to that release
 set -euo pipefail
@@ -19,7 +20,7 @@ is_brand "$brand" || { echo "refused: unknown brand" >&2; exit 2; }
 case "$verb" in
   env)
     [[ ${#args[@]} -eq 2 ]] || { echo "refused" >&2; exit 2; }
-    cat "$ROOT/env/$brand.env"
+    grep -E '^(NEXT_PUBLIC_[A-Z0-9_]+|SUPABASE_URL)=' "$ROOT/env/$brand.env" || true
     ;;
   upload)
     [[ ${#args[@]} -eq 3 && "$release" =~ ^[0-9a-f]{7,40}(-[0-9]+)?$ ]] || { echo "refused" >&2; exit 2; }
