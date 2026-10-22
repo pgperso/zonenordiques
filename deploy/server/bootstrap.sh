@@ -5,7 +5,8 @@
 #
 # Users:
 #   pascal — the admin (your key, sudo). Use this one to log in.
-#   deploy — runs the sites with PM2; no password, no sudo except nginx reload.
+#   deploy — runs the sites with PM2; no password; sudo only for
+#            switch-upstream.sh (validated brand + slot, root writes the file).
 #            GitHub Actions reaches it through deploy-gate.sh only.
 set -euo pipefail
 
@@ -82,14 +83,15 @@ touch /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
 cat > /etc/sudoers.d/91-deploy <<'EOF'
-deploy ALL=(root) NOPASSWD: /usr/sbin/nginx -t -q, /usr/sbin/nginx -s reload
+deploy ALL=(root) NOPASSWD: /srv/la-zone/bin/switch-upstream.sh
 EOF
 chmod 440 /etc/sudoers.d/91-deploy
 visudo -cq
 
 step "Directories and scripts"
 install -d -m 755 -o root -g root "$ROOT" "$ROOT/bin"          # deploy can run, not rewrite
-install -d -m 755 -o deploy -g deploy "$ROOT/nginx" "$ROOT/logs"
+install -d -m 755 -o deploy -g deploy "$ROOT/logs"
+install -d -m 755 -o root -g root /etc/nginx/la-zone-upstreams   # root-only: nginx loads it
 install -d -m 700 -o deploy -g deploy "$ROOT/env"
 . "$HERE/brands.sh"
 for b in $BRANDS; do
@@ -97,11 +99,10 @@ for b in $BRANDS; do
   touch "$ROOT/env/$b.env"
   chown deploy:deploy "$ROOT/env/$b.env"
   chmod 600 "$ROOT/env/$b.env"
-  up="$ROOT/nginx/upstream-$b.conf"
+  up="/etc/nginx/la-zone-upstreams/$b.conf"
   [[ -f "$up" ]] || printf 'upstream %s { server 127.0.0.1:%s; keepalive 16; }\n' "$b" "$(brand_port "$b" a)" > "$up"
-  chown deploy:deploy "$up"
 done
-for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
+for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstream.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
   install -m 755 -o root -g root "$HERE/$f" "$ROOT/bin/$f"
 done
 
@@ -121,6 +122,7 @@ cat > /etc/logrotate.d/la-zone <<'EOF'
   missingok
   notifempty
   copytruncate
+  su deploy deploy
 }
 EOF
 

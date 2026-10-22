@@ -17,7 +17,7 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
 | User | Purpose |
 |---|---|
 | `pascal` | Admin. Personal SSH key, passwordless sudo. |
-| `deploy` | Runs the sites. No password and no sudo, except `nginx -t -q` and `nginx -s reload`. The CI key in its `authorized_keys` is forced to `deploy-gate.sh`, which accepts only `env`, `upload` and `activate`. |
+| `deploy` | Runs the sites. No password. Its only sudo right is `switch-upstream.sh`, which takes a validated brand and slot and writes the nginx upstream itself, so `deploy` never writes a file that root's nginx loads. The CI key in its `authorized_keys` is forced to `deploy-gate.sh`, which accepts only `env`, `upload` and `activate`. |
 | `root` | SSH login disabled by `harden-ssh.sh`. |
 
 ## Layout on the server
@@ -29,8 +29,8 @@ Visitor ─► Cloudflare (proxy, cache, TLS) ─► nginx :443 ─► PM2 ─�
   <brand>/releases/<id>/    unpacked standalone builds (last 5 kept)
   <brand>/live              a | b
   <brand>/live-release      release id currently served
-  nginx/upstream-<brand>.conf  rewritten on each deploy
   logs/cron.log
+/etc/nginx/la-zone-upstreams/<brand>.conf   root-owned, rewritten on each deploy
 ```
 
 | Brand | Slots (ports) | Canonical host |

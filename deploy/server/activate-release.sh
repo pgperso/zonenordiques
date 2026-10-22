@@ -48,10 +48,7 @@ if [[ $ok -ne 1 ]]; then
 fi
 
 # Switch nginx to the new slot.
-printf 'upstream %s { server 127.0.0.1:%s; keepalive 16; }\n' "$brand" "$port" \
-  > "$ROOT/nginx/upstream-$brand.conf"
-sudo /usr/sbin/nginx -t -q
-sudo /usr/sbin/nginx -s reload
+sudo "$ROOT/bin/switch-upstream.sh" "$brand" "$next"
 echo "$next" > "$ROOT/$brand/live"
 echo "$release" > "$ROOT/$brand/live-release"
 
