@@ -1,0 +1,14 @@
+# deploy user's crontab on la-zone — replaces the "crons" block of
+# apps/web/vercel.json. Times are UTC, same as Vercel Cron.
+# Every route below is brand-scoped, so each brand runs its own copy, except
+# nhl-sync which only the hockey brand needs (the others skip it anyway).
+SHELL=/bin/bash
+PATH=/usr/local/bin:/usr/bin:/bin
+LOG=/srv/la-zone/logs/cron.log
+
+0 9 * * *    /srv/la-zone/bin/run-cron.sh zonenordiques /api/cron/nhl-sync >> $LOG 2>&1
+
+0 13 1,15 * * for b in zonenordiques zoneexpos cflquebec; do /srv/la-zone/bin/run-cron.sh $b /api/polls/generate; done >> $LOG 2>&1
+0 8 * * *    for b in zonenordiques zoneexpos cflquebec; do /srv/la-zone/bin/run-cron.sh $b /api/polls/rotate; done >> $LOG 2>&1
+0 6 * * *    for b in zonenordiques zoneexpos cflquebec; do /srv/la-zone/bin/run-cron.sh $b /api/translate-pending; done >> $LOG 2>&1
+0 13 * * 4   for b in zonenordiques zoneexpos cflquebec; do /srv/la-zone/bin/run-cron.sh $b /api/cron/newsletter; done >> $LOG 2>&1

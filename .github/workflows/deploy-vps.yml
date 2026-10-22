@@ -1,0 +1,108 @@
+# Build each brand on GitHub's runners and ship it to the la-zone VPS.
+# The server never builds (4 GB RAM is for serving). See deploy/README.md.
+#
+# Secrets (repo → Settings → Secrets and variables → Actions):
+#   VPS_HOST          IP of the VPS
+#   VPS_SSH_KEY       private half of the CI deploy key (forced to deploy-gate.sh)
+#   VPS_KNOWN_HOSTS   output of `ssh-keyscan -t ed25519 <ip>`, pins the host key
+name: Deploy to VPS
+
+on:
+  workflow_dispatch:
+    inputs:
+      brand:
+        description: 'Brand to deploy (or "all")'
+        required: true
+        default: all
+        type: choice
+        options: [all, zonenordiques, zoneexpos, cflquebec]
+  # Uncomment at DNS cutover so every push to main deploys, like Vercel did.
+  # push:
+  #   branches: [main]
+
+concurrency:
+  group: deploy-vps-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        brand: [zonenordiques, zoneexpos, cflquebec]
+    steps:
+      - name: Skip unselected brand
+        id: gate
+        run: |
+          sel="${{ github.event.inputs.brand || 'all' }}"
+          if [[ "$sel" == "all" || "$sel" == "${{ matrix.brand }}" ]]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.run == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.run == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: SSH setup
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.VPS_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName ${{ secrets.VPS_HOST }}
+            User deploy
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+          EOF
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        env:
+          NEXT_OUTPUT: standalone
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: |
+          # The brand's env file lives only on the server; fetch it for the
+          # build (NEXT_PUBLIC_* are inlined at build time) and delete it after.
+          umask 077
+          ssh vps env ${{ matrix.brand }} > "$RUNNER_TEMP/brand.env"
+          grep -q '^NEXT_PUBLIC_BRAND_ID=' "$RUNNER_TEMP/brand.env" || { echo "env file for ${{ matrix.brand }} is empty on the server"; exit 1; }
+          node --env-file="$RUNNER_TEMP/brand.env" ../../node_modules/next/dist/bin/next build
+          rm -f "$RUNNER_TEMP/brand.env"
+
+      - name: Package
+        if: steps.gate.outputs.run == 'true'
+        working-directory: apps/web
+        run: |
+          cp -r public .next/standalone/apps/web/
+          cp -r .next/static .next/standalone/apps/web/.next/
+          tar -C .next/standalone -czf "$RUNNER_TEMP/release.tgz" .
+          ls -lh "$RUNNER_TEMP/release.tgz"
+
+      - name: Upload and activate
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          release="${GITHUB_SHA::12}-${{ github.run_attempt }}"
+          ssh vps upload ${{ matrix.brand }} "$release" < "$RUNNER_TEMP/release.tgz"
+          ssh vps activate ${{ matrix.brand }} "$release"
+
+      - name: Clean up key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

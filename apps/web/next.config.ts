@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { NextConfig } from "next";
 import bundleAnalyzer from '@next/bundle-analyzer';
 import createNextIntlPlugin from 'next-intl/plugin';
@@ -92,8 +93,17 @@ function assertBrandConfigured(): void {
 
 assertBrandConfigured();
 
+// Self-hosted builds (the la-zone VPS, see deploy/) ship Next's standalone
+// server: a minimal node_modules traced from the monorepo root, run with
+// `node apps/web/server.js`. Vercel builds keep the default output.
+const standalone = process.env.NEXT_OUTPUT === 'standalone';
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  ...(standalone && {
+    output: 'standalone' as const,
+    outputFileTracingRoot: path.join(__dirname, '../../'),
+  }),
   images: {
     remotePatterns: [
       {
