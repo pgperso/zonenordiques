@@ -8,6 +8,8 @@
 #
 # Restore a dump:  pg_restore --clean --if-exists --no-owner -d "<connection string>" file.dump
 # Credentials: /srv/la-zone/env/backup.env (set-backup-secrets.sh).
+# TLS to Supabase is verified against its root CA (Supabase Root 2021 CA,
+# sha256 80:70:25:AD:…:CA:FA), installed by bootstrap.sh.
 set -euo pipefail
 
 ENV=/srv/la-zone/env/backup.env
@@ -32,7 +34,8 @@ for k, v in (("PGHOST", u.hostname), ("PGPORT", u.port or 5432),
              ("PGPASSWORD", urllib.parse.unquote(u.password or "")),
              ("PGDATABASE", u.path.lstrip("/") or "postgres")):
     print(f"export {k}={shlex.quote(str(v))}")
-print("export PGSSLMODE=require")
+print("export PGSSLMODE=verify-full")
+print("export PGSSLROOTCERT=/etc/ssl/la-zone/supabase-ca-2021.crt")
 PY
 )"
 

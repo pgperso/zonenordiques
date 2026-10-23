@@ -129,7 +129,14 @@ curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --
 echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 apt-get update -q
 apt-get install -y -q postgresql-client-17 rclone
-echo '15 7 * * * root /srv/la-zone/bin/backup.sh >> /srv/la-zone/logs/backup.log 2>&1' > /etc/cron.d/la-zone-backup
+# Supabase's own root CA, so pg_dump can verify the pooler (verify-full).
+# Pinned by fingerprint: a download that doesn't match aborts the bootstrap.
+curl -fsS https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt -o /tmp/sb-ca.crt
+[[ "$(openssl x509 -in /tmp/sb-ca.crt -noout -fingerprint -sha256)" == *80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA ]]   || { echo "Supabase CA fingerprint mismatch" >&2; exit 1; }
+install -d -m 755 /etc/ssl/la-zone
+install -m 644 /tmp/sb-ca.crt /etc/ssl/la-zone/supabase-ca-2021.crt
+# Root's log goes to a root-owned path, never into deploy's /srv/la-zone/logs.
+echo '15 7 * * * root /srv/la-zone/bin/backup.sh >> /var/log/la-zone-backup.log 2>&1' > /etc/cron.d/la-zone-backup
 chmod 644 /etc/cron.d/la-zone-backup
 
 step "Logs rotation"
@@ -142,6 +149,13 @@ cat > /etc/logrotate.d/la-zone <<'EOF'
   notifempty
   copytruncate
   su deploy deploy
+}
+/var/log/la-zone-backup.log {
+  weekly
+  rotate 8
+  compress
+  missingok
+  notifempty
 }
 EOF
 
