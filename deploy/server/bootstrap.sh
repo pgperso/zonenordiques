@@ -110,7 +110,7 @@ for b in $BRANDS; do
   up="/etc/nginx/la-zone-upstreams/$b.conf"
   [[ -f "$up" ]] || printf 'upstream %s { server 127.0.0.1:%s; keepalive 16; }\n' "$b" "$(brand_port "$b" a)" > "$up"
 done
-for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstream.sh set-secrets.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
+for f in brands.sh activate-release.sh deploy-gate.sh run-cron.sh switch-upstream.sh set-secrets.sh set-backup-secrets.sh backup.sh cloudflare-ips.sh install-cert.sh harden-ssh.sh; do
   install -m 755 -o root -g root "$HERE/$f" "$ROOT/bin/$f"
 done
 
@@ -122,6 +122,15 @@ systemctl enable pm2-deploy >/dev/null 2>&1 || true
 
 step "Crons"
 crontab -u deploy "$HERE/crontab"
+
+step "Backups (pg_dump 17 + rclone → Cloudflare R2, nightly 07:15 UTC)"
+install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /etc/apt/keyrings/pgdg.gpg
+echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+apt-get update -q
+apt-get install -y -q postgresql-client-17 rclone
+echo '15 7 * * * root /srv/la-zone/bin/backup.sh >> /srv/la-zone/logs/backup.log 2>&1' > /etc/cron.d/la-zone-backup
+chmod 644 /etc/cron.d/la-zone-backup
 
 step "Logs rotation"
 cat > /etc/logrotate.d/la-zone <<'EOF'
