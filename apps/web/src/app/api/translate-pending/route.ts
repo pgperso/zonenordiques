@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import { consumeRateLimit } from '@/lib/rateLimit';
 import { isCronRequest, isSameOrigin, CROSS_SITE_REFUSED } from '@/lib/requestGuards';
 
-// One Claude call per item. Long article bodies can each take 10-20s, so the
+// One Claude call per field (see translateText). Long bodies can take 20-40s, so the
 // batch is kept small and the loops honour a soft time budget (below) that
 // stops cleanly before Vercel kills the function — no more 504 timeouts.
 export const maxDuration = 120;
@@ -39,40 +39,78 @@ function langName(code: string): string {
   return code === 'en' ? 'English' : 'French (Québec)';
 }
 
-/** Pull a JSON object out of Claude's reply, tolerating code fences. */
-function extractJson(text: string): Record<string, string> | null {
-  const stripped = text.trim().replace(/^```(?:json)?/i, '').replace(/```$/, '').trim();
-  const candidate = stripped.match(/\{[\s\S]*\}/)?.[0] ?? stripped;
-  try {
-    const parsed = JSON.parse(candidate);
-    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string>) : null;
-  } catch {
-    return null;
-  }
+const looksLikeHtml = (s: string) => /<[a-z][^>]*>/i.test(s);
+
+/** Tag names in document order (`p`, `/p`, `strong`, …) — the HTML skeleton. */
+function tagSkeleton(html: string): string[] {
+  return Array.from(html.matchAll(/<(\/?[a-z][a-z0-9]*)/gi), (m) => m[1].toLowerCase());
 }
 
-/** Translate a set of named fields; returns the same keys, or null on failure. */
+/**
+ * Translate one field as plain text; null when the result can't be trusted.
+ *
+ * Each field is its own call with the translation as the whole reply. The
+ * previous design asked for every field inside one JSON object and parsed
+ * it, which broke on any article quoting someone: the English text came back
+ * with unescaped `"` and JSON.parse failed, so those articles were skipped
+ * forever without a trace. Forcing JSON with structured outputs fixed the
+ * parse but made Haiku stop long bodies a third of the way through while
+ * still reporting end_turn. Plain text has neither failure mode.
+ */
+async function translateText(
+  client: Anthropic,
+  sourceLang: string,
+  text: string,
+  label: string,
+): Promise<string | null> {
+  const target = sourceLang === 'fr' ? 'en' : 'fr';
+  const html = looksLikeHtml(text);
+  let system = `You translate content for a Québec sports community website from ${langName(sourceLang)} to ${langName(target)}. Keep sports terminology, team names and a natural journalistic tone. Translate the whole input — never summarize, shorten, or add commentary. Reply with the translation only.`;
+  if (html) {
+    system += ' The input is an HTML fragment: keep every tag and attribute exactly as is and translate only the human-readable text.';
+  }
+
+  const res = await client.messages.create({
+    model: MODEL,
+    max_tokens: 16000,
+    system,
+    messages: [{ role: 'user', content: text }],
+  });
+
+  if (res.stop_reason !== 'end_turn') {
+    console.warn(`[translate-pending] ${label}: stop_reason ${res.stop_reason}, skipped`);
+    return null;
+  }
+  const out = res.content
+    .map((b) => (b.type === 'text' ? b.text : ''))
+    .join('')
+    .trim();
+  if (!out) {
+    console.warn(`[translate-pending] ${label}: empty translation, skipped`);
+    return null;
+  }
+  // A dropped or mangled tag means lost or broken content — don't store it.
+  if (html && tagSkeleton(out).join(' ') !== tagSkeleton(text).join(' ')) {
+    console.warn(`[translate-pending] ${label}: HTML structure changed, skipped`);
+    return null;
+  }
+  return out;
+}
+
+/** Translate a set of named fields; returns the same keys, or null if any field fails. */
 async function translateFields(
   client: Anthropic,
   sourceLang: string,
   fields: Record<string, string>,
+  label: string,
 ): Promise<Record<string, string> | null> {
-  const target = sourceLang === 'fr' ? 'en' : 'fr';
-  const prompt = `You are a professional translator for a Québec sports community website. Translate the JSON values below from ${langName(sourceLang)} to ${langName(target)}. Keep sports terminology, team names and a natural journalistic tone. Any value containing HTML must keep every tag and attribute exactly — translate only the human-readable text. Return ONLY a valid JSON object with the exact same keys, nothing else.
-
-${JSON.stringify(fields, null, 2)}`;
-
-  const res = await client.messages.create({
-    model: MODEL,
-    max_tokens: 8000,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  // A truncated reply would store a half-translated body — skip it instead.
-  if (res.stop_reason === 'max_tokens') return null;
-  const block = res.content[0];
-  if (!block || block.type !== 'text') return null;
-  return extractJson(block.text);
+  const out: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    const translated = await translateText(client, sourceLang, value, `${label}.${key}`);
+    if (translated === null) return null;
+    out[key] = translated;
+  }
+  return out;
 }
 
 async function handle(request: Request) {
@@ -143,7 +181,7 @@ async function handle(request: Request) {
       if (outOfTime()) break;
       const fields: Record<string, string> = { title: a.title, body: a.body };
       if (a.excerpt) fields.excerpt = a.excerpt;
-      const out = await translateFields(client, a.source_lang ?? 'fr', fields);
+      const out = await translateFields(client, a.source_lang ?? 'fr', fields, `article ${a.id}`);
       if (!out || !out.title || !out.body) continue;
       await admin
         .from('articles')
@@ -177,7 +215,7 @@ async function handle(request: Request) {
       if (outOfTime()) break;
       const fields: Record<string, string> = { title: p.title };
       if (p.description) fields.description = p.description;
-      const out = await translateFields(client, p.source_lang ?? 'fr', fields);
+      const out = await translateFields(client, p.source_lang ?? 'fr', fields, `podcast ${p.id}`);
       if (!out || !out.title) continue;
       await admin
         .from('podcasts')
