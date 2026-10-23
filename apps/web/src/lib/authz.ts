@@ -25,3 +25,23 @@ export async function isContentCreator(supabase: SupabaseClient, userId: string)
     .limit(1);
   return Boolean((data as unknown[] | null)?.length);
 }
+
+/**
+ * Can this user add or remove podcast audio in `communityId`? Same rule as the
+ * podcast-audio storage policies (migrations 00102 / 00106): admin, moderator
+ * or creator of that community, or the global owner.
+ */
+export async function canManageCommunityPodcasts(
+  supabase: SupabaseClient,
+  userId: string,
+  communityId: number,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from('community_member_roles')
+    .select('community_id, roles!inner(code)')
+    .eq('member_id', userId)
+    .in('roles.code', ['owner', 'admin', 'moderator', 'creator']);
+  return ((data ?? []) as unknown as { community_id: number; roles: { code: string } }[]).some(
+    (r) => r.roles.code === 'owner' || r.community_id === communityId,
+  );
+}

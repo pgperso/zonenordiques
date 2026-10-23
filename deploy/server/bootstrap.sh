@@ -90,7 +90,7 @@ visudo -cq
 
 step "Directories and scripts"
 install -d -m 755 -o root -g root "$ROOT" "$ROOT/bin"          # deploy can run, not rewrite
-install -d -m 755 -o deploy -g deploy "$ROOT/logs"
+install -d -m 755 -o deploy -g deploy "$ROOT/logs" "$ROOT/media"   # media: podcast audio (nginx /media/)
 install -d -m 755 -o root -g root /etc/nginx/la-zone-upstreams   # root-only: nginx loads it
 # root owns the env dir and files; deploy (PM2, CI gate) can only read them.
 install -d -m 750 -o root -g deploy "$ROOT/env"
@@ -147,6 +147,7 @@ for zone in zonenordiques.com zoneexpos.com cflquebec.com lcfquebec.com cflquebe
   fi
 done
 install -m 644 "$HERE/nginx/la-zone.conf" /etc/nginx/sites-available/la-zone.conf
+install -m 644 "$HERE/nginx/la-zone-media.conf" /etc/nginx/snippets/la-zone-media.conf
 ln -sf /etc/nginx/sites-available/la-zone.conf /etc/nginx/sites-enabled/la-zone.conf
 rm -f /etc/nginx/sites-enabled/default
 sed -i 's/^\s*#\?\s*server_tokens .*/\tserver_tokens off;/' /etc/nginx/nginx.conf

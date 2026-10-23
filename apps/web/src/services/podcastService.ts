@@ -114,7 +114,14 @@ export async function removePodcast(
     const coverPath = extractStoragePath(podcast.cover_image_url, 'article-covers');
 
     if (audioPath) {
+      // Legacy file still in Supabase Storage.
       supabase.storage.from('podcast-audio').remove([audioPath]);
+    } else if (podcast.audio_url && typeof window !== 'undefined') {
+      // Audio hosted on our own server (lib/mediaStorage); the route ignores
+      // URLs that aren't ours, such as external links.
+      void fetch(`/api/podcasts/audio?url=${encodeURIComponent(podcast.audio_url)}`, {
+        method: 'DELETE',
+      }).catch(() => {});
     }
     if (coverPath) {
       supabase.storage.from('article-covers').remove([coverPath]);
