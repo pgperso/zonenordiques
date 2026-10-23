@@ -128,7 +128,15 @@ install -d -m 0755 /etc/apt/keyrings
 curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor --yes -o /etc/apt/keyrings/pgdg.gpg
 echo "deb [signed-by=/etc/apt/keyrings/pgdg.gpg] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list
 apt-get update -q
-apt-get install -y -q postgresql-client-17 rclone
+apt-get install -y -q postgresql-client-17
+# rclone from rclone.org, checksum-verified: Ubuntu's 1.60 gets 501 from R2
+# on every upload over the multipart threshold (succeeds only on retry).
+v=$(curl -fsS https://downloads.rclone.org/version.txt | sed 's/rclone //')
+( cd /tmp
+  curl -fsSO "https://downloads.rclone.org/$v/rclone-$v-linux-amd64.deb"
+  curl -fsS "https://downloads.rclone.org/$v/SHA256SUMS" | grep "rclone-$v-linux-amd64.deb" | sha256sum -c -
+  apt-get install -y -q "./rclone-$v-linux-amd64.deb"
+  rm -f "rclone-$v-linux-amd64.deb" )
 # Supabase's own root CA, so pg_dump can verify the pooler (verify-full).
 # Pinned by fingerprint: a download that doesn't match aborts the bootstrap.
 curl -fsS https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt -o /tmp/sb-ca.crt
