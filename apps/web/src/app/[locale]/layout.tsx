@@ -1,5 +1,4 @@
 import { headers } from 'next/headers';
-import { Inter } from 'next/font/google';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { Header } from '@/components/layout/Header';
@@ -16,16 +15,6 @@ import { Toaster } from 'sonner';
 import { routing } from '@/i18n/routing';
 import { BRAND } from '@/lib/brand';
 import { SITE } from '@/lib/siteConfig';
-
-// The <html> element lives in this layout (the root layout only returns its
-// children), so the font's CSS variable has to be attached here: theme.css
-// defines --font-sans as var(--font-inter), and with the variable missing the
-// whole stack was invalid and pages fell back to the browser's default font.
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
 
 const jsonLd = [
   {
@@ -126,7 +115,7 @@ export default async function LocaleLayout({
     // `dark` class on <html> before React hydrates, so React's diff of the
     // root element would otherwise complain about a className mismatch and
     // trip the error boundary.
-    <html lang={locale} className={inter.variable} suppressHydrationWarning style={brandVars}>
+    <html lang={locale} suppressHydrationWarning style={brandVars}>
       <head>
         <link rel="alternate" type="application/rss+xml" title={BRAND.name} href="/feed.xml" />
         {supabaseOrigin && <link rel="preconnect" href={supabaseOrigin} />}

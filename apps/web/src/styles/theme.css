@@ -27,6 +27,9 @@
   --color-ad-bg: #FAFAFA;
   --color-ad-border: #E5E7EB;
 
-  /* Typography — references the CSS variable injected by next/font */
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  /* Typography — the platform's own UI font (Segoe UI on Windows, San
+     Francisco on Apple, Roboto on Android). Tried Inter as a web font
+     (2026-10-23): it renders visibly softer than Segoe UI on Windows, where
+     most visitors are, so the native stack is the deliberate choice. */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
