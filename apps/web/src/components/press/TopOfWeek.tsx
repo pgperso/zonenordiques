@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { Link } from '@/i18n/navigation';
 import { cleanArticleTitle } from '@/lib/articleText';
+import { translatedField } from '@/lib/contentTranslation';
 import { ORIGINAL_CONTENT_CUTOFF, displayCommunityName } from '@arena/shared';
 import { getBrandCommunityIds } from '@/lib/brandScope';
 
@@ -12,6 +13,8 @@ type TopArticleRow = {
   id: number;
   slug: string;
   title: string;
+  source_lang: string | null;
+  title_translated: string | null;
   view_count: number;
   published_at: string | null;
   communities: { slug: string; name: string; name_en: string | null };
@@ -39,7 +42,7 @@ export async function TopOfWeek({ locale }: TopOfWeekProps) {
 
   // Primary: articles published in the last 7 days, ordered by views.
   const select =
-    'id, slug, title, view_count, published_at, communities!inner(slug, name, name_en)';
+    'id, slug, title, source_lang, title_translated, view_count, published_at, communities!inner(slug, name, name_en)';
 
   const { data: weekData } = await supabase
     .from('articles')
@@ -103,7 +106,9 @@ export async function TopOfWeek({ locale }: TopOfWeekProps) {
                   href={`/tribunes/${a.communities.slug}/articles/${a.slug}`}
                   className="block text-sm font-semibold leading-snug text-gray-900 hover:text-brand-blue dark:text-gray-100"
                 >
-                  <span className="line-clamp-3">{cleanArticleTitle(a.title, null, 'Article')}</span>
+                  <span className="line-clamp-3">
+                    {cleanArticleTitle(translatedField(a.source_lang, locale, a.title, a.title_translated), null, 'Article')}
+                  </span>
                 </Link>
                 <p className="mt-1 text-[10px] uppercase tracking-wider text-gray-400">
                   {communityName}

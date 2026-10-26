@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useSupabase } from '@/hooks/useSupabase';
 import { cleanArticleTitle, plainText } from '@/lib/articleText';
+import { translatedField } from '@/lib/contentTranslation';
 import { formatDate, formatDuration } from '@arena/shared';
 import { Avatar } from '@/components/ui/Avatar';
 import Image from 'next/image';
@@ -48,6 +49,7 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
   const t = useTranslations('content');
   const tt = useTranslations('tribune');
   const tc = useTranslations('common');
+  const locale = useLocale();
   const supabase = useSupabase();
   const [items, setItems] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,7 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
       const [{ data: articles }, { data: podcasts }] = await Promise.all([
         supabase
           .from('articles')
-          .select('id, author_id, title, slug, excerpt, cover_image_url, like_count, view_count, published_at, author_name_override, members:members!articles_author_id_fkey(username, avatar_url, creator_display_name, creator_avatar_url)')
+          .select('id, author_id, title, slug, excerpt, source_lang, title_translated, excerpt_translated, cover_image_url, like_count, view_count, published_at, author_name_override, members:members!articles_author_id_fkey(username, avatar_url, creator_display_name, creator_avatar_url)')
           .eq('community_id', communityId)
           .eq('is_published', true)
           .eq('is_removed', false)
@@ -70,7 +72,7 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
           .limit(50),
         supabase
           .from('podcasts')
-          .select('id, published_by, title, description, cover_image_url, like_count, duration_seconds, created_at, members:members!podcasts_published_by_fkey(username, avatar_url, creator_display_name, creator_avatar_url)')
+          .select('id, published_by, title, description, source_lang, title_translated, description_translated, cover_image_url, like_count, duration_seconds, created_at, members:members!podcasts_published_by_fkey(username, avatar_url, creator_display_name, creator_avatar_url)')
           .eq('community_id', communityId)
           .eq('is_published', true)
           .or('is_removed.eq.false,is_removed.is.null')
@@ -82,13 +84,13 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
 
       const mapped: ContentItem[] = [];
 
-      for (const a of (articles ?? []) as unknown as { id: number; author_id: string; title: string; slug: string; excerpt: string | null; cover_image_url: string | null; like_count: number; view_count: number; published_at: string; author_name_override: string | null; members: { username: string; avatar_url: string | null; creator_display_name: string | null; creator_avatar_url: string | null } | null }[]) {
+      for (const a of (articles ?? []) as unknown as { id: number; author_id: string; title: string; slug: string; excerpt: string | null; source_lang: string | null; title_translated: string | null; excerpt_translated: string | null; cover_image_url: string | null; like_count: number; view_count: number; published_at: string; author_name_override: string | null; members: { username: string; avatar_url: string | null; creator_display_name: string | null; creator_avatar_url: string | null } | null }[]) {
         mapped.push({
           type: 'article',
           id: a.id,
-          title: cleanArticleTitle(a.title, null, 'Article'),
+          title: cleanArticleTitle(translatedField(a.source_lang, locale, a.title, a.title_translated), null, 'Article'),
           slug: a.slug,
-          excerpt: plainText(a.excerpt) || null,
+          excerpt: plainText(translatedField(a.source_lang, locale, a.excerpt, a.excerpt_translated)) || null,
           coverImageUrl: a.cover_image_url,
           likeCount: a.like_count,
           viewCount: a.view_count,
@@ -99,12 +101,12 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
         });
       }
 
-      for (const p of (podcasts ?? []) as { id: number; published_by: string | null; title: string; description: string | null; cover_image_url: string | null; like_count: number; duration_seconds: number | null; created_at: string; members: { username: string; avatar_url: string | null; creator_display_name: string | null; creator_avatar_url: string | null } | null }[]) {
+      for (const p of (podcasts ?? []) as unknown as { id: number; published_by: string | null; title: string; description: string | null; source_lang: string | null; title_translated: string | null; description_translated: string | null; cover_image_url: string | null; like_count: number; duration_seconds: number | null; created_at: string; members: { username: string; avatar_url: string | null; creator_display_name: string | null; creator_avatar_url: string | null } | null }[]) {
         mapped.push({
           type: 'podcast',
           id: p.id,
-          title: p.title,
-          description: p.description,
+          title: translatedField(p.source_lang, locale, p.title, p.title_translated),
+          description: translatedField(p.source_lang, locale, p.description, p.description_translated),
           coverImageUrl: p.cover_image_url,
           likeCount: p.like_count,
           durationSeconds: p.duration_seconds,
@@ -122,7 +124,7 @@ export function CommunityContentTab({ communityId, communitySlug, userId, canMod
 
     load();
     return () => { cancelled = true; };
-  }, [supabase, communityId]);
+  }, [supabase, communityId, locale]);
 
   const filtered = filter === 'all' ? items : items.filter((i) => i.type === (filter === 'articles' ? 'article' : 'podcast'));
 
