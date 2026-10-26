@@ -41,6 +41,9 @@ function langName(code: string): string {
 
 const looksLikeHtml = (s: string) => /<[a-z][^>]*>/i.test(s);
 
+/** A paragraph with no visible text (`<p> </p>`, `<p>&nbsp;</p>`, `<p><br></p>`). */
+const EMPTY_PARAGRAPH = /<p\b[^>]*>(?:\s|&nbsp;|&#160;|<br\s*\/?>)*<\/p>/gi;
+
 /** Tag names in document order (`p`, `/p`, `strong`, …) — the HTML skeleton. */
 function tagSkeleton(html: string): string[] {
   return Array.from(html.matchAll(/<(\/?[a-z][a-z0-9]*)/gi), (m) => m[1].toLowerCase());
@@ -81,7 +84,7 @@ async function translateText(
     console.warn(`[translate-pending] ${label}: stop_reason ${res.stop_reason}, skipped`);
     return null;
   }
-  const out = res.content
+  let out = res.content
     .map((b) => (b.type === 'text' ? b.text : ''))
     .join('')
     .trim();
@@ -89,10 +92,19 @@ async function translateText(
     console.warn(`[translate-pending] ${label}: empty translation, skipped`);
     return null;
   }
-  // A dropped or mangled tag means lost or broken content — don't store it.
-  if (html && tagSkeleton(out).join(' ') !== tagSkeleton(text).join(' ')) {
-    console.warn(`[translate-pending] ${label}: HTML structure changed, skipped`);
-    return null;
+  if (html) {
+    // Haiku sometimes inserts a blank paragraph before a heading (seen on
+    // article 658, every run). That is not lost content, so empty paragraphs
+    // don't count in the comparison; any it added are removed so the English
+    // layout matches the French one.
+    if (!EMPTY_PARAGRAPH.test(text)) out = out.replace(EMPTY_PARAGRAPH, '');
+    EMPTY_PARAGRAPH.lastIndex = 0;
+    const skeleton = (h: string) => tagSkeleton(h.replace(EMPTY_PARAGRAPH, '')).join(' ');
+    // A dropped, added or mangled tag means lost or broken content — don't store it.
+    if (skeleton(out) !== skeleton(text)) {
+      console.warn(`[translate-pending] ${label}: HTML structure changed, skipped`);
+      return null;
+    }
   }
   return out;
 }
